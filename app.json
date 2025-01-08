@@ -3,12 +3,13 @@
     "name": "mark13",
     "slug": "mark13",
     "version": "1.0.0",
+    "scheme": "grace.ivory",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -19,10 +20,31 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.grace.ivory"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo-google-fonts/inter/Inter_400Regular.ttf",
+            "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold_Italic.ttf",
+            "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_600SemiBold_Italic.ttf",
+            "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold.ttf.png",
+            "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_600SemiBold.ttf"
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "86725717-131d-468b-9c4a-567448f07923"
+      }
+    },
+    "owner": "samnjue"
   }
 }

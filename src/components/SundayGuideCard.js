@@ -132,7 +132,7 @@ const getStyle = (theme) => {
             color: isDarkTheme ? '#999' : '#555',
         },
         errorText: {
-            color: 'black',
+            color: isDarkTheme ? '#999' : '#555',
             fontSize: 14,
             fontWeight: 'bold',
             textAlign: 'center',
@@ -144,7 +144,7 @@ const getStyle = (theme) => {
         emptyText: {
             fontSize: 14,
             fontWeight: 'bold',
-            color: '#555',
+            color: isDarkTheme ? '#999' : '#555',
             textAlign: 'center',
             marginVertical: 8,
         },
@@ -154,7 +154,7 @@ const getStyle = (theme) => {
             borderRadius: 10,
             marginBottom: 16,
             padding: 16,
-            backgroundColor: '#ededed',
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
@@ -165,6 +165,7 @@ const getStyle = (theme) => {
             fontSize: 19,
             fontWeight: '300',
             marginBottom: 8,
+            color: isDarkTheme ? '#fff' : '#000',
         },
     }
 };

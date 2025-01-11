@@ -58,75 +58,79 @@ export default function VerseCard({ refreshKey }) {
     );
 }
 
-const styles = StyleSheet.create({
-    card: {
-        borderRadius: 10,
-        overflow: 'hidden',
-        marginBottom: 16,
-        padding: 16,
-        flexGrow: 1,
-        minHeight: 200
-    },
-    image: {
-        borderRadius: 10,
-        opacity: 0.8,
-    },
-    title: {
-        fontSize: 16,
-        fontWeight: '300',
-        color: '#ffffff',
-        marginBottom: 0,
-        marginTop: 0,
-    },
-    reference: {
-        fontSize: 17,
-        fontFamily: 'Inter_700Bold',
-        color: '#FFFFFF',
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    content: {
-        fontSize: 24,
-        color: 'white',
-        fontWeight: '600',
-        textAlign: 'left',
-        lineHeight: 29,
-        marginTop: 5,
-        fontFamily: 'SourceSerif4_400Regular',
-    },
-    errorText: {
-        color: 'red',
-        fontSize: 14,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginVertical: 50,
-    },
-    loader: {
-        marginVertical: 16,
-    },
-    errorCard: {
-        borderRadius: 10,
-        marginBottom: 16,
-        padding: 16,
-        backgroundColor: '#ededed',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    errorTitle: {
-        fontSize: 19,
-        fontWeight: '300',
-        marginBottom: 8,
-    },
-    verse_text: {
-        fontSize: 24,
-        color: 'white',
-        fontWeight: '600',
-        textAlign: 'left',
-        lineHeight: 29,
-        marginTop: 5,
-        fontFamily: 'SourceSerif'
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
+        card: {
+            borderRadius: 10,
+            overflow: 'hidden',
+            marginBottom: 16,
+            padding: 16,
+            flexGrow: 1,
+            minHeight: 200
+        },
+        image: {
+            borderRadius: 10,
+            opacity: 0.8,
+        },
+        title: {
+            fontSize: 16,
+            fontWeight: '300',
+            color: '#ffffff',
+            marginBottom: 0,
+            marginTop: 0,
+        },
+        reference: {
+            fontSize: 17,
+            fontFamily: 'Inter_700Bold',
+            color: '#FFFFFF',
+            marginBottom: 10,
+            marginTop: 10,
+        },
+        content: {
+            fontSize: 24,
+            color: 'white',
+            fontWeight: '600',
+            textAlign: 'left',
+            lineHeight: 29,
+            marginTop: 5,
+            fontFamily: 'SourceSerif4_400Regular',
+        },
+        errorText: {
+            color: isDarkTheme ? '#999' : '#555',
+            fontSize: 14,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginVertical: 50,
+        },
+        loader: {
+            marginVertical: 16,
+        },
+        errorCard: {
+            borderRadius: 10,
+            marginBottom: 16,
+            padding: 16,
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        errorTitle: {
+            fontSize: 19,
+            fontWeight: '300',
+            marginBottom: 8,
+            color: isDarkTheme ? '#fff' : '#000',
+        },
+        verse_text: {
+            fontSize: 24,
+            color: 'white',
+            fontWeight: '600',
+            textAlign: 'left',
+            lineHeight: 29,
+            marginTop: 5,
+            fontFamily: 'SourceSerif'
+        }
     }
-});
+};

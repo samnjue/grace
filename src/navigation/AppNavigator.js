@@ -41,7 +41,9 @@ export default function AppNavigator() {
 
                         if (profile) {
                             await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
-                            setInitialRoute(profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection');
+                            setInitialRoute(
+                                profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection'
+                            );
                         } else {
                             console.error('Error fetching profile:', error?.message || 'Unknown error');
                             setInitialRoute('ChurchSelection');
@@ -50,7 +52,9 @@ export default function AppNavigator() {
                         const cachedProfile = await AsyncStorage.getItem('userProfile');
                         if (cachedProfile) {
                             const profile = JSON.parse(cachedProfile);
-                            setInitialRoute(profile.selected_church && profile.selected_district == null ? 'MainApp' : 'ChurchSelection');
+                            setInitialRoute(
+                                profile.selected_church && profile.selected_district == null ? 'MainApp' : 'ChurchSelection'
+                            );
                         } else {
                             setInitialRoute('ChurchSelection');
                         }

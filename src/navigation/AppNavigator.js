@@ -10,6 +10,7 @@ import ChurchSelectionScreen from '../screens/auth/ChurchSelectionScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setTheme } from '../redux/slices/themeSlice';
 import * as NavigationBar from 'expo-navigation-bar';
+import NetInfo from '@react-native-community/netinfo';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { supabase } from '../utils/supabase';
 
@@ -19,29 +20,43 @@ export default function AppNavigator() {
     const [isLoading, setIsLoading] = useState(true);
     const [initialRoute, setInitialRoute] = useState('AuthStack');
     const user = useSelector((state) => state.user);
-    //console.log('Complete user state:', user);
     const dispatch = useDispatch();
 
     useEffect(() => {
         const checkUserSession = async () => {
             try {
                 const session = await AsyncStorage.getItem('userSession');
+                const netInfo = await NetInfo.fetch();
+
                 if (session) {
                     const parsedSession = JSON.parse(session);
                     dispatch(logIn(parsedSession));
 
-                    const { data: profile, error } = await supabase
-                        .from('users')
-                        .select('selected_church, selected_district')
-                        .eq('id', parsedSession.user.id)
-                        .single();
+                    if (netInfo.isConnected) {
+                        // Fetch user profile from Supabase
+                        const { data: profile, error } = await supabase
+                            .from('users')
+                            .select('selected_church, selected_district')
+                            .eq('id', parsedSession.user.id)
+                            .single();
 
-                    if (error) {
-                        //console.error('Error fetching profile:', error.message);
-                    } else if (profile?.selected_church && profile?.selected_district) {
-                        setInitialRoute('MainApp');
+                        if (profile) {
+                            // Cache the profile data locally
+                            await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
+                            setInitialRoute(profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection');
+                        } else {
+                            console.error('Error fetching profile:', error?.message || 'Unknown error');
+                            setInitialRoute('ChurchSelection');
+                        }
                     } else {
-                        setInitialRoute('ChurchSelection');
+                        // Offline: Use cached profile data
+                        const cachedProfile = await AsyncStorage.getItem('userProfile');
+                        if (cachedProfile) {
+                            const profile = JSON.parse(cachedProfile);
+                            setInitialRoute(profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection');
+                        } else {
+                            setInitialRoute('ChurchSelection');
+                        }
                     }
                 } else {
                     setInitialRoute('AuthStack');
@@ -100,8 +115,6 @@ export default function AppNavigator() {
             </View>
         );
     }
-
-    //console.log('User session state:', user?.session);
 
     return (
         <NavigationContainer theme={appTheme}>

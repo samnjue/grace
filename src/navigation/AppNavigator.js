@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -33,7 +33,6 @@ export default function AppNavigator() {
                     dispatch(logIn(parsedSession));
 
                     if (netInfo.isConnected) {
-                        // Fetch user profile from Supabase
                         const { data: profile, error } = await supabase
                             .from('users')
                             .select('selected_church, selected_district')
@@ -41,7 +40,6 @@ export default function AppNavigator() {
                             .single();
 
                         if (profile) {
-                            // Cache the profile data locally
                             await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
                             setInitialRoute(profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection');
                         } else {
@@ -49,7 +47,6 @@ export default function AppNavigator() {
                             setInitialRoute('ChurchSelection');
                         }
                     } else {
-                        // Offline: Use cached profile data
                         const cachedProfile = await AsyncStorage.getItem('userProfile');
                         if (cachedProfile) {
                             const profile = JSON.parse(cachedProfile);
@@ -110,7 +107,9 @@ export default function AppNavigator() {
 
     if (isLoading) {
         return (
+
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: isDarkTheme ? '#121212' : '#fff' }}>
+                <StatusBar barStyle={isDarkTheme ? 'light-content' : 'dark-content'} backgroundColor={isDarkTheme ? '#121212' : '#fff'} />
                 <ActivityIndicator size="large" color="#6a5acd" />
             </View>
         );

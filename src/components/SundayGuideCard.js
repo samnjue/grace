@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, FlatList } from 'react-native';
+import { Text, View, ActivityIndicator, FlatList } from 'react-native';
 import { fetchSundayGuide } from '../services/supabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
@@ -16,7 +16,7 @@ export default function SundayGuideCard({ refreshKey }) {
     useEffect(() => {
         const getGuideData = async () => {
             if (!selectedChurch || !selectedChurch.church_id) {
-                setError('Church ID is undefined.');
+                setError('Church ID is undefined');
                 return;
             }
 
@@ -28,10 +28,10 @@ export default function SundayGuideCard({ refreshKey }) {
                     await AsyncStorage.setItem('sundayGuide', JSON.stringify(data));
                     setError('');
                 } else {
-                    setError('No information posted.');
+                    setError('No information posted');
                 }
             } catch (err) {
-                setError('Check your connection.');
+                setError('Check your connection');
                 const cachedGuide = await AsyncStorage.getItem('sundayGuide');
                 if (cachedGuide) {
                     setGuideData(JSON.parse(cachedGuide));
@@ -55,10 +55,10 @@ export default function SundayGuideCard({ refreshKey }) {
                     setSelectedChurch(parsedChurch);
                     setError('');
                 } else {
-                    setError('No church selected.');
+                    setError('No church selected');
                 }
             } catch (error) {
-                setError('Error retrieving church information.');
+                setError('Error retrieving church information');
             }
         };
 

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ImageBackground, ActivityIndicator } from 'react-native';
+import { Text, View, ImageBackground, ActivityIndicator } from 'react-native';
 import { fetchVerseOfTheDay } from '../services/supabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
 
 export default function VerseCard({ refreshKey }) {
     const [verse, setVerse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    const theme = useSelector((state) => state.theme.theme);
+    const styles = getStyle(theme);
 
     useEffect(() => {
         const getVerse = async () => {
@@ -18,10 +22,10 @@ export default function VerseCard({ refreshKey }) {
                     await AsyncStorage.setItem('verseOfTheDay', JSON.stringify(data));
                     setError('');
                 } else {
-                    setError('No verse found.');
+                    setError('No verse found');
                 }
             } catch (err) {
-                setError('Check your connection.');
+                setError('Check your connection');
                 const cachedVerse = await AsyncStorage.getItem('verseOfTheDay');
                 if (cachedVerse) {
                     setVerse(JSON.parse(cachedVerse));

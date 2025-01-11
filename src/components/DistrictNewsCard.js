@@ -25,10 +25,10 @@ export default function DistrictNewsCard({ refreshKey }) {
                     await AsyncStorage.setItem('districtNews', JSON.stringify(data));
                     setError('');
                 } else {
-                    setError('No information posted.');
+                    setError('No information posted');
                 }
             } catch (err) {
-                setError('Check your connection.');
+                setError('Check your connection');
                 const cachedNews = await AsyncStorage.getItem('districtNews');
                 if (cachedNews) {
                     setNews(JSON.parse(cachedNews));
@@ -54,10 +54,10 @@ export default function DistrictNewsCard({ refreshKey }) {
                     setSelectedDistrict(districtWithCorrectKey);
                     setError('');
                 } else {
-                    setError('No district selected.');
+                    setError('No district selected');
                 }
             } catch (error) {
-                setError('Error retrieving district information.');
+                setError('Error retrieving district information');
             }
         };
 
@@ -131,7 +131,7 @@ const getStyle = (theme) => {
             color: isDarkTheme ? '#999' : '#555',
         },
         errorText: {
-            color: 'black',
+            color: isDarkTheme ? '#999' : '#555',
             fontSize: 14,
             fontWeight: 'bold',
             textAlign: 'center',
@@ -153,7 +153,7 @@ const getStyle = (theme) => {
             borderRadius: 10,
             marginBottom: 16,
             padding: 16,
-            backgroundColor: '#ededed',
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
@@ -164,6 +164,7 @@ const getStyle = (theme) => {
             fontSize: 19,
             fontWeight: '300',
             marginBottom: 8,
+            color: isDarkTheme ? '#fff' : '#000',
         },
     }
 };

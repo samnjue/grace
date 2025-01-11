@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Image, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../utils/supabase';
 import { logIn } from '../../redux/slices/userSlice';
 import CustomError from '../../components/CustomError';
+import { useSelector } from 'react-redux';
+import * as NavigationBar from 'expo-navigation-bar';
 
 export default function LogInScreen({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -14,7 +16,17 @@ export default function LogInScreen({ navigation }) {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [showPassword, setShowPassword] = useState(false); ``
+    const [showPassword, setShowPassword] = useState(false);
+
+    const theme = useSelector((state) => state.theme.theme);
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    const styles = getStyle(theme);
+
+    useEffect(() => {
+        NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
+        NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
+    }, [isDarkTheme]);
+
 
     const dispatch = useDispatch();
 
@@ -82,15 +94,19 @@ export default function LogInScreen({ navigation }) {
                 backgroundColor: '#fff',
             }}
         >
+            <StatusBar
+                barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+                backgroundColor={isDarkTheme ? '#121212' : '#fff'}
+            />
             <View style={styles.container}>
                 {/* Back Button */}
-                <View style={styles.backHeader}>
+                <View style={styles.fixedBackHeader}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
                         style={{ flexDirection: 'row', alignItems: 'center' }}
                     >
-                        <Ionicons name="chevron-back-outline" size={31} color="#9E44FF" style={{ left: 25 }} />
-                        <Text style={{ fontSize: 16, color: '#9E44FF', marginLeft: 5, left: 20, fontFamily: 'Inter' }}>Return</Text>
+                        <Ionicons name="chevron-back-outline" size={31} color="#9E44FF" />
+                        <Text style={styles.returnText}>Return</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -158,76 +174,96 @@ export default function LogInScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-    },
-    backHeader: {
-        position: 'absolute',
-        top: 10,
-        left: -50,
-        zIndex: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    input: {
-        backgroundColor: '#f5f5f5',
-        width: 350,
-        paddingVertical: 14,
-        paddingHorizontal: 18,
-        borderRadius: 8,
-        marginBottom: 15,
-        fontSize: 16,
-        bottom: 100,
-    },
-    passwordContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5',
-        width: 350,
-        borderRadius: 8,
-        marginBottom: 15,
-        paddingHorizontal: 18,
-        bottom: 100,
-    },
-    passwordInput: {
-        flex: 1,
-        paddingVertical: 14,
-        paddingHorizontal: 0,
-        fontSize: 16,
-    },
-    eyeIcon: {
-        padding: 8,
-    },
-    logo: {
-        width: 300,
-        height: 300,
-        marginBottom: -20,
-        bottom: 55,
-    },
-    header: {
-        fontSize: 24,
-        fontFamily: 'Archivo_700Bold',
-        textAlign: 'center',
-        bottom: 113,
-        color: '#333',
-    },
-    button: {
-        backgroundColor: '#6a5acd',
-        paddingVertical: 12,
-        paddingHorizontal: 40,
-        borderRadius: 8,
-        bottom: 90,
-    },
-    buttonDisabled: {
-        backgroundColor: '#ccc',
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontFamily: 'Archivo_700Bold',
-    },
-});
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
+        container: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+        },
+        backHeader: {
+            position: 'absolute',
+            top: 10,
+            left: -50,
+            zIndex: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        input: {
+            backgroundColor: isDarkTheme ? '#333' : '#f5f5f5',
+            width: 350,
+            paddingVertical: 14,
+            paddingHorizontal: 18,
+            borderRadius: 8,
+            marginBottom: 15,
+            fontSize: 16,
+            bottom: 100,
+            color: isDarkTheme ? '#f5f5f5' : '#000'
+        },
+        passwordContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: isDarkTheme ? '#333' : '#f5f5f5',
+            width: 350,
+            borderRadius: 8,
+            marginBottom: 15,
+            paddingHorizontal: 18,
+            bottom: 100,
+        },
+        passwordInput: {
+            flex: 1,
+            paddingVertical: 14,
+            paddingHorizontal: 0,
+            fontSize: 16,
+            color: isDarkTheme ? '#f5f5f5' : '#000'
+        },
+        eyeIcon: {
+            padding: 8,
+        },
+        logo: {
+            width: 300,
+            height: 300,
+            marginBottom: -20,
+            bottom: 55,
+        },
+        header: {
+            fontSize: 24,
+            fontFamily: 'Archivo_700Bold',
+            textAlign: 'center',
+            bottom: 113,
+            color: isDarkTheme ? '#fff' : '#333',
+        },
+        button: {
+            backgroundColor: '#6a5acd',
+            paddingVertical: 12,
+            paddingHorizontal: 40,
+            borderRadius: 8,
+            bottom: 90,
+        },
+        buttonDisabled: {
+            backgroundColor: '#ccc',
+        },
+        buttonText: {
+            color: '#fff',
+            fontSize: 16,
+            fontFamily: 'Archivo_700Bold',
+        },
+        fixedBackHeader: {
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            zIndex: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        returnText: {
+            fontSize: 16,
+            color: '#9E44FF',
+            marginLeft: 5,
+            fontFamily: 'Inter',
+        },
+    }
+};

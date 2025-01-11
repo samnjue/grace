@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, FlatList } from 'react-native';
+import { Text, View, ActivityIndicator, FlatList } from 'react-native';
 import { fetchDistrictNews } from '../services/supabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
 
 export default function DistrictNewsCard({ refreshKey }) {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedDistrict, setSelectedDistrict] = useState(null);
+
+    const theme = useSelector((state) => state.theme.theme);
+    const styles = getStyle(theme);
 
     useEffect(() => {
         const getNews = async () => {
@@ -91,71 +95,75 @@ export default function DistrictNewsCard({ refreshKey }) {
     );
 }
 
-const styles = StyleSheet.create({
-    card: {
-        borderRadius: 10,
-        backgroundColor: '#ededed',
-        marginBottom: 16,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
-        width: 380
-    },
-    title: {
-        fontSize: 19,
-        fontWeight: '300',
-        marginBottom: 8,
-    },
-    newsItem: {
-        marginBottom: 12,
-    },
-    newsTitle: {
-        fontSize: 20,
-        fontFamily: "Archivo_700Bold",
-        color: '#333',
-        marginBottom: 4,
-    },
-    newsContent: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#555',
-    },
-    errorText: {
-        color: 'black',
-        fontSize: 14,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginVertical: 50,
-    },
-    loader: {
-        marginVertical: 16,
-    },
-    emptyText: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#555',
-        textAlign: 'center',
-        marginVertical: 8,
-    },
-    errorCard: {
-        height: 200,
-        width: 380,
-        borderRadius: 10,
-        marginBottom: 16,
-        padding: 16,
-        backgroundColor: '#ededed',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    errorTitle: {
-        fontSize: 19,
-        fontWeight: '300',
-        marginBottom: 8,
-    },
-});
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
+        card: {
+            borderRadius: 10,
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
+            marginBottom: 16,
+            padding: 16,
+            shadowColor: isDarkTheme ? '#aaa' : '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 2,
+            width: 380
+        },
+        title: {
+            fontSize: 19,
+            fontWeight: '300',
+            marginBottom: 8,
+            color: isDarkTheme ? '#fff' : '#000',
+        },
+        newsItem: {
+            marginBottom: 12,
+        },
+        newsTitle: {
+            fontSize: 20,
+            fontFamily: "Archivo_700Bold",
+            color: isDarkTheme ? '#fff' : '#333',
+            marginBottom: 4,
+        },
+        newsContent: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: isDarkTheme ? '#999' : '#555',
+        },
+        errorText: {
+            color: 'black',
+            fontSize: 14,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginVertical: 50,
+        },
+        loader: {
+            marginVertical: 16,
+        },
+        emptyText: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: '#555',
+            textAlign: 'center',
+            marginVertical: 8,
+        },
+        errorCard: {
+            height: 200,
+            width: 380,
+            borderRadius: 10,
+            marginBottom: 16,
+            padding: 16,
+            backgroundColor: '#ededed',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        errorTitle: {
+            fontSize: 19,
+            fontWeight: '300',
+            marginBottom: 8,
+        },
+    }
+};

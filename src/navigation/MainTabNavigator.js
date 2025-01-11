@@ -7,6 +7,7 @@ import ProfileNavigator from './ProfileNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import HomeNavigator from './HomeNavigator';
+import { useSelector } from 'react-redux';
 
 const Tab = createBottomTabNavigator();
 
@@ -17,6 +18,9 @@ const CustomTabBarButton = ({ children, onPress }) => (
 );
 
 export default function MainTabNavigator() {
+    const theme = useSelector((state) => state.theme.theme);
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+
     const getTabBarStyle = (route) => {
         const routeName = getFocusedRouteNameFromRoute(route) ?? 'Home';
         if (routeName === 'Bible') {
@@ -39,7 +43,7 @@ export default function MainTabNavigator() {
         }
         return {
             position: 'absolute',
-            backgroundColor: '#ffffff',
+            backgroundColor: isDarkTheme ? '#121212' : '#ffffff',
             borderTopWidth: 0,
             elevation: 0,
             height: 60,
@@ -50,7 +54,7 @@ export default function MainTabNavigator() {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
-                animation: 'shift',
+                animation: 'none',
                 headerShown: false,
                 tabBarStyle: getTabBarStyle(route),
                 tabBarHideOnKeyboard: true,

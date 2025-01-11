@@ -11,14 +11,13 @@ import { SourceSerif4_400Regular, SourceSerif4_400Regular_Italic, SourceSerif4_7
 import { Archivo_700Bold, Archivo_800ExtraBold, Archivo_900Black } from '@expo-google-fonts/archivo';
 import { Montserrat_700Bold, Montserrat_800ExtraBold, Montserrat_900Black } from '@expo-google-fonts/montserrat';
 import { StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as NavigationBar from 'expo-navigation-bar';
+import { useSelector, useDispatch } from 'react-redux';
+import { setTheme } from './src/redux/slices/themeSlice';
 
-export default function App() {
+function MainApp() {
   const [fontsLoaded] = useFonts({
-    'PlayfairDisplay': require('./assets/PlayfairDisplay-VariableFont_wght.ttf'),
-    'Inter': require('./assets/Inter-VariableFont_opsz,wght.ttf'),
-    'SourceSerif': require('./assets/SourceSerif4-VariableFont_opsz,wght.ttf'),
-    'Serif7Italic': require('./node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold_Italic.ttf'),
     Inter_200ExtraLight,
     Inter_400Regular,
     Inter_600SemiBold,
@@ -35,8 +34,44 @@ export default function App() {
     Archivo_900Black,
     Montserrat_700Bold,
     Montserrat_800ExtraBold,
-    Montserrat_900Black
+    Montserrat_900Black,
   });
+
+  const dispatch = useDispatch();
+  const theme = useSelector((state) => state.theme.theme);
+  const isDarkTheme = theme.toLowerCase().includes('dark');
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const storedTheme = await AsyncStorage.getItem('appTheme');
+        if (storedTheme) {
+          dispatch(setTheme(storedTheme));
+        }
+      } catch (error) {
+        console.error('Error loading theme:', error);
+      }
+    };
+
+    loadTheme();
+  }, [dispatch]);
+
+  useEffect(() => {
+    const saveTheme = async () => {
+      try {
+        await AsyncStorage.setItem('appTheme', theme);
+      } catch (error) {
+        console.error('Error saving theme:', error);
+      }
+    };
+
+    saveTheme();
+  }, [theme]);
+
+  useEffect(() => {
+    NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
+    NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
+  }, [isDarkTheme]);
 
   useEffect(() => {
     const prepare = async () => {
@@ -56,26 +91,22 @@ export default function App() {
     return null;
   }
 
-  const linking = {
-    prefixes: ['grace.ivory://'],
-    config: {
-      screens: {
-        LogInScreeen: 'auth/callback',
-      },
-    },
-  };
-
-  NavigationBar.setBackgroundColorAsync("white");
-  NavigationBar.setButtonStyleAsync("dark");
-
   return (
-    <>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <Provider store={store}>
-        <SafeAreaProvider>
-          <AppNavigator linking={linking} />
-        </SafeAreaProvider>
-      </Provider>
-    </>
+    <SafeAreaProvider>
+      <StatusBar
+        barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+        backgroundColor={isDarkTheme ? '#121212' : '#fff'}
+        animated
+      />
+      <AppNavigator />
+    </SafeAreaProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <Provider store={store}>
+      <MainApp />
+    </Provider>
   );
 }

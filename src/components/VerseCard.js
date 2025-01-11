@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 16,
         fontWeight: '300',
-        color: '#FFFFFF',
+        color: '#ffffff',
         marginBottom: 0,
         marginTop: 0,
     },
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         lineHeight: 29,
         marginTop: 5,
-        fontFamily: 'SourceSerif',
+        fontFamily: 'SourceSerif4_400Regular',
     },
     errorText: {
         color: 'red',
@@ -120,4 +120,13 @@ const styles = StyleSheet.create({
         fontWeight: '300',
         marginBottom: 8,
     },
+    verse_text: {
+        fontSize: 24,
+        color: 'white',
+        fontWeight: '600',
+        textAlign: 'left',
+        lineHeight: 29,
+        marginTop: 5,
+        fontFamily: 'SourceSerif'
+    }
 });

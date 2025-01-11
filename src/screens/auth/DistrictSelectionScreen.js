@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StatusBar } from 'react-native';
 import { supabase } from '../../utils/supabase';
 import { useDispatch } from 'react-redux';
 import { logIn } from '../../redux/slices/userSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomError from '../../components/CustomError';
+import { useSelector } from 'react-redux';
+import * as NavigationBar from 'expo-navigation-bar';
 
 export default function DistrictSelectionScreen({ navigation }) {
     const [districts, setDistricts] = useState([]);
@@ -13,10 +15,18 @@ export default function DistrictSelectionScreen({ navigation }) {
     const [error, setError] = useState('');
     const dispatch = useDispatch();
 
+    const theme = useSelector((state) => state.theme.theme);
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    const styles = getStyle(theme);
+
+    useEffect(() => {
+        NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
+        NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
+    }, [isDarkTheme]);
+
     useEffect(() => {
         const fetchDistricts = async () => {
             try {
-                // Get the selected church from AsyncStorage
                 const selectedChurch = await AsyncStorage.getItem('selectedChurch');
                 const parsedChurch = JSON.parse(selectedChurch);
 
@@ -24,7 +34,6 @@ export default function DistrictSelectionScreen({ navigation }) {
                     throw new Error('No church selected. Please go back and select a church.');
                 }
 
-                // Query districts corresponding to the selected church
                 const { data, error } = await supabase
                     .from('districts')
                     .select('*')
@@ -107,6 +116,10 @@ export default function DistrictSelectionScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
+            <StatusBar
+                barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+                backgroundColor={isDarkTheme ? '#121212' : '#fff'}
+            />
             <Text style={styles.title} maxFontSizeMultiplier={1.2}>Select Your District</Text>
             {error && <CustomError message={error} />}
             <FlatList
@@ -129,64 +142,68 @@ export default function DistrictSelectionScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: '#FFF',
-    },
-    title: {
-        fontSize: 24,
-        marginVertical: 16,
-        marginTop: 40,
-        bottom: 20,
-        textAlign: 'center',
-        fontFamily: 'Archivo_700Bold',
-        color: '#333',
-    },
-    districtCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        marginVertical: 8,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 8,
-        backgroundColor: '#f9f9f9',
-    },
-    selectedCard: {
-        borderColor: '#6a5acd',
-    },
-    districtName: {
-        fontSize: 16,
-        fontFamily: 'Archivo_700Bold',
-        color: '#333',
-    },
-    selectedText: {
-        color: '#6a5acd',
-    },
-    selectButton: {
-        position: 'absolute',
-        bottom: 20,
-        alignSelf: 'center',
-        paddingHorizontal: 32,
-        paddingVertical: 16,
-        borderRadius: 8,
-    },
-    selectButtonActive: {
-        backgroundColor: '#6a5acd',
-    },
-    selectButtonDisabled: {
-        backgroundColor: '#ccc',
-    },
-    selectButtonText: {
-        color: 'white',
-        fontSize: 18,
-        fontFamily: 'Archivo_700Bold',
-    },
-    loaderContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
+        container: {
+            flex: 1,
+            padding: 16,
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+        },
+        title: {
+            fontSize: 24,
+            marginVertical: 16,
+            marginTop: 40,
+            bottom: 20,
+            textAlign: 'center',
+            fontFamily: 'Archivo_700Bold',
+            color: isDarkTheme ? '#f5f5f5' : '#333',
+        },
+        districtCard: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 16,
+            marginVertical: 8,
+            borderWidth: 0.1,
+            borderColor: '#ccc',
+            borderRadius: 8,
+            backgroundColor: isDarkTheme ? '#333' : '#f5f5f5',
+        },
+        selectedCard: {
+            borderColor: '#6a5acd',
+        },
+        districtName: {
+            fontSize: 16,
+            fontFamily: 'Archivo_700Bold',
+            color: isDarkTheme ? '#fff' : '#333'
+        },
+        selectedText: {
+            color: '#6a5acd',
+        },
+        selectButton: {
+            position: 'absolute',
+            bottom: 20,
+            alignSelf: 'center',
+            paddingHorizontal: 32,
+            paddingVertical: 16,
+            borderRadius: 8,
+        },
+        selectButtonActive: {
+            backgroundColor: '#6a5acd',
+        },
+        selectButtonDisabled: {
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#ccc',
+        },
+        selectButtonText: {
+            color: 'white',
+            fontSize: 18,
+            fontFamily: 'Archivo_700Bold',
+        },
+        loaderContainer: {
+            flex: 1,
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+    }
+};

@@ -1,18 +1,58 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { RefreshControl, StyleSheet, View, FlatList, Modal, Text, TouchableOpacity, BackHandler } from 'react-native';
+import { RefreshControl, View, FlatList, Modal, Text, TouchableOpacity, BackHandler, StatusBar } from 'react-native';
 import VerseCard from '../../components/VerseCard';
 import DistrictNewsCard from '../../components/DistrictNewsCard';
 import SundayGuideCard from '../../components/SundayGuideCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import * as NavigationBar from 'expo-navigation-bar';
+import { useSelector, useDispatch } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setTheme } from '../../redux/slices/themeSlice';
 
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
-    const navigation = useNavigation();
     const [refreshing, setRefreshing] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+
+    const dispatch = useDispatch();
+    const theme = useSelector((state) => state.theme.theme);
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    const styles = getStyle(theme);
+
+    useEffect(() => {
+        const loadTheme = async () => {
+            try {
+                const storedTheme = await AsyncStorage.getItem('appTheme');
+                if (storedTheme) {
+                    dispatch(setTheme(storedTheme));
+                }
+            } catch (error) {
+                console.error('Error loading theme:', error);
+            }
+        };
+
+        loadTheme();
+    }, [dispatch]);
+
+    useEffect(() => {
+        const saveTheme = async () => {
+            try {
+                await AsyncStorage.setItem('appTheme', theme);
+            } catch (error) {
+                console.error('Error saving theme:', error);
+            }
+        };
+
+        saveTheme();
+    }, [theme]);
+
+    useEffect(() => {
+        NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
+        NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
+    }, [isDarkTheme]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -58,9 +98,13 @@ export default function HomeScreen() {
                 paddingBottom: insets.bottom,
                 paddingLeft: insets.left,
                 paddingRight: insets.right,
-                backgroundColor: '#fff',
+                backgroundColor: isDarkTheme ? '#121212' : '#fff',
             }}
         >
+            <StatusBar
+                barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+                backgroundColor={isDarkTheme ? '#121212' : '#fff'}
+            />
             <Header title="Home" />
             <FlatList
                 data={['VerseCard', 'DistrictNewsCard', 'SundayGuideCard']}
@@ -107,61 +151,64 @@ export default function HomeScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-    scrollContainer: {
-        padding: 16,
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    },
-    modalContent: {
-        width: '80%',
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 20,
-        alignItems: 'center',
-    },
-    modalText: {
-        fontSize: 20,
-        fontFamily: 'Inter_700Bold',
-        color: '#555',
-        textAlign: 'center',
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    modalButtonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 25,
-        width: '100%',
-    },
-    cancelButton: {
-        flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 25,
-        paddingVertical: 12,
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    cancelButtonText: {
-        fontFamily: 'Inter_700Bold',
-        color: '#000',
-        fontSize: 16,
-    },
-    exitButton: {
-        flex: 1,
-        backgroundColor: '#D2042D',
-        borderRadius: 25,
-        paddingVertical: 12,
-        alignItems: 'center',
-        marginLeft: 10,
-    },
-    exitButtonText: {
-        fontFamily: 'Inter_700Bold',
-        color: '#fff',
-        fontSize: 16,
-    },
-});
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
+        scrollContainer: {
+            padding: 16,
+        },
+        modalContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        },
+        modalContent: {
+            width: '80%',
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+            borderRadius: 20,
+            padding: 20,
+            alignItems: 'center',
+        },
+        modalText: {
+            fontSize: 20,
+            fontFamily: 'Inter_700Bold',
+            color: isDarkTheme ? '#fff' : '#555',
+            textAlign: 'center',
+            marginBottom: 10,
+            marginTop: 10,
+        },
+        modalButtonContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginTop: 25,
+            width: '100%',
+        },
+        cancelButton: {
+            flex: 1,
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+            borderRadius: 25,
+            paddingVertical: 12,
+            alignItems: 'center',
+            marginRight: 10,
+        },
+        cancelButtonText: {
+            fontFamily: 'Inter_700Bold',
+            color: isDarkTheme ? '#fff' : '#000',
+            fontSize: 16,
+        },
+        exitButton: {
+            flex: 1,
+            backgroundColor: '#D2042D',
+            borderRadius: 25,
+            paddingVertical: 12,
+            alignItems: 'center',
+            marginLeft: 10,
+        },
+        exitButtonText: {
+            fontFamily: 'Inter_700Bold',
+            color: '#fff',
+            fontSize: 16,
+        },
+    }
+};

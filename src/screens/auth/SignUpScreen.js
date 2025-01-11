@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Linking, Switch } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, Linking, Switch, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../utils/supabase';
 import CustomError from '../../components/CustomError';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
+import * as NavigationBar from 'expo-navigation-bar';
 
 export default function SignUpScreen({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -15,6 +17,15 @@ export default function SignUpScreen({ navigation }) {
     const [signUpSuccess, setSignUpSuccess] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+
+    const theme = useSelector((state) => state.theme.theme);
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    const styles = getStyle(theme);
+
+    useEffect(() => {
+        NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
+        NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
+    }, [isDarkTheme]);
 
     const handleSignUp = async () => {
         setError('');
@@ -73,6 +84,10 @@ export default function SignUpScreen({ navigation }) {
                 backgroundColor: '#fff',
             }}
         >
+            <StatusBar
+                barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+                backgroundColor={isDarkTheme ? '#121212' : '#fff'}
+            />
             <View style={styles.fixedBackHeader}>
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}
@@ -99,7 +114,7 @@ export default function SignUpScreen({ navigation }) {
                 {signUpSuccess && (
                     <View style={styles.successMessageContainer}>
                         <Text style={styles.successMessage}>
-                            Check your Email to verify your account then proceed to Log In.
+                            Check your Email and verify your account then proceed to Log In.
                         </Text>
                     </View>
                 )}
@@ -163,109 +178,115 @@ export default function SignUpScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-    },
-    logo: {
-        width: 300,
-        height: 300,
-        marginBottom: -20,
-        bottom: 55,
-    },
-    input: {
-        backgroundColor: '#f5f5f5',
-        width: 350,
-        paddingVertical: 14,
-        paddingHorizontal: 18,
-        borderRadius: 8,
-        marginBottom: 15,
-        fontSize: 16,
-        bottom: 100,
-    },
-    passwordContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5',
-        width: 350,
-        borderRadius: 8,
-        marginBottom: 15,
-        paddingHorizontal: 18,
-        bottom: 100,
-    },
-    passwordInput: {
-        flex: 1,
-        paddingVertical: 14,
-        paddingHorizontal: 0,
-        fontSize: 16,
-    },
-    eyeIcon: {
-        padding: 8,
-    },
-    header: {
-        fontSize: 24,
-        fontFamily: 'Archivo_700Bold',
-        textAlign: 'center',
-        bottom: 113,
-        color: '#333',
-    },
-    button: {
-        backgroundColor: '#6a5acd',
-        paddingVertical: 12,
-        paddingHorizontal: 40,
-        borderRadius: 8,
-        bottom: 90,
-    },
-    buttonDisabled: {
-        backgroundColor: '#ccc',
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontFamily: 'Archivo_700Bold',
-    },
-    successMessageContainer: {
-        marginBottom: 20,
-        padding: 10,
-        bottom: 100,
-        backgroundColor: '#dff0d8',
-        borderRadius: 8,
-    },
-    successMessage: {
-        color: '#3c763d',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    fixedBackHeader: {
-        position: 'absolute',
-        top: 10,
-        left: 10,
-        zIndex: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    returnText: {
-        fontSize: 16,
-        color: '#9E44FF',
-        marginLeft: 5,
-        fontFamily: 'Inter',
-    },
-    rememberMeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-        bottom: 100,
-    },
-    checkbox: {
-        marginRight: 10,
-    },
-    rememberMeText: {
-        fontSize: 16,
-        color: '#333',
-        fontFamily: 'Inter',
-    },
-});
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
+        container: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+        },
+        logo: {
+            width: 300,
+            height: 300,
+            marginBottom: -20,
+            bottom: 55,
+        },
+        input: {
+            backgroundColor: isDarkTheme ? '#333' : '#f5f5f5',
+            color: isDarkTheme ? '#f5f5f5' : '',
+            width: 350,
+            paddingVertical: 14,
+            paddingHorizontal: 18,
+            borderRadius: 8,
+            marginBottom: 15,
+            fontSize: 16,
+            bottom: 100,
+        },
+        passwordContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: isDarkTheme ? '#333' : '#f5f5f5',
+            width: 350,
+            borderRadius: 8,
+            marginBottom: 15,
+            paddingHorizontal: 18,
+            bottom: 100,
+        },
+        passwordInput: {
+            flex: 1,
+            paddingVertical: 14,
+            paddingHorizontal: 0,
+            fontSize: 16,
+            color: isDarkTheme ? '#f5f5f5' : ''
+        },
+        eyeIcon: {
+            padding: 8,
+        },
+        header: {
+            fontSize: 24,
+            fontFamily: 'Archivo_700Bold',
+            textAlign: 'center',
+            bottom: 113,
+            color: isDarkTheme ? '#fff' : '#333',
+        },
+        button: {
+            backgroundColor: '#6a5acd',
+            paddingVertical: 12,
+            paddingHorizontal: 40,
+            borderRadius: 8,
+            bottom: 90,
+        },
+        buttonDisabled: {
+            backgroundColor: '#ccc',
+        },
+        buttonText: {
+            color: '#fff',
+            fontSize: 16,
+            fontFamily: 'Archivo_700Bold',
+        },
+        successMessageContainer: {
+            marginBottom: 20,
+            padding: 10,
+            bottom: 100,
+            backgroundColor: '#dff0d8',
+            borderRadius: 8,
+        },
+        successMessage: {
+            color: '#3c763d',
+            fontSize: 16,
+            fontWeight: 'bold',
+            textAlign: 'center',
+        },
+        fixedBackHeader: {
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            zIndex: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        returnText: {
+            fontSize: 16,
+            color: '#9E44FF',
+            marginLeft: 5,
+            fontFamily: 'Inter',
+        },
+        rememberMeContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 20,
+            bottom: 100,
+        },
+        checkbox: {
+            marginRight: 10,
+        },
+        rememberMeText: {
+            fontSize: 16,
+            color: isDarkTheme ? '#fff' : '#333',
+            fontFamily: 'Inter',
+        },
+    }
+};

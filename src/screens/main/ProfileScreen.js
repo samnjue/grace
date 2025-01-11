@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, Linking, ScrollView, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Pressable, Linking, ScrollView, BackHandler, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
@@ -9,6 +9,8 @@ import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logOut } from '../../redux/slices/userSlice';
 import { useSelector } from 'react-redux';
+import { setTheme } from '../../redux/slices/themeSlice';
+import * as NavigationBar from 'expo-navigation-bar';
 
 const ProfileScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
@@ -18,10 +20,9 @@ const ProfileScreen = ({ navigation }) => {
     const [errorMessage, setErrorMessage] = useState('');
     const [isThemeModalVisible, setThemeModalVisible] = useState(false);
     const [isLogOutModalVisible, setIsLogOutModalVisible] = useState(false);
-    const [selectedTheme, setSelectedTheme] = useState('System Default');
+    const [selectedTheme, setSelectedTheme] = useState('');
     const theme = useSelector((state) => state.theme.theme);
-    //const styles = getStyles(theme); -- Goes to the bottom!
-
+    const isDarkTheme = theme.toLowerCase().includes('dark');
 
     const fetchUserData = async () => {
         try {
@@ -85,14 +86,60 @@ const ProfileScreen = ({ navigation }) => {
         setThemeModalVisible(true);
     };
 
-    const handleThemeChange = (theme) => {
-        setSelectedTheme(theme);
-        setThemeModalVisible(false);
-        dispatch(setTheme(theme));
+    const handleThemeChange = async (theme) => {
+        try {
+            setSelectedTheme(theme);
+            await AsyncStorage.setItem('selectedTheme', theme);
+            dispatch(setTheme(theme));
+            setThemeModalVisible(false);
+        } catch (err) {
+            console.error('Failed to save theme:', err);
+        }
     };
+
+    useEffect(() => {
+        const loadSavedTheme = async () => {
+            try {
+                const savedTheme = await AsyncStorage.getItem('selectedTheme');
+                if (savedTheme) {
+                    dispatch(setTheme(savedTheme));
+                }
+            } catch (err) {
+                console.error('Failed to load theme from AsyncStorage:', err);
+            }
+        };
+        loadSavedTheme();
+    }, [dispatch]);
+
+    const styles = getStyle(theme);
+
+    useEffect(() => {
+        const loadSavedTheme = async () => {
+            try {
+                const savedTheme = await AsyncStorage.getItem('selectedTheme');
+                if (savedTheme) {
+                    dispatch(setTheme(savedTheme));
+                    setSelectedTheme(savedTheme);
+                }
+            } catch (err) {
+                console.error('Failed to load theme from AsyncStorage:', err);
+            }
+        };
+        loadSavedTheme();
+    }, [dispatch]);
+
+    useEffect(() => {
+        NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
+        NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
+    }, [isDarkTheme]);
+
 
     return (
         <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+            <StatusBar
+                barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+                backgroundColor={isDarkTheme ? '#121212' : '#fff'}
+            />
             <Header title="Profile" />
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Profile Section */}
@@ -105,7 +152,7 @@ const ProfileScreen = ({ navigation }) => {
                         <TouchableOpacity
                             onPress={() => navigation.navigate('EditScreen')}
                         >
-                            <Ionicons name="create-outline" size={25} />
+                            <Ionicons name="create-outline" size={25} color={isDarkTheme ? '#fff' : '#000'} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -119,13 +166,13 @@ const ProfileScreen = ({ navigation }) => {
                         style={styles.button}
                         onPress={() => navigation.navigate('ShareScreen')}
                     >
-                        <Ionicons name="link-outline" size={30} />
+                        <Ionicons name="link-outline" size={30} color={isDarkTheme ? '#fff' : '#333'} />
                         <Text style={styles.buttonText} maxFontSizeMultiplier={0}>
                             Share App Link
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.button} onPress={showThemeSelector}>
-                        <Ionicons name="bulb-outline" size={30} />
+                        <Ionicons name="bulb-outline" size={30} color={isDarkTheme ? '#fff' : '#333'} />
                         <Text style={styles.buttonText}>Appearance</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -183,7 +230,7 @@ const ProfileScreen = ({ navigation }) => {
                             <Text style={styles.themeModalTitle} maxFontSizeMultiplier={0}>
                                 Appearance
                             </Text>
-                            {['Light Theme', 'Dark Theme', 'System Default'].map((theme) => (
+                            {['Light Theme', 'Dark Theme'].map((theme) => (
                                 <TouchableOpacity
                                     key={theme}
                                     style={styles.modalOption}
@@ -230,7 +277,7 @@ const ProfileScreen = ({ navigation }) => {
                         style={styles.button}
                         onPress={() => navigation.navigate('ContactScreen')}
                     >
-                        <Ionicons name="chatbubbles-outline" size={30} />
+                        <Ionicons name="chatbubbles-outline" size={30} color={isDarkTheme ? '#fff' : '#333'} />
                         <Text style={styles.buttonText} maxFontSizeMultiplier={0}>
                             Contact Us
                         </Text>
@@ -243,7 +290,7 @@ const ProfileScreen = ({ navigation }) => {
                         ABOUT
                     </Text>
                     <TouchableOpacity style={styles.button} onPress={openPlayStore}>
-                        <Ionicons name="star-outline" size={30} />
+                        <Ionicons name="star-outline" size={30} color={isDarkTheme ? '#fff' : '#333'} />
                         <Text style={styles.buttonText} maxFontSizeMultiplier={0}>
                             Rate the App!
                         </Text>
@@ -260,177 +307,171 @@ const ProfileScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff'
-    },
-    profileSection: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 20
-    },
-    uidContainer: {
-        flex: 1,
-        flexWrap: 'wrap',
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 10
-    },
-    uidText: {
-        fontSize: 17,
-        fontWeight: 'bold',
-        color: 'gray',
-        marginRight: 10,
-        flexShrink: 1
-    },
-    section: {
-        padding: 20,
-        paddingBottom: -8
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontFamily: 'Archivo_700Bold',
-        marginBottom: 10,
-        left: 4
-    },
-    button: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        marginBottom: 15
-    },
-    buttonText: {
-        marginLeft: 10,
-        fontSize: 17,
-        fontFamily: 'Inter',
-    },
-    logOutButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'red',
-        padding: 10,
-        borderRadius: 25,
-        marginTop: 10,
-    },
-    logOutText: {
-        color: 'white',
-        fontWeight: 'bold',
-        marginLeft: 10,
-        fontSize: 14,
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    },
-    modalContent: {
-        width: '80%',
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 20,
-        alignItems: 'center',
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontFamily: 'Inter_700Bold',
-        color: '#333',
-        textAlign: 'center',
-        marginBottom: 10,
-        marginTop: 10,
-    },
-    themeModalTitle: {
-        fontSize: 20,
-        fontFamily: 'Inter_700Bold',
-        color: '#333',
-        right: 75,
-        bottom: 20,
-        marginBottom: 0,
-        marginTop: 10,
-    },
-    themeModalOptionText: {
-        fontSize: 16,
-        fontFamily: 'Inter_500Medium',
-        color: '#333',
-        paddingLeft: 10
-    },
-    modalButtonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    modalOption: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        width: '100%',
-        marginBottom: 10,
-        marginLeft: 10,
-    },
-    modalOptionText: {
-        fontSize: 16,
-        marginLeft: 10,
-        fontFamily: 'Inter'
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 20
-    },
-    yesButton: {
-        flex: 1,
-        backgroundColor: 'red',
-        borderRadius: 25,
-        paddingVertical: 12,
-        alignItems: 'center',
-        marginLeft: 10,
-    },
-    yesButtonText: {
-        fontFamily: 'Inter_700Bold',
-        color: '#fff',
-        fontSize: 16,
-    },
-    cancelButton: {
-        flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 25,
-        paddingVertical: 12,
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    cancelButtonText: {
-        fontFamily: 'Inter_700Bold',
-        color: '#000',
-        fontSize: 16,
-    },
-    modalButtonText: {
-        fontSize: 18,
-        color: '#6a5acd',
-        fontFamily: 'Inter_700Bold'
-    },
-    versionText: {
-        fontSize: 12,
-        color: 'gray',
-        marginTop: 10,
-        left: 15
-    },
-    scrollContent: {
-        paddingBottom: 60,
-    }
-});
-
-{/*
-    const getStyles = (theme) => ({
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
         container: {
             flex: 1,
-            backgroundColor: theme === 'dark' ? '#000' : '#fff',
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
         },
-    });
-*/}
-
-
-
+        profileSection: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 20
+        },
+        uidContainer: {
+            flex: 1,
+            flexWrap: 'wrap',
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginLeft: 10
+        },
+        uidText: {
+            fontSize: 17,
+            fontWeight: 'bold',
+            color: isDarkTheme ? '#f5f5f5' : '#333',
+            marginRight: 10,
+            flexShrink: 1
+        },
+        section: {
+            padding: 20,
+            paddingBottom: -8
+        },
+        sectionTitle: {
+            fontSize: 16,
+            fontFamily: 'Archivo_700Bold',
+            color: isDarkTheme ? '#FFF' : '#333',
+            marginBottom: 10,
+            left: 4
+        },
+        button: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 15,
+            marginBottom: 15
+        },
+        buttonText: {
+            marginLeft: 10,
+            fontSize: 17,
+            fontFamily: 'Inter',
+            color: isDarkTheme ? '#FFF' : '#333',
+        },
+        logOutButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'red',
+            padding: 10,
+            borderRadius: 25,
+            marginTop: 10,
+        },
+        logOutText: {
+            color: 'white',
+            fontWeight: 'bold',
+            marginLeft: 10,
+            fontSize: 14,
+        },
+        modalContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        },
+        modalContent: {
+            width: '80%',
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#fff',
+            borderRadius: 20,
+            padding: 20,
+            alignItems: 'center',
+        },
+        modalTitle: {
+            fontSize: 20,
+            fontFamily: 'Inter_700Bold',
+            color: isDarkTheme ? '#fff' : '#333',
+            textAlign: 'center',
+            marginBottom: 10,
+            marginTop: 10,
+        },
+        themeModalTitle: {
+            fontSize: 20,
+            fontFamily: 'Inter_700Bold',
+            color: isDarkTheme ? '#fff' : '#333',
+            right: 75,
+            bottom: 20,
+            marginBottom: 0,
+            marginTop: 10,
+        },
+        themeModalOptionText: {
+            fontSize: 16,
+            fontFamily: 'Inter_500Medium',
+            color: isDarkTheme ? '#fff' : '#333',
+            paddingLeft: 10
+        },
+        modalButtonContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: '100%',
+        },
+        modalOption: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 10,
+            width: '100%',
+            marginBottom: 10,
+            marginLeft: 10,
+        },
+        modalOptionText: {
+            fontSize: 16,
+            marginLeft: 10,
+            fontFamily: 'Inter'
+        },
+        modalButtons: {
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            marginTop: 20
+        },
+        yesButton: {
+            flex: 1,
+            backgroundColor: 'red',
+            borderRadius: 25,
+            paddingVertical: 12,
+            alignItems: 'center',
+            marginLeft: 10,
+        },
+        yesButtonText: {
+            fontFamily: 'Inter_700Bold',
+            color: '#fff',
+            fontSize: 16,
+        },
+        cancelButton: {
+            flex: 1,
+            backgroundColor: '#fff',
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#fff',
+            borderRadius: 25,
+            paddingVertical: 12,
+            alignItems: 'center',
+            marginRight: 10,
+        },
+        cancelButtonText: {
+            fontFamily: 'Inter_700Bold',
+            color: isDarkTheme ? '#fff' : '#000',
+            fontSize: 16,
+        },
+        modalButtonText: {
+            fontSize: 18,
+            color: '#6a5acd',
+            fontFamily: 'Inter_700Bold'
+        },
+        versionText: {
+            fontSize: 12,
+            color: 'gray',
+            marginTop: 10,
+            left: 15
+        },
+        scrollContent: {
+            paddingBottom: 60,
+        }
+    }
+};
 
 export default ProfileScreen;

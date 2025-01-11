@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Modal, StyleSheet, Share } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, Modal, StatusBar, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Clipboard from '@react-native-clipboard/clipboard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch, useSelector } from 'react-redux';
+import { setTheme } from '../../redux/slices/themeSlice';
+import * as NavigationBar from 'expo-navigation-bar';
 
 const ShareAppScreen = ({ navigation }) => {
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
@@ -23,12 +27,54 @@ const ShareAppScreen = ({ navigation }) => {
         }
     };
 
+    const dispatch = useDispatch();
+    const theme = useSelector((state) => state.theme.theme);
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+
+    const styles = getStyle(theme);
+
+    useEffect(() => {
+        const loadTheme = async () => {
+            try {
+                const storedTheme = await AsyncStorage.getItem('appTheme');
+                if (storedTheme) {
+                    dispatch(setTheme(storedTheme));
+                }
+            } catch (error) {
+                console.error('Error loading theme:', error);
+            }
+        };
+
+        loadTheme();
+    }, [dispatch]);
+
+    useEffect(() => {
+        const saveTheme = async () => {
+            try {
+                await AsyncStorage.setItem('appTheme', theme);
+            } catch (error) {
+                console.error('Error saving theme:', error);
+            }
+        };
+
+        saveTheme();
+    }, [theme]);
+
+    useEffect(() => {
+        NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
+        NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
+    }, [isDarkTheme]);
+
     return (
         <View style={styles.container}>
+            <StatusBar
+                barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+                backgroundColor={isDarkTheme ? '#121212' : '#fff'}
+            />
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
+                    <Ionicons name="arrow-back" size={24} style={{ color: isDarkTheme ? '#fff' : '#000' }} />
                 </TouchableOpacity>
                 <Text style={styles.headerText} maxFontSizeMultiplier={1}>Share App Link</Text>
             </View>
@@ -79,113 +125,115 @@ const ShareAppScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#fff',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    headerText: {
-        marginLeft: 10,
-        fontSize: 18,
-        fontFamily: 'Archivo_700Bold',
-        //left: 80,
-        color: '#000',
-    },
-    content: {
-        alignItems: 'center',
-        flex: 1,
-        justifyContent: 'center',
-    },
-    image: {
-        width: 400,
-        height: 400,
-        resizeMode: 'contain',
-        bottom: 40
-    },
-    appName: {
-        marginTop: 20,
-        bottom: 130,
-        fontSize: 24,
-        fontFamily: 'Archivo_700Bold',
-        color: '#000',
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 10,
-        marginBottom: 20,
-    },
-    copyButton: {
-        flex: 1,
-        marginRight: 10,
-        backgroundColor: '#d3d3d3',
-        borderRadius: 25,
-        paddingVertical: 12,
-        alignItems: 'center',
-    },
-    copyButtonText: {
-        fontFamily: 'Inter_700Bold',
-        color: '#000',
-        fontSize: 16,
-    },
-    shareButton: {
-        flex: 1,
-        marginLeft: 10,
-        backgroundColor: '#6a5acd',
-        borderRadius: 25,
-        paddingVertical: 12,
-        alignItems: 'center',
-    },
-    shareButtonText: {
-        fontFamily: 'Inter_700Bold',
-        color: '#fff',
-        fontSize: 16,
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 25,
-        padding: 45,
-        paddingTop: 20,
-        alignItems: 'center',
-        width: '80%',
-    },
-    modalText: {
-        fontSize: 22,
-        color: '#333',
-        marginVertical: 7,
-        marginTop: -10,
-        fontFamily: 'Inter_700Bold',
-        textAlign: 'center',
-        top: 18
-    },
-    modalButton: {
-        marginTop: 20,
-        backgroundColor: '#6a5acd',
-        height: 50,
-        width: 150,
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        top: 25,
-    },
-    modalButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontFamily: 'Archivo_700Bold',
-        textAlign: 'center',
-    },
-});
+const getStyle = (theme) => {
+    const isDarkTheme = theme.toLowerCase().includes('dark');
+    return {
+        container: {
+            flex: 1,
+            padding: 20,
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+        },
+        header: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 20,
+        },
+        headerText: {
+            marginLeft: 10,
+            fontSize: 18,
+            fontFamily: 'Archivo_700Bold',
+            color: isDarkTheme ? '#fff' : '#000',
+        },
+        content: {
+            alignItems: 'center',
+            flex: 1,
+            justifyContent: 'center',
+        },
+        image: {
+            width: 400,
+            height: 400,
+            resizeMode: 'contain',
+            bottom: 40
+        },
+        appName: {
+            marginTop: 20,
+            bottom: 130,
+            fontSize: 24,
+            fontFamily: 'Archivo_700Bold',
+            color: isDarkTheme ? '#fff' : '#000',
+        },
+        buttonContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingHorizontal: 10,
+            marginBottom: 20,
+        },
+        copyButton: {
+            flex: 1,
+            marginRight: 10,
+            backgroundColor: '#d3d3d3',
+            borderRadius: 25,
+            paddingVertical: 12,
+            alignItems: 'center',
+        },
+        copyButtonText: {
+            fontFamily: 'Inter_700Bold',
+            color: '#000',
+            fontSize: 16,
+        },
+        shareButton: {
+            flex: 1,
+            marginLeft: 10,
+            backgroundColor: '#6a5acd',
+            borderRadius: 25,
+            paddingVertical: 12,
+            alignItems: 'center',
+        },
+        shareButtonText: {
+            fontFamily: 'Inter_700Bold',
+            color: '#fff',
+            fontSize: 16,
+        },
+        modalContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        },
+        modalContent: {
+            backgroundColor: '#fff',
+            borderRadius: 25,
+            padding: 45,
+            paddingTop: 20,
+            alignItems: 'center',
+            width: '80%',
+        },
+        modalText: {
+            fontSize: 22,
+            color: '#333',
+            marginVertical: 7,
+            marginTop: -10,
+            fontFamily: 'Inter_700Bold',
+            textAlign: 'center',
+            top: 18
+        },
+        modalButton: {
+            marginTop: 20,
+            backgroundColor: '#6a5acd',
+            height: 50,
+            width: 150,
+            borderRadius: 30,
+            justifyContent: 'center',
+            alignItems: 'center',
+            top: 25,
+        },
+        modalButtonText: {
+            color: '#fff',
+            fontSize: 16,
+            fontFamily: 'Archivo_700Bold',
+            textAlign: 'center',
+        },
+    }
+};
 
 export default ShareAppScreen;

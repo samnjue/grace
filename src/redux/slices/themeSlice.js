@@ -1,9 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Appearance } from 'react-native';
+import { configureNavigationBar } from '../../utils/themeUtils';
 
 const initialState = {
-    theme: 'System Default',
+    theme: 'Light theme',
 };
 
 const themeSlice = createSlice({
@@ -11,25 +11,18 @@ const themeSlice = createSlice({
     initialState,
     reducers: {
         setTheme: (state, action) => {
-            console.log('Theme updated to:', action.payload); // Debug
             state.theme = action.payload;
             AsyncStorage.setItem('theme', action.payload);
+            configureNavigationBar(action.payload);
         },
         loadTheme: (state, action) => {
-            state.theme = action.payload || 'System Default';
+            state.theme = action.payload || 'Light theme';
+            configureNavigationBar(action.payload || 'Light Theme');
         },
     },
 });
 
 export const { setTheme, loadTheme } = themeSlice.actions;
-
-export const initializeTheme = () => (dispatch) => {
-    const systemTheme = Appearance.getColorScheme();
-    const initialTheme = systemTheme || 'light';
-    dispatch(setTheme('System Default'));
-    if (initialTheme) {
-        dispatch(setTheme(systemTheme));
-    }
-};
-
 export default themeSlice.reducer;
+
+

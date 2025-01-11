@@ -6,27 +6,45 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { logIn } from '../redux/slices/userSlice';
 import AuthStack from './AuthStack';
 import MainTabNavigator from './MainTabNavigator';
+import ChurchSelectionScreen from '../screens/auth/ChurchSelectionScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setTheme } from '../redux/slices/themeSlice';
 import * as NavigationBar from 'expo-navigation-bar';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { supabase } from '../utils/supabase';
 
 const Stack = createStackNavigator();
 
 export default function AppNavigator() {
     const [isLoading, setIsLoading] = useState(true);
+    const [initialRoute, setInitialRoute] = useState('AuthStack');
     const user = useSelector((state) => state.user);
+    //console.log('Complete user state:', user);
     const dispatch = useDispatch();
 
     useEffect(() => {
         const checkUserSession = async () => {
             try {
                 const session = await AsyncStorage.getItem('userSession');
-                console.log('Retrieved session from AsyncStorage:', session);
                 if (session) {
                     const parsedSession = JSON.parse(session);
                     dispatch(logIn(parsedSession));
-                    console.log('Dispatched logIn action with session:', parsedSession);
+
+                    const { data: profile, error } = await supabase
+                        .from('users')
+                        .select('selected_church, selected_district')
+                        .eq('id', parsedSession.user.id)
+                        .single();
+
+                    if (error) {
+                        //console.error('Error fetching profile:', error.message);
+                    } else if (profile?.selected_church && profile?.selected_district) {
+                        setInitialRoute('MainApp');
+                    } else {
+                        setInitialRoute('ChurchSelection');
+                    }
+                } else {
+                    setInitialRoute('AuthStack');
                 }
             } catch (error) {
                 console.error('Error checking session:', error);
@@ -34,6 +52,7 @@ export default function AppNavigator() {
                 setIsLoading(false);
             }
         };
+
         checkUserSession();
     }, [dispatch]);
 
@@ -51,7 +70,6 @@ export default function AppNavigator() {
                 console.error('Error loading theme:', error);
             }
         };
-
         loadTheme();
     }, [dispatch]);
 
@@ -63,7 +81,6 @@ export default function AppNavigator() {
                 console.error('Error saving theme:', error);
             }
         };
-
         saveTheme();
     }, [theme]);
 
@@ -76,7 +93,7 @@ export default function AppNavigator() {
         ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: '#121212' } }
         : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: '#fff' } };
 
-    if (isLoading || user?.session) {
+    if (isLoading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: isDarkTheme ? '#121212' : '#fff' }}>
                 <ActivityIndicator size="large" color="#6a5acd" />
@@ -84,16 +101,14 @@ export default function AppNavigator() {
         );
     }
 
-    console.log("User session state:", user?.session);
+    //console.log('User session state:', user?.session);
 
     return (
         <NavigationContainer theme={appTheme}>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-                {user?.session != undefined ? (
-                    <Stack.Screen name="MainApp" component={MainTabNavigator} />
-                ) : (
-                    <Stack.Screen name="AuthStack" component={AuthStack} />
-                )}
+            <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="AuthStack" component={AuthStack} />
+                <Stack.Screen name="MainApp" component={MainTabNavigator} />
+                <Stack.Screen name="ChurchSelection" component={ChurchSelectionScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

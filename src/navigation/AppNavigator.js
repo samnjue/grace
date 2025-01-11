@@ -22,9 +22,11 @@ export default function AppNavigator() {
         const checkUserSession = async () => {
             try {
                 const session = await AsyncStorage.getItem('userSession');
+                console.log('Retrieved session from AsyncStorage:', session);
                 if (session) {
                     const parsedSession = JSON.parse(session);
                     dispatch(logIn(parsedSession));
+                    console.log('Dispatched logIn action with session:', parsedSession);
                 }
             } catch (error) {
                 console.error('Error checking session:', error);
@@ -74,7 +76,7 @@ export default function AppNavigator() {
         ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: '#121212' } }
         : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: '#fff' } };
 
-    if (isLoading || user?.session === undefined) {
+    if (isLoading || user?.session) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: isDarkTheme ? '#121212' : '#fff' }}>
                 <ActivityIndicator size="large" color="#6a5acd" />
@@ -82,10 +84,12 @@ export default function AppNavigator() {
         );
     }
 
+    console.log("User session state:", user?.session);
+
     return (
         <NavigationContainer theme={appTheme}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
-                {user?.session ? (
+                {user?.session != undefined ? (
                     <Stack.Screen name="MainApp" component={MainTabNavigator} />
                 ) : (
                     <Stack.Screen name="AuthStack" component={AuthStack} />

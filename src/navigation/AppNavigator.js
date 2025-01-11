@@ -53,7 +53,7 @@ export default function AppNavigator() {
                         if (cachedProfile) {
                             const profile = JSON.parse(cachedProfile);
                             setInitialRoute(
-                                profile.selected_church && profile.selected_district == null ? 'MainApp' : 'ChurchSelection'
+                                profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection'
                             );
                         } else {
                             setInitialRoute('ChurchSelection');

@@ -50,7 +50,7 @@ export default function AppNavigator() {
                         const cachedProfile = await AsyncStorage.getItem('userProfile');
                         if (cachedProfile) {
                             const profile = JSON.parse(cachedProfile);
-                            setInitialRoute(profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection');
+                            setInitialRoute(profile.selected_church && profile.selected_district == null ? 'MainApp' : 'ChurchSelection');
                         } else {
                             setInitialRoute('ChurchSelection');
                         }
@@ -118,6 +118,7 @@ export default function AppNavigator() {
     return (
         <NavigationContainer theme={appTheme}>
             <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+                <StatusBar barStyle={isDarkTheme ? 'light-content' : 'dark-content'} backgroundColor={isDarkTheme ? '#121212' : '#fff'} />
                 <Stack.Screen name="AuthStack" component={AuthStack} />
                 <Stack.Screen name="MainApp" component={MainTabNavigator} />
                 <Stack.Screen name="ChurchSelection" component={ChurchSelectionScreen} />

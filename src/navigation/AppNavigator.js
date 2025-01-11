@@ -117,8 +117,8 @@ export default function AppNavigator() {
 
     return (
         <NavigationContainer theme={appTheme}>
+            <StatusBar barStyle={isDarkTheme ? 'light-content' : 'dark-content'} backgroundColor={isDarkTheme ? '#121212' : '#fff'} />
             <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
-                <StatusBar barStyle={isDarkTheme ? 'light-content' : 'dark-content'} backgroundColor={isDarkTheme ? '#121212' : '#fff'} />
                 <Stack.Screen name="AuthStack" component={AuthStack} />
                 <Stack.Screen name="MainApp" component={MainTabNavigator} />
                 <Stack.Screen name="ChurchSelection" component={ChurchSelectionScreen} />

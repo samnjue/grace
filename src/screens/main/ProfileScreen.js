@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
 import { supabase } from '../../utils/supabase';
-import { useFocusEffect } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logOut } from '../../redux/slices/userSlice';
@@ -12,6 +11,7 @@ import { useSelector } from 'react-redux';
 import { setTheme } from '../../redux/slices/themeSlice';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const ProfileScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
@@ -27,7 +27,6 @@ const ProfileScreen = ({ navigation }) => {
     const theme = useSelector((state) => state.theme.theme);
     const isDarkTheme = theme.toLowerCase().includes('dark');
 
-    // Fetch user data from Supabase
     const fetchUserData = async () => {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
@@ -38,7 +37,6 @@ const ProfileScreen = ({ navigation }) => {
 
             setUserUID(user.id);
 
-            // Fetch user details
             const { data: userData, error: userError } = await supabase
                 .from('users')
                 .select('display_name, profile_image_url')
@@ -53,7 +51,6 @@ const ProfileScreen = ({ navigation }) => {
             setDisplayName(userData.display_name || '');
             setProfileImage(userData.profile_image_url || '');
 
-            // Save to AsyncStorage for offline use
             await AsyncStorage.setItem('displayName', userData.display_name || '');
             await AsyncStorage.setItem('profileImage', userData.profile_image_url || '');
         } catch (err) {
@@ -61,7 +58,6 @@ const ProfileScreen = ({ navigation }) => {
         }
     };
 
-    // Load data from AsyncStorage for offline access
     const loadOfflineData = async () => {
         try {
             const offlineDisplayName = await AsyncStorage.getItem('displayName');
@@ -75,14 +71,44 @@ const ProfileScreen = ({ navigation }) => {
     };
 
     useEffect(() => {
-        fetchUserData();
-        loadOfflineData();
+        const initializeProfile = async () => {
+            const hasSession = await checkAuthSession();
+            if (!hasSession) return;
+
+            await loadOfflineData();
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (error || !user) {
+                    console.error('User fetch error:', error);
+                    return;
+                }
+                await fetchUserData();
+            } catch (err) {
+                console.error('Initialization error:', err);
+            }
+        };
+
+        initializeProfile();
     }, []);
 
-    // Handle image picker and upload
+    const getBlobFromUri = async (uri) => {
+        const response = await fetch(uri);
+        if (!response.ok) throw new Error('Failed to fetch image URI');
+        return await response.blob();
+    };
+
+    const resizeImage = async (uri) => {
+        const manipResult = await manipulateAsync(
+            uri,
+            [{ resize: { width: 500, height: 500 } }],
+            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        return manipResult.uri;
+    };
+
     const handleProfileImageChange = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
             quality: 1,
@@ -90,44 +116,47 @@ const ProfileScreen = ({ navigation }) => {
 
         if (!result.canceled) {
             const imageUri = result.assets[0].uri;
+            console.log('Image URI:', imageUri);
 
-            // Upload image to Supabase storage
-            const fileName = `${userUID}-${Date.now()}.jpg`;
-            const { data, error } = await supabase.storage
-                .from('profile_images')
-                .upload(fileName, {
-                    uri: imageUri,
-                    type: 'image/jpeg',
-                    name: fileName,
-                });
+            try {
+                const resizedUri = await resizeImage(imageUri);
+                const blob = await getBlobFromUri(resizedUri);
+                console.log('Blob created successfully');
 
-            if (error) {
-                Alert.alert('Error', 'Failed to upload image');
-                return;
+                const fileName = `${userUID}-${Date.now()}.jpg`;
+
+                const { data, error } = await supabase.storage
+                    .from('profile_images')
+                    .upload(fileName, blob, { contentType: 'image/jpeg' });
+
+                if (error) {
+                    console.error('Supabase upload error:', error.message);
+                    Alert.alert('Error', 'Failed to upload image');
+                    return;
+                }
+
+                const { publicUrl } = supabase.storage
+                    .from('profile_images')
+                    .getPublicUrl(fileName).data;
+
+                const { error: updateError } = await supabase
+                    .from('users')
+                    .update({ profile_image_url: publicUrl })
+                    .eq('id', userUID);
+
+                if (updateError) {
+                    console.error('Database update error:', updateError.message);
+                    Alert.alert('Error', 'Failed to update profile image');
+                    return;
+                }
+
+                setProfileImage(publicUrl);
+                await AsyncStorage.setItem('profileImage', publicUrl);
+                Alert.alert('Success', 'Profile image updated');
+            } catch (err) {
+                console.error('Image upload error:', err);
+                Alert.alert('Error', 'Something went wrong while uploading the image');
             }
-
-            // Get the public URL for the image
-            const { publicUrl } = supabase.storage
-                .from('profile_images')
-                .getPublicUrl(fileName);
-
-            // Update the user's profile in the database
-            const { error: updateError } = await supabase
-                .from('users')
-                .update({ profile_image_url: publicUrl })
-                .eq('id', userUID);
-
-            if (updateError) {
-                Alert.alert('Error', 'Failed to update profile image');
-                return;
-            }
-
-            setProfileImage(publicUrl);
-
-            // Save to AsyncStorage
-            await AsyncStorage.setItem('profileImage', publicUrl);
-
-            Alert.alert('Success', 'Profile image updated');
         }
     };
 
@@ -137,24 +166,12 @@ const ProfileScreen = ({ navigation }) => {
         setRefreshing(false);
     };
 
-
-    useEffect(() => {
-        fetchUserData();
-    }, []);
-
-    useFocusEffect(
-        React.useCallback(() => {
-            fetchUserData();
-        }, [])
-    );
-
     const handleLogOut = async () => {
         try {
             const { error } = await supabase.auth.signOut();
             if (error) throw new Error(error.message);
 
             dispatch(logOut());
-            await AsyncStorage.removeItem('userSession');
             navigation.replace('AuthStack');
         } catch (err) {
             setErrorMessage('Failed to log out. Please try again.');

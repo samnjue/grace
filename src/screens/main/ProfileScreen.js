@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, Pressable, Linking, ScrollView, BackHandler, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Pressable, Linking, ScrollView, BackHandler, StatusBar, Image, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
@@ -11,12 +11,15 @@ import { logOut } from '../../redux/slices/userSlice';
 import { useSelector } from 'react-redux';
 import { setTheme } from '../../redux/slices/themeSlice';
 import * as NavigationBar from 'expo-navigation-bar';
+import * as ImagePicker from 'expo-image-picker';
 
 const ProfileScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
     const dispatch = useDispatch();
     const [userUID, setUserUID] = useState('');
     const [displayName, setDisplayName] = useState('');
+    const [profileImage, setProfileImage] = useState('');
+    const [refreshing, setRefreshing] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [isThemeModalVisible, setThemeModalVisible] = useState(false);
     const [isLogOutModalVisible, setIsLogOutModalVisible] = useState(false);
@@ -24,29 +27,114 @@ const ProfileScreen = ({ navigation }) => {
     const theme = useSelector((state) => state.theme.theme);
     const isDarkTheme = theme.toLowerCase().includes('dark');
 
+    // Fetch user data from Supabase
     const fetchUserData = async () => {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
             if (error || !user) {
-                setErrorMessage('Unable to load user data.');
+                Alert.alert('Error', 'Unable to fetch user data');
                 return;
             }
 
             setUserUID(user.id);
+
+            // Fetch user details
             const { data: userData, error: userError } = await supabase
                 .from('users')
-                .select('display_name')
+                .select('display_name, profile_image_url')
                 .eq('id', user.id)
                 .single();
 
-            if (userError || !userData) {
-                setDisplayName('');
-            } else {
-                setDisplayName(userData.display_name || '');
+            if (userError) {
+                Alert.alert('Error', 'Unable to fetch profile data');
+                return;
             }
+
+            setDisplayName(userData.display_name || '');
+            setProfileImage(userData.profile_image_url || '');
+
+            // Save to AsyncStorage for offline use
+            await AsyncStorage.setItem('displayName', userData.display_name || '');
+            await AsyncStorage.setItem('profileImage', userData.profile_image_url || '');
         } catch (err) {
-            setErrorMessage('Unable to load user data.');
+            Alert.alert('Error', 'Something went wrong');
         }
+    };
+
+    // Load data from AsyncStorage for offline access
+    const loadOfflineData = async () => {
+        try {
+            const offlineDisplayName = await AsyncStorage.getItem('displayName');
+            const offlineProfileImage = await AsyncStorage.getItem('profileImage');
+
+            if (offlineDisplayName) setDisplayName(offlineDisplayName);
+            if (offlineProfileImage) setProfileImage(offlineProfileImage);
+        } catch (err) {
+            console.error('Failed to load offline data:', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchUserData();
+        loadOfflineData();
+    }, []);
+
+    // Handle image picker and upload
+    const handleProfileImageChange = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            const imageUri = result.assets[0].uri;
+
+            // Upload image to Supabase storage
+            const fileName = `${userUID}-${Date.now()}.jpg`;
+            const { data, error } = await supabase.storage
+                .from('profile_images')
+                .upload(fileName, {
+                    uri: imageUri,
+                    type: 'image/jpeg',
+                    name: fileName,
+                });
+
+            if (error) {
+                Alert.alert('Error', 'Failed to upload image');
+                return;
+            }
+
+            // Get the public URL for the image
+            const { publicUrl } = supabase.storage
+                .from('profile_images')
+                .getPublicUrl(fileName);
+
+            // Update the user's profile in the database
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ profile_image_url: publicUrl })
+                .eq('id', userUID);
+
+            if (updateError) {
+                Alert.alert('Error', 'Failed to update profile image');
+                return;
+            }
+
+            setProfileImage(publicUrl);
+
+            // Save to AsyncStorage
+            await AsyncStorage.setItem('profileImage', publicUrl);
+
+            Alert.alert('Success', 'Profile image updated');
+        }
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchUserData();
+        setRefreshing(false);
     };
 
 
@@ -141,10 +229,37 @@ const ProfileScreen = ({ navigation }) => {
                 backgroundColor={isDarkTheme ? '#121212' : '#fff'}
             />
             <Header title="Profile" />
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 {/* Profile Section */}
-                <View style={styles.profileSection}>
+                {/* <View style={styles.profileSection}>
                     <Ionicons name="person-circle" size={70} color="gray" />
+                    <View style={styles.uidContainer}>
+                        <Text style={styles.uidText} maxFontSizeMultiplier={0}>
+                            {errorMessage || (displayName ? displayName : `#${userUID}`)}
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('EditScreen')}
+                        >
+                            <Ionicons name="create-outline" size={25} color={isDarkTheme ? '#fff' : '#000'} />
+                        </TouchableOpacity>
+                    </View>
+                </View> */}
+                <View style={styles.profileSection}>
+                    <TouchableOpacity onPress={handleProfileImageChange}>
+                        {profileImage ? (
+                            <Image
+                                source={{ uri: profileImage }}
+                                style={{ width: 100, height: 100, borderRadius: 50 }}
+                            />
+                        ) : (
+                            <Ionicons name="person-circle" size={70} color="gray" />
+                        )}
+                    </TouchableOpacity>
+
                     <View style={styles.uidContainer}>
                         <Text style={styles.uidText} maxFontSizeMultiplier={0}>
                             {errorMessage || (displayName ? displayName : `#${userUID}`)}

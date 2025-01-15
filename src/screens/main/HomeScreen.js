@@ -110,7 +110,7 @@ export default function HomeScreen() {
                 data={['VerseCard', 'DistrictNewsCard', 'SundayGuideCard']}
                 renderItem={renderItem}
                 keyExtractor={(item) => item}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6A5ACD']} />}
                 contentContainerStyle={styles.scrollContainer}
                 showsVerticalScrollIndicator={false}
             />

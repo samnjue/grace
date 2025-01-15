@@ -128,7 +128,7 @@ const getStyle = (theme) => {
         },
         guideContent: {
             fontSize: 16,
-            fontWeight: '600',
+            fontFamily: 'Inter_600SemiBold',
             color: isDarkTheme ? '#999' : '#555',
         },
         errorText: {

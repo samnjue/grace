@@ -41,10 +41,19 @@ export default function MainTabNavigator() {
         if (routeName === 'EditScreen') {
             return { display: 'none' };
         }
+        if (routeName === 'VerseHistoryScreen') {
+            return { display: 'none' };
+        }
+        if (routeName === 'DistrictNewsScreen') {
+            return { display: 'none' };
+        }
+        if (routeName === 'PostNewsScreen') {
+            return { display: 'none' };
+        }
         return {
             position: 'absolute',
             backgroundColor: isDarkTheme ? '#121212' : '#ffffff',
-            borderTopWidth: 0,
+            borderTopWidth: 0.5,
             elevation: 0,
             height: 60,
             keyboardHidesTabBar: true,

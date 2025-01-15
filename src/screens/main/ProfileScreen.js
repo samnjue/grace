@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logOut } from '../../redux/slices/userSlice';
 import { useSelector } from 'react-redux';
 import { setTheme } from '../../redux/slices/themeSlice';
+import { v4 as uuid4 } from 'uuid';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -92,52 +93,73 @@ const ProfileScreen = ({ navigation }) => {
     }, []);
 
     const getBlobFromUri = async (uri) => {
-        const response = await fetch(uri);
-        if (!response.ok) throw new Error('Failed to fetch image URI');
-        return await response.blob();
+        try {
+            const response = await fetch(uri);
+            if (!response.ok) throw new Error('Failed to fetch image URI');
+            return await response.blob();
+        } catch (error) {
+            console.error('Blob creation error:', error);
+            throw error;
+        }
     };
 
     const resizeImage = async (uri) => {
-        const manipResult = await manipulateAsync(
+        const manipResult = await ImageManipulator.manipulateAsync(
             uri,
-            [{ resize: { width: 500, height: 500 } }],
-            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+            [{ resize: { width: 100, height: 100 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
         return manipResult.uri;
     };
 
     const handleProfileImageChange = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1,
-        });
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+            });
 
-        if (!result.canceled) {
-            const imageUri = result.assets[0].uri;
-            console.log('Image URI:', imageUri);
+            if (!result.canceled) {
+                const imageUri = result.assets[0].uri;
+                console.log('Image URI:', imageUri);
 
-            try {
                 const resizedUri = await resizeImage(imageUri);
+                console.log('Resized Image URI:', resizedUri);
+
                 const blob = await getBlobFromUri(resizedUri);
                 console.log('Blob created successfully');
 
                 const fileName = `${userUID}-${Date.now()}.jpg`;
+                console.log('File name:', fileName);
 
                 const { data, error } = await supabase.storage
                     .from('profile_images')
-                    .upload(fileName, blob, { contentType: 'image/jpeg' });
+                    .upload(fileName, blob, {
+                        contentType: 'image/jpeg',
+                    });
 
                 if (error) {
-                    console.error('Supabase upload error:', error.message);
-                    Alert.alert('Error', 'Failed to upload image');
+                    console.error('Supabase upload error:', error);
+                    Alert.alert('Error', 'Failed to upload image to storage');
                     return;
                 }
 
-                const { publicUrl } = supabase.storage
+                console.log('Upload successful:', data);
+
+                const { data: publicUrlData } = supabase.storage
                     .from('profile_images')
-                    .getPublicUrl(fileName).data;
+                    .getPublicUrl(fileName);
+
+                const publicUrl = publicUrlData?.publicUrl;
+                if (!publicUrl) {
+                    console.error('Failed to retrieve public URL');
+                    Alert.alert('Error', 'Could not get image public URL');
+                    return;
+                }
+
+                console.log('Public URL:', publicUrl);
 
                 const { error: updateError } = await supabase
                     .from('users')
@@ -145,18 +167,19 @@ const ProfileScreen = ({ navigation }) => {
                     .eq('id', userUID);
 
                 if (updateError) {
-                    console.error('Database update error:', updateError.message);
-                    Alert.alert('Error', 'Failed to update profile image');
+                    console.error('Database update error:', updateError);
+                    Alert.alert('Error', 'Failed to update profile image in the database');
                     return;
                 }
 
                 setProfileImage(publicUrl);
                 await AsyncStorage.setItem('profileImage', publicUrl);
-                Alert.alert('Success', 'Profile image updated');
-            } catch (err) {
-                console.error('Image upload error:', err);
-                Alert.alert('Error', 'Something went wrong while uploading the image');
+
+                Alert.alert('Success', 'Profile image updated successfully');
             }
+        } catch (err) {
+            console.error('Image upload error:', err);
+            Alert.alert('Error', 'Something went wrong while uploading the image');
         }
     };
 
@@ -249,24 +272,11 @@ const ProfileScreen = ({ navigation }) => {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6A5ACD']} />}
             >
                 {/* Profile Section */}
-                {/* <View style={styles.profileSection}>
-                    <Ionicons name="person-circle" size={70} color="gray" />
-                    <View style={styles.uidContainer}>
-                        <Text style={styles.uidText} maxFontSizeMultiplier={0}>
-                            {errorMessage || (displayName ? displayName : `#${userUID}`)}
-                        </Text>
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('EditScreen')}
-                        >
-                            <Ionicons name="create-outline" size={25} color={isDarkTheme ? '#fff' : '#000'} />
-                        </TouchableOpacity>
-                    </View>
-                </View> */}
                 <View style={styles.profileSection}>
-                    <TouchableOpacity onPress={handleProfileImageChange}>
+                    <TouchableOpacity>
                         {profileImage ? (
                             <Image
                                 source={{ uri: profileImage }}
@@ -311,7 +321,7 @@ const ProfileScreen = ({ navigation }) => {
                         style={styles.logOutButton}
                         onPress={() => setIsLogOutModalVisible(true)}
                     >
-                        <Ionicons name="exit-outline" size={25} color="white" />
+                        <Ionicons name="log-out-outline" size={27} color="white" />
                         <Text style={styles.logOutText} maxFontSizeMultiplier={0}>
                             LOG OUT
                         </Text>
@@ -500,8 +510,8 @@ const getStyle = (theme) => {
         logOutText: {
             color: 'white',
             fontWeight: 'bold',
-            marginLeft: 10,
-            fontSize: 14,
+            marginLeft: 5,
+            fontSize: 15,
         },
         modalContainer: {
             flex: 1,

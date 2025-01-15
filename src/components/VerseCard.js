@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, ImageBackground, ActivityIndicator } from 'react-native';
+import { Text, View, ImageBackground, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { fetchVerseOfTheDay } from '../services/supabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function VerseCard({ refreshKey }) {
     const [verse, setVerse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigation = useNavigation();
 
     const theme = useSelector((state) => state.theme.theme);
     const styles = getStyle(theme);
@@ -53,6 +56,12 @@ export default function VerseCard({ refreshKey }) {
             style={styles.card}
             imageStyle={styles.image}
         >
+            <TouchableOpacity
+                style={styles.historyButton}
+                onPress={() => navigation.navigate('VerseHistoryScreen')}
+            >
+                <Ionicons name="chevron-forward" size={22} color="white" />
+            </TouchableOpacity>
             <View>
                 <Text style={styles.title} maxFontSizeMultiplier={1.2}>Verse of the Day</Text>
                 <Text style={styles.reference} maxFontSizeMultiplier={1.2}>{verse?.reference}</Text>
@@ -135,6 +144,18 @@ const getStyle = (theme) => {
             lineHeight: 29,
             marginTop: 5,
             fontFamily: 'SourceSerif'
+        },
+        historyButton: {
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: 'rgba(0, 0, 0, 0.28)',
+            borderRadius: 20,
+            width: 35,
+            height: 35,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
         }
     }
 };

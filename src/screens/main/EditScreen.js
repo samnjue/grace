@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, StatusBar, KeyboardAvoidingView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../utils/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -179,16 +180,20 @@ const EditScreen = ({ navigation }) => {
 
 const getStyle = (theme) => {
     const isDarkTheme = theme.toLowerCase().includes('dark');
+    const insets = useSafeAreaInsets();
     return {
         container: {
             flex: 1,
-            padding: 20,
             backgroundColor: isDarkTheme ? '#121212' : '#fff',
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
         },
         header: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 20,
+            padding: 16,
         },
         headerText: {
             marginLeft: 10,

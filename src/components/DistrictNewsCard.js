@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, ActivityIndicator, FlatList } from 'react-native';
+import { Text, View, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { fetchDistrictNews } from '../services/supabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function DistrictNewsCard({ refreshKey }) {
     const [news, setNews] = useState([]);
@@ -10,6 +12,7 @@ export default function DistrictNewsCard({ refreshKey }) {
     const [error, setError] = useState('');
     const [selectedDistrict, setSelectedDistrict] = useState(null);
 
+    const navigation = useNavigation();
     const theme = useSelector((state) => state.theme.theme);
     const styles = getStyle(theme);
 
@@ -82,6 +85,12 @@ export default function DistrictNewsCard({ refreshKey }) {
 
     return (
         <View style={styles.card}>
+            <TouchableOpacity
+                style={styles.historyButton}
+                onPress={() => navigation.navigate('DistrictNewsScreen')}
+            >
+                <Ionicons name="chevron-forward" size={22} color="white" />
+            </TouchableOpacity>
             <Text style={styles.title} maxFontSizeMultiplier={1.2}>District News</Text>
             <FlatList
                 data={news}
@@ -108,7 +117,8 @@ const getStyle = (theme) => {
             shadowOpacity: 0.2,
             shadowRadius: 4,
             elevation: 2,
-            width: 380
+            width: 380,
+            position: 'relative',
         },
         title: {
             fontSize: 19,
@@ -127,7 +137,7 @@ const getStyle = (theme) => {
         },
         newsContent: {
             fontSize: 16,
-            fontWeight: '600',
+            fontFamily: 'Inter_600SemiBold',
             color: isDarkTheme ? '#999' : '#555',
         },
         errorText: {
@@ -166,5 +176,17 @@ const getStyle = (theme) => {
             marginBottom: 8,
             color: isDarkTheme ? '#fff' : '#000',
         },
-    }
+        historyButton: {
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: '#6A5ACD',
+            borderRadius: 20,
+            width: 37,
+            height: 37,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+        },
+    };
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as MailComposer from 'expo-mail-composer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -200,16 +201,20 @@ const ContactScreen = ({ navigation }) => {
 
 const getStyle = (theme) => {
     const isDarkTheme = theme.toLowerCase().includes('dark');
+    const insets = useSafeAreaInsets();
     return {
         container: {
             flex: 1,
             backgroundColor: isDarkTheme ? '#121212' : '#fff',
-            padding: 20,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
         },
         header: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 20,
+            padding: 16,
         },
         headerText: {
             marginLeft: 10,
@@ -219,6 +224,7 @@ const getStyle = (theme) => {
         },
         formContainer: {
             marginVertical: 20,
+            marginLeft: 20
         },
         inputLabel: {
             fontSize: 14,
@@ -228,6 +234,7 @@ const getStyle = (theme) => {
         },
         input: {
             height: 40,
+            width: '95%',
             borderWidth: 1,
             borderColor: '#ccc',
             borderRadius: 10,
@@ -237,6 +244,7 @@ const getStyle = (theme) => {
         },
         commentInput: {
             height: 100,
+            width: '95%',
             borderWidth: 1,
             borderColor: '#ccc',
             borderRadius: 5,
@@ -247,6 +255,8 @@ const getStyle = (theme) => {
         },
         sendButton: {
             backgroundColor: '#6a5acd',
+            width: '90%',
+            marginLeft: 20,
             paddingVertical: 12,
             borderRadius: 25,
             alignItems: 'center',

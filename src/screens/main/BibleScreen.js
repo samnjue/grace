@@ -145,7 +145,7 @@ export default function BibleScreen({ navigation }) {
 
                 {selectedBook && (
                     <Modal
-                        animationType='none'
+                        animationType='fade'
                         visible={true}
                         transparent={true}
                         onRequestClose={handleCloseModal}

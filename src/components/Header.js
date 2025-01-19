@@ -10,7 +10,7 @@ const Header = ({ title, version, onVersionPress, showVersionButton }) => {
         <View style={styles.container}>
             <Text style={styles.title} maxFontSizeMultiplier={1}>{title}</Text>
             {showVersionButton && (
-                <TouchableOpacity style={styles.versionButton} onPress={onVersionPress} activeOpacity={0}>
+                <TouchableOpacity style={styles.versionButton} onPress={onVersionPress} activeOpacity={1}>
                     <Text style={styles.versionText} maxFontSizeMultiplier={1.2}>{version}</Text>
                 </TouchableOpacity>
             )}

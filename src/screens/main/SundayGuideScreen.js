@@ -59,7 +59,7 @@ export default function SundayGuideScreen() {
         }).start();
 
         Animated.timing(cardScales[index], {
-            toValue: 1.05,
+            toValue: 1.09,
             duration: 200,
             useNativeDriver: true,
         }).start();
@@ -180,7 +180,7 @@ const getStyle = (theme) => {
         },
         headerTitle: {
             fontSize: 20,
-            fontFamily: 'Archivo_700Bold',
+            fontFamily: 'SourceSerif4_700Bold',
             color: isDarkTheme ? '#fff' : '#000',
         },
         scrollContainer: {
@@ -242,7 +242,7 @@ const getStyle = (theme) => {
             borderRadius: 10,
             padding: 20,
             elevation: 2,
-            shadowColor: '#000',
+            shadowColor: isDarkTheme ? '#fff' : '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.1,
             shadowRadius: 4,
@@ -255,8 +255,8 @@ const getStyle = (theme) => {
         },
         content: {
             fontSize: 16,
-            fontFamily: 'Inter_600SemiBold',
-            color: isDarkTheme ? '#999' : '#555',
+            fontFamily: 'SourceSerif4_700Bold',
+            color: isDarkTheme ? '#dedede' : '#555',
             lineHeight: 20,
         },
     }

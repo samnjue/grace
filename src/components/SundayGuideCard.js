@@ -94,7 +94,7 @@ export default function SundayGuideCard({ refreshKey }) {
             </TouchableOpacity>
             <Text style={styles.title}>Sunday Guide</Text>
             <FlatList
-                data={guideData.slice(0, 4)}
+                data={guideData.slice(0, 3)}
                 renderItem={renderGuideItem}
                 keyExtractor={(item) => item.id.toString()}
                 ListEmptyComponent={<Text style={styles.emptyText}>No information available.</Text>}

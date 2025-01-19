@@ -79,21 +79,30 @@ export default function DistrictNewsScreen() {
         const now = new Date();
         const timeDifference = now - postDate;
         const oneDay = 24 * 60 * 60 * 1000;
+        const twoDays = 2 * oneDay;
+
+        const hours = postDate.getHours() % 12 || 12;
+        const minutes = String(postDate.getMinutes()).padStart(2, '0');
+        const ampm = postDate.getHours() >= 12 ? 'pm' : 'am';
 
         if (timeDifference < oneDay) {
-            const hours = postDate.getHours() % 12 || 12;
-            const minutes = String(postDate.getMinutes()).padStart(2, '0');
-            const ampm = postDate.getHours() >= 12 ? 'pm' : 'am';
             return `${hours}:${minutes} ${ampm}`;
-        } else if (timeDifference < 2 * oneDay) {
-            return 'Yesterday';
+        } else if (timeDifference < twoDays) {
+            return `Yesterday ${hours}:${minutes} ${ampm}`;
         } else {
-            const day = String(postDate.getDate()).padStart(2, '0');
-            const month = String(postDate.getMonth() + 1).padStart(2, '0');
-            const year = String(postDate.getFullYear()).slice(-2);
-            return `${day}/${month}/${year}`;
+            const postYear = postDate.getFullYear();
+            const nowYear = now.getFullYear();
+            const day = postDate.getDate();
+            const month = postDate.toLocaleString('default', { month: 'short' });
+
+            if (postYear === nowYear) {
+                return `${day} ${month} ${hours}:${minutes} ${ampm}`;
+            } else {
+                return `${day} ${month} ${postYear} ${hours}:${minutes} ${ampm}`;
+            }
         }
     };
+
 
     const [currentUser, setCurrentUser] = useState(null);
 
@@ -198,6 +207,16 @@ export default function DistrictNewsScreen() {
             ) : error ? (
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
+                    {/* Floating Button */}
+                    {!error.includes('Check your connection') && (
+                        <TouchableOpacity
+                            style={styles.floatingButton}
+                            onPress={() => navigation.navigate('PostNewsScreen')}
+                        >
+                            <Ionicons name="chatbox-ellipses" size={24} color="#fff" />
+                            <Text style={styles.floatingButtonText}>Announce</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             ) : (
                 <FlatList

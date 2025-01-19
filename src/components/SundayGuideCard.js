@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, ActivityIndicator, FlatList } from 'react-native';
+import { Text, View, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { fetchSundayGuide } from '../services/supabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 
 export default function SundayGuideCard({ refreshKey }) {
@@ -9,6 +11,7 @@ export default function SundayGuideCard({ refreshKey }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedChurch, setSelectedChurch] = useState(null);
+    const navigation = useNavigation();
 
     const theme = useSelector((state) => state.theme.theme);
     const styles = getStyle(theme);
@@ -83,9 +86,15 @@ export default function SundayGuideCard({ refreshKey }) {
 
     return (
         <View style={styles.card}>
+            <TouchableOpacity
+                style={styles.historyButton}
+                onPress={() => navigation.navigate('SundayGuideScreen')}
+            >
+                <Ionicons name="chevron-forward" size={22} color="white" />
+            </TouchableOpacity>
             <Text style={styles.title}>Sunday Guide</Text>
             <FlatList
-                data={guideData}
+                data={guideData.slice(0, 4)}
                 renderItem={renderGuideItem}
                 keyExtractor={(item) => item.id.toString()}
                 ListEmptyComponent={<Text style={styles.emptyText}>No information available.</Text>}
@@ -166,6 +175,18 @@ const getStyle = (theme) => {
             fontWeight: '300',
             marginBottom: 8,
             color: isDarkTheme ? '#fff' : '#000',
+        },
+        historyButton: {
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: '#6A5ACD',
+            borderRadius: 20,
+            width: 35,
+            height: 35,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
         },
     }
 };

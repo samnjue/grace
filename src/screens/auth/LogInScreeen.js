@@ -45,23 +45,34 @@ export default function LogInScreen({ navigation }) {
                 await AsyncStorage.setItem('userSession', JSON.stringify(data.session));
                 dispatch(logIn({ email: data.session.user.email, session: data.session }));
 
-                const { data: profile, error } = await supabase
+                const { data: profile, error: profileError } = await supabase
                     .from('users')
-                    .select('selected_church', 'selected_district')
+                    .select('selected_church, selected_district')
                     .eq('id', data.session.user.id)
                     .single({ refresh: true });
 
-                if (error) {
-                    throw new Error(error.message);
+                if (profileError) {
+                    throw new Error(profileError.message);
                 }
 
-                if (profile?.selected_church && profile?.selected_district == null) {
+                if (profile?.selected_church) {
+                    const church = { church_id: profile.selected_church };
+                    await AsyncStorage.setItem('selectedChurch', JSON.stringify(church));
+                }
+
+                if (profile?.selected_district) {
+                    const district = { district_id: profile.selected_district };
+                    await AsyncStorage.setItem('selectedDistrict', JSON.stringify(district));
+                }
+
+                if (profile?.selected_church && profile?.selected_district) {
                     navigation.replace('MainApp');
                 } else {
                     navigation.replace('ChurchSelection');
                 }
             }
         } catch (error) {
+            console.error('Error during login:', error);
             setError(error.message || 'An unexpected error occurred.');
         } finally {
             setIsLoading(false);

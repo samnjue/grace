@@ -4,6 +4,7 @@ import HomeScreen from '../screens/main/HomeScreen';
 import VerseHistoryScreen from '../screens/main/VerseHistoryScreen';
 import DistrictNewsScreen from '../screens/main/DistrictNewsScreen';
 import PostNewsScreen from '../screens/main/PostNewsScreen';
+import SundayGuideScreen from '../screens/main/SundayGuideScreen';
 import { TransitionSpecs } from '@react-navigation/stack';
 import { CardStyleInterpolators } from '@react-navigation/stack';
 
@@ -31,6 +32,13 @@ export default function HomeNavigator() {
                 gestureEnabled: true,
                 gestureDirection: 'vertical',
                 cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+                transitionSpec: {
+                    open: TransitionSpecs.TransitionIOSSpec,
+                    close: TransitionSpecs.TransitionIOSSpec,
+                },
+            }} />
+            <Stack.Screen name="SundayGuideScreen" component={SundayGuideScreen} options={{
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
                 transitionSpec: {
                     open: TransitionSpecs.TransitionIOSSpec,
                     close: TransitionSpecs.TransitionIOSSpec,

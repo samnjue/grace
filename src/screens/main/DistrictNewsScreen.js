@@ -21,20 +21,24 @@ export default function DistrictNewsScreen() {
     const navigation = useNavigation();
 
     const styles = getStyle(theme);
+    const isDarkTheme = theme.toLowerCase().includes('dark');
 
     useEffect(() => {
         const fetchSelectedDistrict = async () => {
             try {
                 const storedDistrict = await AsyncStorage.getItem('selectedDistrict');
+
                 if (storedDistrict) {
                     const parsedDistrict = JSON.parse(storedDistrict);
-                    const districtWithCorrectKey = { ...parsedDistrict, district_id: parsedDistrict.id };
-                    delete districtWithCorrectKey.id;
+
+                    const districtWithCorrectKey = { ...parsedDistrict, district_id: parsedDistrict.district_id };
                     setSelectedDistrict(districtWithCorrectKey);
+                    setError('');
                 } else {
                     setError('No district selected');
                 }
-            } catch {
+            } catch (error) {
+                console.error('Error retrieving district information:', error);
                 setError('Error retrieving district information');
             }
         };
@@ -91,23 +95,37 @@ export default function DistrictNewsScreen() {
         }
     };
 
+    const [currentUser, setCurrentUser] = useState(null);
 
-    const renderNewsItem = ({ item }) => (
-        <View style={styles.newsCard}>
-            <Text style={styles.newsTitle} maxFontSizeMultiplier={1.2}>{item.title}</Text>
-            <Text style={styles.newsContent} maxFontSizeMultiplier={1.2}>{item.content}</Text>
-            <Text style={styles.postInfo} maxFontSizeMultiplier={1.2}>
-                {`posted by ${item.user_name || 'Anonymous'} · ${item.date ? formatDate(item.date) : 'Unknown date'}`}
-            </Text>
-            {/* Delete button - only visible to the user who posted the news */}
-            <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeletePress(item)}
-            >
-                <Ionicons name="trash-bin" size={24} color="red" />
-            </TouchableOpacity>
-        </View>
-    );
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (!error && user) {
+                setCurrentUser(user);
+            }
+        };
+        fetchCurrentUser();
+    }, []);
+
+    const renderNewsItem = ({ item }, currentUser) => {
+        return (
+            <View style={styles.newsCard}>
+                <Text style={styles.newsTitle} maxFontSizeMultiplier={1.2}>{item.title}</Text>
+                <Text style={styles.newsContent} maxFontSizeMultiplier={1.2}>{item.content}</Text>
+                <Text style={styles.postInfo} maxFontSizeMultiplier={1.2}>
+                    {`posted by ${item.user_name || 'Anonymous'} · ${item.date ? formatDate(item.date) : 'Unknown date'}`}
+                </Text>
+                {currentUser?.id === item.user_id && (
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeletePress(item)}
+                    >
+                        <Ionicons name="ellipsis-horizontal" size={22} color={isDarkTheme ? '#aaa' : '#888'} />
+                    </TouchableOpacity>
+                )}
+            </View>
+        );
+    };
 
     const handleDeletePress = async (item) => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -184,7 +202,7 @@ export default function DistrictNewsScreen() {
             ) : (
                 <FlatList
                     data={news}
-                    renderItem={renderNewsItem}
+                    renderItem={(item) => renderNewsItem(item, currentUser)}
                     keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={styles.listContainer}
                     ListEmptyComponent={<Text style={styles.emptyText}>No information posted. Check back later</Text>}
@@ -218,7 +236,7 @@ export default function DistrictNewsScreen() {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalText}>Are you sure you want to delete this post?</Text>
+                        <Text style={styles.modalText}>Delete post?</Text>
                         <View style={styles.modalButtonContainer}>
                             <TouchableOpacity
                                 style={styles.exitButton}
@@ -332,7 +350,7 @@ const getStyle = (theme) => {
             marginLeft: 8,
         },
         postInfo: {
-            marginTop: 18,
+            marginTop: 21,
             fontSize: 12,
             fontFamily: 'Inter_500Medium',
             color: isDarkTheme ? '#aaa' : '#666',

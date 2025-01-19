@@ -172,7 +172,8 @@ const getStyle = (theme) => {
         buttonContainer: {
             flexDirection: 'row',
             justifyContent: 'space-between',
-            bottom: 30
+            bottom: 30,
+            padding: 18
         },
         copyButton: {
             flex: 1,

@@ -30,7 +30,7 @@ export default function HomeScreen() {
                     dispatch(setTheme(storedTheme));
                 }
             } catch (error) {
-                console.error('Error loading theme:', error);
+                //console.error('Error loading theme:', error);
             }
         };
 
@@ -42,7 +42,7 @@ export default function HomeScreen() {
             try {
                 await AsyncStorage.setItem('appTheme', theme);
             } catch (error) {
-                console.error('Error saving theme:', error);
+                //console.error('Error saving theme:', error);
             }
         };
 
@@ -99,6 +99,7 @@ export default function HomeScreen() {
                 paddingLeft: insets.left,
                 paddingRight: insets.right,
                 backgroundColor: isDarkTheme ? '#121212' : '#fff',
+                marginBottom: 15,
             }}
         >
             <StatusBar

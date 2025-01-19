@@ -194,6 +194,8 @@ const ProfileScreen = ({ navigation }) => {
             const { error } = await supabase.auth.signOut();
             if (error) throw new Error(error.message);
 
+            await AsyncStorage.multiRemove(['userSession', 'selectedChurch', 'selectedDistrict']);
+
             dispatch(logOut());
             navigation.replace('AuthStack');
         } catch (err) {
@@ -438,7 +440,7 @@ const ProfileScreen = ({ navigation }) => {
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-                        Version 1.13.3
+                        Version 1.13.5
                     </Text>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
                         © 2025 ivory

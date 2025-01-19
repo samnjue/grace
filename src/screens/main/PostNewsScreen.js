@@ -36,7 +36,7 @@ const PostNewsScreen = ({ navigation }) => {
             const storedDistrict = await AsyncStorage.getItem('selectedDistrict');
             const parsedDistrict = JSON.parse(storedDistrict);
 
-            if (!parsedDistrict || !parsedDistrict.id) {
+            if (!parsedDistrict || !parsedDistrict.district_id) {
                 throw new Error('Selected district not found. Please re-select your district.');
             }
 
@@ -49,7 +49,7 @@ const PostNewsScreen = ({ navigation }) => {
                 {
                     title,
                     content,
-                    district_id: parsedDistrict.id,
+                    district_id: parsedDistrict.district_id,
                     user_id: user.id,
                     created_at: new Date().toISOString(),
                 },
@@ -110,7 +110,7 @@ const PostNewsScreen = ({ navigation }) => {
             <Modal
                 visible={isSuccessModalVisible}
                 transparent={true}
-                animationType="none"
+                animationType="fade"
                 onRequestClose={() => setIsSuccessModalVisible(false)}
             >
                 <View style={styles.modalContainer}>

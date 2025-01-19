@@ -50,6 +50,9 @@ export default function MainTabNavigator() {
         if (routeName === 'PostNewsScreen') {
             return { display: 'none' };
         }
+        if (routeName === 'SundayGuideScreen') {
+            return { display: 'none' };
+        }
         return {
             position: 'absolute',
             backgroundColor: isDarkTheme ? '#121212' : '#ffffff',

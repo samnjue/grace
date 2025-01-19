@@ -52,14 +52,15 @@ export default function DistrictNewsCard({ refreshKey }) {
                 const storedDistrict = await AsyncStorage.getItem('selectedDistrict');
                 if (storedDistrict) {
                     const parsedDistrict = JSON.parse(storedDistrict);
-                    const districtWithCorrectKey = { ...parsedDistrict, district_id: parsedDistrict.id };
-                    delete districtWithCorrectKey.id;
+
+                    const districtWithCorrectKey = { ...parsedDistrict, district_id: parsedDistrict.district_id };
                     setSelectedDistrict(districtWithCorrectKey);
                     setError('');
                 } else {
                     setError('No district selected');
                 }
             } catch (error) {
+                console.error('Error retrieving district information:', error);
                 setError('Error retrieving district information');
             }
         };
@@ -78,6 +79,12 @@ export default function DistrictNewsCard({ refreshKey }) {
 
     if (error) return (
         <View style={styles.errorCard}>
+            <TouchableOpacity
+                style={styles.historyButton}
+                onPress={() => navigation.navigate('DistrictNewsScreen')}
+            >
+                <Ionicons name="chevron-forward" size={22} color="white" />
+            </TouchableOpacity>
             <Text style={styles.errorTitle} maxFontSizeMultiplier={1.2}>District News</Text>
             <Text style={styles.errorText} maxFontSizeMultiplier={1.2}>{error}</Text>
         </View>
@@ -182,8 +189,8 @@ const getStyle = (theme) => {
             right: 10,
             backgroundColor: '#6A5ACD',
             borderRadius: 20,
-            width: 37,
-            height: 37,
+            width: 35,
+            height: 35,
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 10,

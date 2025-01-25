@@ -12,10 +12,9 @@ const userSlice = createSlice({
     initialState,
     reducers: {
         logIn(state, action) {
-            //console.log('logIn action payload:', action.payload);
             state.isLoggedIn = true;
-            state.user = action.payload.user;
-            state.session = action.payload.session;
+            state.session = action.payload;
+            state.user = action.payload.user
         },
         logOut(state) {
             state.isLoggedIn = false;
@@ -27,7 +26,7 @@ const userSlice = createSlice({
             state.selectedChurch = action.payload;
         },
         selectDistrict(state, action) {
-            state.selectedDistrict = action.payload.select_district;
+            state.selectedDistrict = action.payload;
         },
     },
 });

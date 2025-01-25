@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { RefreshControl, View, FlatList, Modal, Text, TouchableOpacity, BackHandler, StatusBar } from 'react-native';
+import { RefreshControl, View, FlatList, Modal, Text, TouchableOpacity, BackHandler, StatusBar, Alert } from 'react-native';
 import VerseCard from '../../components/VerseCard';
 import DistrictNewsCard from '../../components/DistrictNewsCard';
 import SundayGuideCard from '../../components/SundayGuideCard';
@@ -10,17 +10,93 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { useSelector, useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setTheme } from '../../redux/slices/themeSlice';
+import { supabase } from '../../utils/supabase';
 
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [refreshing, setRefreshing] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [isExitModalVisible, setIsExitModalVisible] = useState(false);
+    const [displayName, setDisplayName] = useState('');
 
     const dispatch = useDispatch();
     const theme = useSelector((state) => state.theme.theme);
     const isDarkTheme = theme.toLowerCase().includes('dark');
     const styles = getStyle(theme);
+
+    const fetchUserData = async () => {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error || !user) {
+                Alert.alert('Error', 'Unable to fetch user data');
+                return;
+            }
+
+            setUserUID(user.id);
+
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('display_name')
+                .eq('id', user.id)
+                .single();
+
+            if (userError) {
+                Alert.alert('Error', 'Unable to fetch profile data');
+                return;
+            }
+
+            setDisplayName(userData.display_name || '');
+            setProfileImage(userData.profile_image_url || '');
+
+            await AsyncStorage.setItem('displayName', userData.display_name || '');
+            await AsyncStorage.setItem('profileImage', userData.profile_image_url || '');
+        } catch (err) {
+            //Alert.alert('Error', 'Something went wrong');
+        }
+    };
+
+    const loadOfflineData = async () => {
+        try {
+            const offlineDisplayName = await AsyncStorage.getItem('displayName');
+            const offlineProfileImage = await AsyncStorage.getItem('profileImage');
+
+            if (offlineDisplayName) setDisplayName(offlineDisplayName);
+            if (offlineProfileImage) setProfileImage(offlineProfileImage);
+        } catch (err) {
+            console.error('Failed to load offline data:', err);
+        }
+    };
+
+    useEffect(() => {
+        const initializeProfile = async () => {
+            try {
+                const savedSession = await AsyncStorage.getItem('supabaseSession');
+                if (savedSession) {
+                    const session = JSON.parse(savedSession);
+
+                    const { error } = await supabase.auth.setSession({
+                        access_token: session.access_token,
+                        refresh_token: session.refresh_token,
+                    });
+
+                    if (error) {
+                        console.error('Failed to restore session:', error);
+                        Alert.alert('Error', 'Failed to restore user session. Please log in again.');
+                        return;
+                    }
+                }
+
+                await loadOfflineData();
+
+                await fetchUserData();
+            } catch (err) {
+                console.error('Session initialization error:', err);
+                Alert.alert('Error', 'An unexpected error occurred while restoring your session.');
+            }
+        };
+
+        initializeProfile();
+    }, []);
 
     useEffect(() => {
         const loadTheme = async () => {

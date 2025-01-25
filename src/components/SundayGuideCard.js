@@ -111,7 +111,7 @@ const getStyle = (theme) => {
         card: {
             borderRadius: 10,
             backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
-            marginBottom: 50,
+            marginBottom: 40,
             padding: 16,
             shadowColor: isDarkTheme ? '#aaa' : '#000',
             shadowOffset: { width: 0, height: 2 },
@@ -161,7 +161,7 @@ const getStyle = (theme) => {
             height: 200,
             width: 380,
             borderRadius: 10,
-            marginBottom: 16,
+            marginBottom: 40,
             padding: 16,
             backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
             shadowColor: '#000',

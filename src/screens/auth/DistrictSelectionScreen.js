@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StatusBar } from 'react-native';
 import { supabase } from '../../utils/supabase';
 import { useDispatch } from 'react-redux';
-import { logIn } from '../../redux/slices/userSlice';
+import { selectDistrict } from '../../redux/slices/userSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomError from '../../components/CustomError';
 import { useSelector } from 'react-redux';
@@ -58,7 +58,13 @@ export default function DistrictSelectionScreen({ navigation }) {
         setSelectedDistrict(district);
     };
 
+    useEffect(() => {
+        setSelectedDistrict(null);
+    }, []);
+
     const handleProceed = async () => {
+        setError('');
+
         try {
             const userSession = await AsyncStorage.getItem('userSession');
             const parsedSession = JSON.parse(userSession);
@@ -75,16 +81,18 @@ export default function DistrictSelectionScreen({ navigation }) {
                 throw new Error(error.message);
             }
 
-            const userData = { ...parsedSession, selected_district: selectedDistrict.id };
-            dispatch(logIn(userData));
+            const district = { district_id: selectedDistrict.id };
+            await AsyncStorage.setItem('selectedDistrict', JSON.stringify(district));
 
-            await AsyncStorage.setItem('selectedDistrict', JSON.stringify(selectedDistrict));
+            dispatch(selectDistrict(selectedDistrict.id));
 
             navigation.replace('MainApp');
         } catch (error) {
+            console.error('Error selecting district:', error);
             setError(error.message || 'An error occurred while selecting the district.');
         }
     };
+
 
     const renderDistrictItem = ({ item }) => (
         <TouchableOpacity

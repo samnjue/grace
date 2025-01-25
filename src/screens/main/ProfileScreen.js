@@ -9,7 +9,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logOut } from '../../redux/slices/userSlice';
 import { useSelector } from 'react-redux';
 import { setTheme } from '../../redux/slices/themeSlice';
-import { v4 as uuid4 } from 'uuid';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -40,7 +39,7 @@ const ProfileScreen = ({ navigation }) => {
 
             const { data: userData, error: userError } = await supabase
                 .from('users')
-                .select('display_name, profile_image_url')
+                .select('display_name')
                 .eq('id', user.id)
                 .single();
 
@@ -73,19 +72,29 @@ const ProfileScreen = ({ navigation }) => {
 
     useEffect(() => {
         const initializeProfile = async () => {
-            const hasSession = await checkAuthSession();
-            if (!hasSession) return;
-
-            await loadOfflineData();
             try {
-                const { data: { user }, error } = await supabase.auth.getUser();
-                if (error || !user) {
-                    console.error('User fetch error:', error);
-                    return;
+                const savedSession = await AsyncStorage.getItem('supabaseSession');
+                if (savedSession) {
+                    const session = JSON.parse(savedSession);
+
+                    const { error } = await supabase.auth.setSession({
+                        access_token: session.access_token,
+                        refresh_token: session.refresh_token,
+                    });
+
+                    if (error) {
+                        console.error('Failed to restore session:', error);
+                        Alert.alert('Error', 'Failed to restore user session. Please log in again.');
+                        return;
+                    }
                 }
+
+                await loadOfflineData();
+
                 await fetchUserData();
             } catch (err) {
-                console.error('Initialization error:', err);
+                console.error('Session initialization error:', err);
+                Alert.alert('Error', 'An unexpected error occurred while restoring your session.');
             }
         };
 
@@ -194,7 +203,7 @@ const ProfileScreen = ({ navigation }) => {
             const { error } = await supabase.auth.signOut();
             if (error) throw new Error(error.message);
 
-            await AsyncStorage.multiRemove(['userSession', 'selectedChurch', 'selectedDistrict']);
+            await AsyncStorage.multiRemove(['userSession', 'selectedChurch', 'selectedDistrict', 'supabaseSession']);
 
             dispatch(logOut());
             navigation.replace('AuthStack');
@@ -440,7 +449,7 @@ const ProfileScreen = ({ navigation }) => {
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-                        Version 1.13.5
+                        Version 1.13.24
                     </Text>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
                         © 2025 ivory

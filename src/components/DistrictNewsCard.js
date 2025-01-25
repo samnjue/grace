@@ -10,29 +10,42 @@ export default function DistrictNewsCard({ refreshKey }) {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [selectedDistrict, setSelectedDistrict] = useState(null);
 
-    const navigation = useNavigation();
+    const selectedDistrict = useSelector((state) => state.user.selectedDistrict);
     const theme = useSelector((state) => state.theme.theme);
     const styles = getStyle(theme);
 
+    const navigation = useNavigation();
+
     useEffect(() => {
         const getNews = async () => {
-            if (!selectedDistrict) return;
+            if (!selectedDistrict) {
+                setError('No district selected');
+                setLoading(false);
+                return;
+            }
 
             try {
                 setLoading(true);
-                const data = await fetchDistrictNews(selectedDistrict.district_id);
+
+                const data = await fetchDistrictNews(selectedDistrict);
                 if (data.length > 0) {
                     setNews(data);
-                    await AsyncStorage.setItem('districtNews', JSON.stringify(data));
+
+                    await AsyncStorage.setItem(
+                        `districtNews_${selectedDistrict}`,
+                        JSON.stringify(data)
+                    );
                     setError('');
                 } else {
                     setError('No information posted');
                 }
             } catch (err) {
                 setError('Check your connection');
-                const cachedNews = await AsyncStorage.getItem('districtNews');
+
+                const cachedNews = await AsyncStorage.getItem(
+                    `districtNews_${selectedDistrict}`
+                );
                 if (cachedNews) {
                     setNews(JSON.parse(cachedNews));
                 }
@@ -41,32 +54,8 @@ export default function DistrictNewsCard({ refreshKey }) {
             }
         };
 
-        if (selectedDistrict) {
-            getNews();
-        }
+        getNews();
     }, [selectedDistrict, refreshKey]);
-
-    useEffect(() => {
-        const getSelectedDistrict = async () => {
-            try {
-                const storedDistrict = await AsyncStorage.getItem('selectedDistrict');
-                if (storedDistrict) {
-                    const parsedDistrict = JSON.parse(storedDistrict);
-
-                    const districtWithCorrectKey = { ...parsedDistrict, district_id: parsedDistrict.district_id };
-                    setSelectedDistrict(districtWithCorrectKey);
-                    setError('');
-                } else {
-                    setError('No district selected');
-                }
-            } catch (error) {
-                console.error('Error retrieving district information:', error);
-                setError('Error retrieving district information');
-            }
-        };
-
-        getSelectedDistrict();
-    }, [refreshKey]);
 
     const renderNewsItem = ({ item }) => (
         <View style={styles.newsItem}>
@@ -75,20 +64,24 @@ export default function DistrictNewsCard({ refreshKey }) {
         </View>
     );
 
-    if (loading) return <ActivityIndicator style={styles.loader} size="large" color="#6A5ACD" />;
+    if (loading) {
+        return <ActivityIndicator style={styles.loader} size="large" color="#6A5ACD" />;
+    }
 
-    if (error) return (
-        <View style={styles.errorCard}>
-            <TouchableOpacity
-                style={styles.historyButton}
-                onPress={() => navigation.navigate('DistrictNewsScreen')}
-            >
-                <Ionicons name="chevron-forward" size={22} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.errorTitle} maxFontSizeMultiplier={1.2}>District News</Text>
-            <Text style={styles.errorText} maxFontSizeMultiplier={1.2}>{error}</Text>
-        </View>
-    );
+    if (error) {
+        return (
+            <View style={styles.errorCard}>
+                <TouchableOpacity
+                    style={styles.historyButton}
+                    onPress={() => navigation.navigate('DistrictNewsScreen')}
+                >
+                    <Ionicons name="chevron-forward" size={22} color="white" />
+                </TouchableOpacity>
+                <Text style={styles.errorTitle} maxFontSizeMultiplier={1.2}>District News</Text>
+                <Text style={styles.errorText} maxFontSizeMultiplier={1.2}>{error}</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.card}>
@@ -103,7 +96,11 @@ export default function DistrictNewsCard({ refreshKey }) {
                 data={news}
                 renderItem={renderNewsItem}
                 keyExtractor={(item) => item.id.toString()}
-                ListEmptyComponent={<Text style={styles.emptyText} maxFontSizeMultiplier={1.2}>No information posted. Check back later</Text>}
+                ListEmptyComponent={
+                    <Text style={styles.emptyText} maxFontSizeMultiplier={1.2}>
+                        No information posted. Check back later
+                    </Text>
+                }
                 contentContainerStyle={{ flexGrow: 1 }}
                 scrollEnabled={false}
             />

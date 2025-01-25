@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../utils/supabase';
-import { logIn } from '../../redux/slices/userSlice';
+import { logIn, selectChurch, selectDistrict } from '../../redux/slices/userSlice';
 import CustomError from '../../components/CustomError';
 import { useSelector } from 'react-redux';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -42,7 +42,12 @@ export default function LogInScreen({ navigation }) {
             }
 
             if (data?.session) {
+                await AsyncStorage.setItem('supabaseSession', JSON.stringify(data.session));
+            }
+
+            if (data?.session) {
                 await AsyncStorage.setItem('userSession', JSON.stringify(data.session));
+
                 dispatch(logIn({ email: data.session.user.email, session: data.session }));
 
                 const { data: profile, error: profileError } = await supabase
@@ -58,11 +63,13 @@ export default function LogInScreen({ navigation }) {
                 if (profile?.selected_church) {
                     const church = { church_id: profile.selected_church };
                     await AsyncStorage.setItem('selectedChurch', JSON.stringify(church));
+                    dispatch(selectChurch(profile.selected_church));
                 }
 
                 if (profile?.selected_district) {
                     const district = { district_id: profile.selected_district };
                     await AsyncStorage.setItem('selectedDistrict', JSON.stringify(district));
+                    dispatch(selectDistrict(profile.selected_district));
                 }
 
                 if (profile?.selected_church && profile?.selected_district) {
@@ -78,6 +85,7 @@ export default function LogInScreen({ navigation }) {
             setIsLoading(false);
         }
     };
+
 
     useEffect(() => {
         const loadRememberedCredentials = async () => {

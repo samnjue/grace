@@ -217,7 +217,7 @@ const getStyle = (theme) => {
         },
         modalContent: {
             width: 300,
-            backgroundColor: '#fff',
+            backgroundColor: isDarkTheme ? '#000' : '#fff',
             borderRadius: 10,
             padding: 20,
             alignItems: 'center',
@@ -225,6 +225,7 @@ const getStyle = (theme) => {
         modalText: {
             fontSize: 22,
             fontFamily: 'Archivo_700Bold',
+            color: isDarkTheme ? '#fff' : '#000',
             marginVertical: 10,
             textAlign: 'center',
         },

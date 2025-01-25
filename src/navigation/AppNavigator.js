@@ -3,7 +3,8 @@ import { ActivityIndicator, View, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { createStackNavigator } from '@react-navigation/stack';
-import { logIn } from '../redux/slices/userSlice';
+import { logIn, selectChurch, selectDistrict } from '../redux/slices/userSlice';
+import { setChurchAndDistrict } from '../redux/actions';
 import AuthStack from './AuthStack';
 import MainTabNavigator from './MainTabNavigator';
 import ChurchSelectionScreen from '../screens/auth/ChurchSelectionScreen';
@@ -21,6 +22,15 @@ export default function AppNavigator() {
     const [initialRoute, setInitialRoute] = useState('AuthStack');
     const user = useSelector((state) => state.user);
     const dispatch = useDispatch();
+
+    /*useEffect(() => {
+        const logDebugInfo = async () => {
+            const session = await AsyncStorage.getItem('userSession');
+            console.log('AsyncStorage session:', session);
+            console.log('Redux user state:', user);
+        };
+        logDebugInfo();
+    }, [user]);*/
 
     useEffect(() => {
         const checkUserSession = async () => {
@@ -40,6 +50,14 @@ export default function AppNavigator() {
                             .single();
 
                         if (profile) {
+                            dispatch(setChurchAndDistrict({
+                                selected_church: profile.selected_church,
+                                selected_district: profile.selected_district,
+                            }));
+
+                            dispatch(selectChurch(profile.selected_church));
+                            dispatch(selectDistrict(profile.selected_district));
+
                             await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
                             setInitialRoute(
                                 profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection'
@@ -52,6 +70,15 @@ export default function AppNavigator() {
                         const cachedProfile = await AsyncStorage.getItem('userProfile');
                         if (cachedProfile) {
                             const profile = JSON.parse(cachedProfile);
+
+                            dispatch(setChurchAndDistrict({
+                                selected_church: profile.selected_church,
+                                selected_district: profile.selected_district,
+                            }));
+
+                            dispatch(selectChurch(profile.selected_church));
+                            dispatch(selectDistrict(profile.selected_district));
+
                             setInitialRoute(
                                 profile.selected_church && profile.selected_district ? 'MainApp' : 'ChurchSelection'
                             );
@@ -70,6 +97,31 @@ export default function AppNavigator() {
         };
 
         checkUserSession();
+    }, [dispatch]);
+
+
+    useEffect(() => {
+        const syncReduxWithStorage = async () => {
+            try {
+                const session = await AsyncStorage.getItem('userSession');
+                if (session) {
+                    const parsedSession = JSON.parse(session);
+                    dispatch(logIn(parsedSession));
+
+                    const profile = await AsyncStorage.getItem('userProfile');
+                    if (profile) {
+                        const parsedProfile = JSON.parse(profile);
+                        dispatch(setChurchAndDistrict({
+                            selected_church: parsedProfile.selected_church,
+                            selected_district: parsedProfile.selected_district,
+                        }));
+                    }
+                }
+            } catch (error) {
+                console.error('Error syncing state:', error);
+            }
+        };
+        syncReduxWithStorage();
     }, [dispatch]);
 
     const theme = useSelector((state) => state.theme.theme);

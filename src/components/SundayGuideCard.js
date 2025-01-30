@@ -118,7 +118,8 @@ const getStyle = (theme) => {
             shadowOpacity: 0.2,
             shadowRadius: 4,
             elevation: 2,
-            width: 380
+            width: 380,
+            maxWidth: 380
         },
         title: {
             fontSize: 19,

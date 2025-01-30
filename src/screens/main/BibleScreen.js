@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, TextInput, Modal, ScrollView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, TextInput, Modal, ScrollView, StatusBar, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import nkjvBibleData from '../../data/bible.json';
 // import kswBibleData from '../../data/biblia.json';
@@ -94,6 +94,11 @@ export default function BibleScreen({ navigation }) {
         handleCloseModal();
     };
 
+    const clearSearch = () => {
+        setSearchQuery('');
+        Keyboard.dismiss();
+    };
+
     return (
         <View
             style={{
@@ -128,6 +133,18 @@ export default function BibleScreen({ navigation }) {
                         onChangeText={(text) => setSearchQuery(text)}
                         maxFontSizeMultiplier={1.2}
                     />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity
+                            onPress={clearSearch}
+                            style={styles.clearButton}
+                        >
+                            <Ionicons
+                                name="close-circle"
+                                size={35}
+                                color={isDarkTheme ? '#fff' : '#666'}
+                            />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <FlatList
@@ -272,6 +289,11 @@ const getStyle = (theme) => {
             textAlign: 'center',
             fontFamily: 'Inter_700Bold',
             fontSize: 18
+        },
+        clearButton: {
+            padding: 8,
+            position: 'absolute',
+            right: 0,
         },
     }
 };

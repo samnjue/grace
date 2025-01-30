@@ -122,6 +122,7 @@ const getStyle = (theme) => {
             shadowRadius: 4,
             elevation: 2,
             width: 380,
+            maxWidth: 380,
             position: 'relative',
         },
         title: {

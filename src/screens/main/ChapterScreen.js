@@ -333,7 +333,7 @@ const ChapterScreen = () => {
                         adjustsFontSizeToFit
                         maxFontSizeMultiplier={1.2}
                     >
-                        {book}
+                        {book} {chapter}
                     </Text>
                 </TouchableOpacity>
             </View>

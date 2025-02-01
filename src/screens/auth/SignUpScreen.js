@@ -93,7 +93,7 @@ export default function SignUpScreen({ navigation }) {
                     onPress={() => navigation.goBack()}
                     style={{ flexDirection: 'row', alignItems: 'center' }}
                 >
-                    <Ionicons name="chevron-back-outline" size={31} color="#9E44FF" />
+                    <Ionicons name="chevron-back-outline" size={31} color={isDarkTheme ? "#9e44ff" : "#5f2999"} />
                     <Text style={styles.returnText}>Return</Text>
                 </TouchableOpacity>
             </View>
@@ -122,7 +122,7 @@ export default function SignUpScreen({ navigation }) {
                 <TextInput
                     style={styles.input}
                     placeholder="Email"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={isDarkTheme ? "#aaa" : "#666"}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -133,7 +133,7 @@ export default function SignUpScreen({ navigation }) {
                     <TextInput
                         style={styles.passwordInput}
                         placeholder="Password"
-                        placeholderTextColor="#aaa"
+                        placeholderTextColor={isDarkTheme ? "#aaa" : "#666"}
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
@@ -146,8 +146,8 @@ export default function SignUpScreen({ navigation }) {
                     >
                         <Ionicons
                             name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                            size={22}
-                            color="#aaa"
+                            size={26}
+                            color={isDarkTheme ? "#aaa" : "#666"}
                         />
                     </TouchableOpacity>
                 </View>
@@ -159,6 +159,7 @@ export default function SignUpScreen({ navigation }) {
                         onValueChange={setRememberMe}
                         trackColor={{ false: '#ccc', true: '#d2cdf0' }}
                         thumbColor={rememberMe ? '#6a5acd' : '#f4f3f4'}
+                        style={{ transform: [{ scaleX: 1.15 }, { scaleY: 1.15 }], marginLeft: 5 }}
                     />
                 </View>
 
@@ -269,14 +270,15 @@ const getStyle = (theme) => {
             alignItems: 'center',
         },
         returnText: {
-            fontSize: 16,
-            color: '#9E44FF',
-            marginLeft: 5,
+            fontSize: 18,
+            color: isDarkTheme ? "#9e44ff" : "#5f2999",
+            marginLeft: -2,
             fontFamily: 'Inter',
         },
         rememberMeContainer: {
             flexDirection: 'row',
             alignItems: 'center',
+            marginTop: 13,
             marginBottom: 20,
             bottom: 100,
         },
@@ -284,7 +286,7 @@ const getStyle = (theme) => {
             marginRight: 10,
         },
         rememberMeText: {
-            fontSize: 16,
+            fontSize: 17,
             color: isDarkTheme ? '#fff' : '#333',
             fontFamily: 'Inter',
         },

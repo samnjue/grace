@@ -57,7 +57,8 @@
     "undefined": "supabase/supabase-js",
     "uuid": "^11.0.5",
     "yup": "^1.6.1",
-    "expo-image-manipulator": "~13.0.6"
+    "expo-image-manipulator": "~13.0.6",
+    "expo-notifications": "~0.29.13"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

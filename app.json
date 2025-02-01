@@ -44,6 +44,12 @@
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_600SemiBold.ttf"
           ]
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "useNextNotificationsApi": true
+        }
       ]
     ],
     "extra": {

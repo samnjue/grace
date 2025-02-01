@@ -124,7 +124,7 @@ export default function LogInScreen({ navigation }) {
                         onPress={() => navigation.goBack()}
                         style={{ flexDirection: 'row', alignItems: 'center' }}
                     >
-                        <Ionicons name="chevron-back-outline" size={31} color="#9E44FF" />
+                        <Ionicons name="chevron-back-outline" size={31} color={isDarkTheme ? "#9e44ff" : "#5f2999"} />
                         <Text style={styles.returnText}>Return</Text>
                     </TouchableOpacity>
                 </View>
@@ -144,7 +144,7 @@ export default function LogInScreen({ navigation }) {
                 <TextInput
                     style={styles.input}
                     placeholder="Email"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={isDarkTheme ? "#aaa" : "#666"}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -157,7 +157,7 @@ export default function LogInScreen({ navigation }) {
                     <TextInput
                         style={styles.passwordInput}
                         placeholder="Password"
-                        placeholderTextColor="#aaa"
+                        placeholderTextColor={isDarkTheme ? "#aaa" : "#666"}
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
@@ -170,8 +170,8 @@ export default function LogInScreen({ navigation }) {
                     >
                         <Ionicons
                             name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                            size={22}
-                            color="#aaa"
+                            size={26}
+                            color={isDarkTheme ? "#aaa" : "#666"}
                         />
                     </TouchableOpacity>
                 </View>
@@ -279,9 +279,9 @@ const getStyle = (theme) => {
             alignItems: 'center',
         },
         returnText: {
-            fontSize: 16,
-            color: '#9E44FF',
-            marginLeft: 5,
+            fontSize: 18,
+            color: isDarkTheme ? "#9e44ff" : "#5f2999",
+            marginLeft: -2,
             fontFamily: 'Inter',
         },
     }

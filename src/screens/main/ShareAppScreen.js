@@ -11,7 +11,7 @@ import * as NavigationBar from 'expo-navigation-bar';
 const ShareAppScreen = ({ navigation }) => {
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
-    const appLink = 'https://example.com/app';
+    const appLink = 'https://play.google.com/store/apps/details?id=com.grace.ivory';
 
     const handleCopyLink = () => {
         Clipboard.setString(appLink);

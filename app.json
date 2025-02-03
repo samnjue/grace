@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "mark13",
+    "name": "Grace",
     "slug": "mark13",
-    "version": "1.0.0",
+    "version": "1.13.27",
     "scheme": "grace.ivory",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -27,7 +27,8 @@
         "INTERNET"
       ],
       "softwareKeyboardLayoutMode": "pan",
-      "package": "com.grace.ivory"
+      "package": "com.grace.ivory",
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -43,12 +44,6 @@
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold.ttf.png",
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_600SemiBold.ttf"
           ]
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "useNextNotificationsApi": true
         }
       ]
     ],

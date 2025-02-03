@@ -14,7 +14,6 @@ import * as NavigationBar from 'expo-navigation-bar';
 import NetInfo from '@react-native-community/netinfo';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { supabase } from '../utils/supabase';
-import { registerForPushNotificationsAsync } from '../utils/notifications';
 
 const Stack = createStackNavigator();
 
@@ -157,26 +156,6 @@ export default function AppNavigator() {
         NavigationBar.setBackgroundColorAsync(isDarkTheme ? '#121212' : '#fff');
         NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
     }, [isDarkTheme]);
-
-    useEffect(() => {
-        async function getToken() {
-            const token = await registerForPushNotificationsAsync();
-            if (token) {
-                const user = await supabase.auth.getUser();
-                if (user?.data?.user) {
-                    const { error } = await supabase
-                        .from("users")
-                        .update({ push_token: token })
-                        .eq("id", user.data.user.id);
-
-                    if (error) console.log("Error saving token:", error);
-                    else console.log("Push token saved!");
-                }
-            }
-        }
-
-        getToken();
-    }, []);
 
     const appTheme = isDarkTheme
         ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: '#121212' } }

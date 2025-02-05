@@ -12,7 +12,6 @@ import { setTheme } from '../../redux/slices/themeSlice';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import Notification from '../../utils/notifications';
 
 const ProfileScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
@@ -316,7 +315,7 @@ const ProfileScreen = ({ navigation }) => {
                     <Text style={styles.sectionTitle} maxFontSizeMultiplier={0}>
                         SETTINGS
                     </Text>
-                    <Notification />
+                    {/* <Notification /> */}
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => navigation.navigate('ShareScreen')}
@@ -451,7 +450,7 @@ const ProfileScreen = ({ navigation }) => {
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-                        Version 1.13.27
+                        Version 1.13.28
                     </Text>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
                         © 2025 ivory

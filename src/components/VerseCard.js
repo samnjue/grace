@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Text, View, ImageBackground, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { Text, View, ImageBackground, TouchableOpacity, Animated } from 'react-native';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 import { fetchVerseOfTheDay } from '../services/supabaseService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
@@ -11,19 +13,22 @@ export default function VerseCard({ refreshKey }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const navigation = useNavigation();
-
     const theme = useSelector((state) => state.theme.theme);
     const styles = getStyle(theme);
+
+    // Animation for fading shimmer out and fading content in
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const contentOpacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         const getVerse = async () => {
             try {
                 setLoading(true);
+                setError('');
                 const data = await fetchVerseOfTheDay();
                 if (data) {
                     setVerse(data);
                     await AsyncStorage.setItem('verseOfTheDay', JSON.stringify(data));
-                    setError('');
                 } else {
                     setError('No verse found');
                 }
@@ -35,39 +40,63 @@ export default function VerseCard({ refreshKey }) {
                 }
             } finally {
                 setLoading(false);
+                Animated.parallel([
+                    Animated.timing(fadeAnim, {
+                        toValue: 0,
+                        duration: 400, // Smooth fade-out of shimmer
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(contentOpacity, {
+                        toValue: 1,
+                        duration: 400, // Smooth fade-in of content
+                        delay: 100, // Small delay for better effect
+                        useNativeDriver: true,
+                    }),
+                ]).start();
             }
         };
 
         getVerse();
     }, [refreshKey]);
 
-    if (loading) return <ActivityIndicator style={styles.loader} size="large" color="#6A5ACD" />;
-
-    if (error) return (
-        <View style={styles.errorCard}>
-            <Text style={styles.errorTitle} maxFontSizeMultiplier={1.2}>Verse of the day</Text>
-            <Text style={styles.errorText} maxFontSizeMultiplier={1.2}>{error}</Text>
-        </View>
-    );
-
     return (
-        <ImageBackground
-            source={{ uri: verse?.backgroundImage }}
-            style={styles.card}
-            imageStyle={styles.image}
-        >
-            <TouchableOpacity
-                style={styles.historyButton}
-                onPress={() => navigation.navigate('VerseHistoryScreen')}
-            >
-                <Ionicons name="chevron-forward" size={22} color="white" />
-            </TouchableOpacity>
-            <View>
-                <Text style={styles.title} maxFontSizeMultiplier={1.2}>Verse of the Day</Text>
-                <Text style={styles.reference} maxFontSizeMultiplier={1.2}>{verse?.reference}</Text>
-                <Text style={styles.content} maxFontSizeMultiplier={1.2}>{verse?.verse_text}</Text>
-            </View>
-        </ImageBackground>
+        <View>
+            {loading ? (
+                <Animated.View style={[styles.shimmerWrapper, { opacity: fadeAnim }]}>
+                    <ShimmerPlaceholder
+                        LinearGradient={LinearGradient}
+                        shimmerColors={['#E0E0E0', '#F5F5F5', '#E0E0E0']}
+                        style={styles.shimmerCard}
+                        autoRun={true}
+                    />
+                </Animated.View>
+            ) : error ? (
+                <Animated.View style={[styles.errorCard, { opacity: contentOpacity }]}>
+                    <Text style={styles.errorTitle} maxFontSizeMultiplier={1.2}>Verse of the Day</Text>
+                    <Text style={styles.errorText} maxFontSizeMultiplier={1.2}>{error}</Text>
+                </Animated.View>
+            ) : (
+                <Animated.View style={{ opacity: contentOpacity }}>
+                    <ImageBackground
+                        source={{ uri: verse?.backgroundImage }}
+                        style={styles.card}
+                        imageStyle={styles.image}
+                    >
+                        <TouchableOpacity
+                            style={styles.historyButton}
+                            onPress={() => navigation.navigate('VerseHistoryScreen')}
+                        >
+                            <Ionicons name="chevron-forward" size={22} color="white" />
+                        </TouchableOpacity>
+                        <View>
+                            <Text style={styles.title} maxFontSizeMultiplier={1.2}>Verse of the Day</Text>
+                            <Text style={styles.reference} maxFontSizeMultiplier={1.2}>{verse?.reference}</Text>
+                            <Text style={styles.content} maxFontSizeMultiplier={1.2}>{verse?.verse_text}</Text>
+                        </View>
+                    </ImageBackground>
+                </Animated.View>
+            )}
+        </View>
     );
 }
 
@@ -80,7 +109,7 @@ const getStyle = (theme) => {
             marginBottom: 16,
             padding: 16,
             flexGrow: 1,
-            minHeight: 200
+            minHeight: 200,
         },
         image: {
             borderRadius: 10,
@@ -116,9 +145,6 @@ const getStyle = (theme) => {
             textAlign: 'center',
             marginVertical: 50,
         },
-        loader: {
-            marginVertical: 16,
-        },
         errorCard: {
             borderRadius: 10,
             marginBottom: 16,
@@ -136,14 +162,17 @@ const getStyle = (theme) => {
             marginBottom: 8,
             color: isDarkTheme ? '#fff' : '#000',
         },
-        verse_text: {
-            fontSize: 24,
-            color: 'white',
-            fontWeight: '600',
-            textAlign: 'left',
-            lineHeight: 29,
-            marginTop: 5,
-            fontFamily: 'SourceSerif'
+        shimmerWrapper: {
+            borderRadius: 10,
+            marginBottom: 16,
+            overflow: 'hidden',
+        },
+        shimmerCard: {
+            borderRadius: 10,
+            marginBottom: 16,
+            padding: 16,
+            minHeight: 200,
+            backgroundColor: '#E0E0E0',
         },
         historyButton: {
             position: 'absolute',
@@ -157,5 +186,5 @@ const getStyle = (theme) => {
             alignItems: 'center',
             zIndex: 10,
         }
-    }
+    };
 };

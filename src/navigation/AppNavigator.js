@@ -14,6 +14,7 @@ import * as NavigationBar from 'expo-navigation-bar';
 import NetInfo from '@react-native-community/netinfo';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { supabase } from '../utils/supabase';
+import { usePushNotifications } from '../utils/notifications';
 
 const Stack = createStackNavigator();
 
@@ -31,6 +32,8 @@ export default function AppNavigator() {
         };
         logDebugInfo();
     }, [user]);*/
+
+    const expoPushToken = usePushNotifications();
 
     useEffect(() => {
         const checkUserSession = async () => {

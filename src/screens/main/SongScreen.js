@@ -124,7 +124,11 @@ export default function SongScreen({ navigation }) {
                     <TextInput
                         style={styles.searchBar}
                         placeholder="Search"
-                        placeholderTextColor='#aaa'
+                        placeholderTextColor={isDarkTheme ? '#bbb' : '#8c8c8c'}
+                        fontFamily='Inter_600SemiBold'
+                        fontSize={16}
+                        color={isDarkTheme ? '#fff' : '#121212'}
+                        selectionColor={isDarkTheme ? '#ccc' : '#121212'}
                         value={searchQuery}
                         onChangeText={(text) => setSearchQuery(text)}
                         maxFontSizeMultiplier={1.2}
@@ -146,7 +150,7 @@ export default function SongScreen({ navigation }) {
                 <FlatList
                     data={filteredSongs}
                     keyExtractor={(item) => item}
-                    contentContainerStyle={{ paddingBottom: 50 }}
+                    contentContainerStyle={{ paddingBottom: 60 }}
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => handleSongPress(item)}>
                             <Text style={styles.songName} maxFontSizeMultiplier={1.2}>{item}</Text>
@@ -166,6 +170,7 @@ const getStyle = (theme) => {
         container: {
             flex: 1,
             padding: 16,
+            paddingTop: 5,
             paddingBottom: 0,
             backgroundColor: isDarkTheme ? '#121212' : '#fff',
         },

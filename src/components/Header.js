@@ -45,7 +45,7 @@ const getStyle = (theme) => {
         versionText: {
             color: '#000',
             fontSize: 14,
-            fontWeight: 'bold',
+            fontFamily: 'Inter_700Bold'
         },
     }
 }

@@ -164,7 +164,7 @@ const getStyle = (theme) => {
             fontSize: 23,
             fontFamily: 'Archivo_700Bold',
             lineHeight: 35,
-            color: '#6a5acd',
+            color: isDarkTheme ? '#bf76f3' : '#6a5acd',
             marginLeft: 60,
             right: 15,
             marginBottom: -15,

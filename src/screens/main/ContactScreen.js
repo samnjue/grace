@@ -124,6 +124,9 @@ const ContactScreen = ({ navigation }) => {
                     value={firstName}
                     onChangeText={setFirstName}
                     maxFontSizeMultiplier={1.2}
+                    fontFamily='Inter_600SemiBold'
+                    selectionColor={isDarkTheme ? '#ccc' : '#666666'}
+                    fontSize={16}
                 />
 
                 <Text style={styles.inputLabel} maxFontSizeMultiplier={1.2}>Email</Text>
@@ -134,6 +137,9 @@ const ContactScreen = ({ navigation }) => {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     maxFontSizeMultiplier={1.2}
+                    fontFamily='Inter_600SemiBold'
+                    selectionColor={isDarkTheme ? '#ccc' : '#000'}
+                    fontSize={16}
                 />
 
                 <TextInput
@@ -141,14 +147,19 @@ const ContactScreen = ({ navigation }) => {
                     value={comment}
                     onChangeText={setComment}
                     placeholder="Enter comment..."
+                    placeholderTextColor={isDarkTheme ? '#ccc' : '#666666'}
+                    fontFamily='Archivo_700Bold'
+                    fontSize={17}
                     multiline
                     maxFontSizeMultiplier={1.2}
+                    color={isDarkTheme ? '#fff' : '#000'}
+                    selectionColor={isDarkTheme ? '#ccc' : '#000'}
                 />
             </View>
 
             {/* Send Button */}
             <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-                <Text style={styles.sendButtonText} maxFontSizeMultiplier={1.2}>Send</Text>
+                <Text style={styles.sendButtonText} maxFontSizeMultiplier={1.2}>Submit</Text>
             </TouchableOpacity>
 
             {/* Success Modal */}
@@ -215,6 +226,7 @@ const getStyle = (theme) => {
             flexDirection: 'row',
             alignItems: 'center',
             padding: 16,
+            paddingBottom: 0
         },
         headerText: {
             marginLeft: 10,
@@ -227,9 +239,9 @@ const getStyle = (theme) => {
             marginLeft: 20
         },
         inputLabel: {
-            fontSize: 14,
-            fontFamily: 'Inter',
-            color: '#666',
+            fontSize: 16,
+            fontFamily: 'Inter_600SemiBold',
+            color: isDarkTheme ? '#ccc' : '#666',
             marginBottom: 5,
         },
         input: {
@@ -246,12 +258,12 @@ const getStyle = (theme) => {
             height: 100,
             width: '95%',
             borderWidth: 1,
-            borderColor: '#ccc',
+            borderColor: isDarkTheme ? '#393939' : '#e4e4e4',
             borderRadius: 5,
             paddingHorizontal: 10,
             paddingTop: 10,
             textAlignVertical: 'top',
-            backgroundColor: isDarkTheme ? '#ccc' : '#f7f7f7',
+            backgroundColor: isDarkTheme ? '#393939' : '#e6e6e6',
         },
         sendButton: {
             backgroundColor: '#6a5acd',

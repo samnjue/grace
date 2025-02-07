@@ -221,6 +221,10 @@ const ProfileScreen = ({ navigation }) => {
         Linking.openURL('https://play.google.com/store/apps/details?id=com.grace.ivory');
     };
 
+    const openWebsite = () => {
+        Linking.openURL('https://ivorykenya.wordpress.com/about/');
+    };
+
     const showThemeSelector = () => {
         setThemeModalVisible(true);
     };
@@ -333,7 +337,7 @@ const ProfileScreen = ({ navigation }) => {
                         style={styles.logOutButton}
                         onPress={() => setIsLogOutModalVisible(true)}
                     >
-                        <Ionicons name="log-out-outline" size={27} color="white" />
+                        <Ionicons name="log-out-outline" size={28} color="white" />
                         <Text style={styles.logOutText} maxFontSizeMultiplier={0}>
                             LOG OUT
                         </Text>
@@ -439,22 +443,28 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 {/* About Section */}
-                <View style={styles.section}>
+                <View style={[styles.section, { paddingTop: 5 }]}>
                     <Text style={styles.sectionTitle} maxFontSizeMultiplier={0}>
                         ABOUT
                     </Text>
-                    <TouchableOpacity style={styles.button} onPress={openPlayStore}>
+                    <TouchableOpacity style={[styles.button, { paddingBottom: 10, marginBottom: 10 }]} onPress={openPlayStore}>
                         <Ionicons name="star-outline" size={30} color={isDarkTheme ? '#fff' : '#333'} />
                         <Text style={styles.buttonText} maxFontSizeMultiplier={0}>
-                            Rate the App!
+                            Rate the App
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.button,]} onPress={openWebsite} >
+                        <Ionicons name="information-circle-outline" size={32} color={isDarkTheme ? '#fff' : '#333'} />
+                        <Text style={styles.buttonText} maxFontSizeMultiplier={0}>
+                            Privacy Policy & Account Deletion
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-                        Version 1.13.28
+                        v1.13.28
                     </Text>
-                    <Text style={styles.versionText} maxFontSizeMultiplier={0}>
+                    {/* <Text style={styles.versionText} maxFontSizeMultiplier={0}>
                         © 2025 ivory
-                    </Text>
+                    </Text> */}
                 </View>
             </ScrollView>
         </View>
@@ -471,7 +481,9 @@ const getStyle = (theme) => {
         profileSection: {
             flexDirection: 'row',
             alignItems: 'center',
-            padding: 20
+            padding: 20,
+            paddingBottom: 10,
+            paddingTop: 5
         },
         uidContainer: {
             flex: 1,
@@ -488,7 +500,7 @@ const getStyle = (theme) => {
             flexShrink: 1
         },
         section: {
-            padding: 20,
+            padding: 15,
             paddingBottom: -8
         },
         sectionTitle: {
@@ -521,7 +533,7 @@ const getStyle = (theme) => {
         },
         logOutText: {
             color: 'white',
-            fontWeight: 'bold',
+            fontFamily: 'Inter_700Bold',
             marginLeft: 5,
             fontSize: 15,
         },
@@ -618,9 +630,10 @@ const getStyle = (theme) => {
         },
         versionText: {
             fontSize: 12,
+            fontFamily: 'Inter_700Bold',
             color: 'gray',
             marginTop: 10,
-            left: 15
+            left: 10
         },
         scrollContent: {
             paddingBottom: 60,

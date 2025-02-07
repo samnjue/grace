@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ActivityIndicator, FlatList, TouchableOpacity, Modal, RefreshControl } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchDistrictNewsScreen } from '../../services/supabaseService';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../utils/supabase';
 import { deleteNewsItem } from '../../services/supabaseService';
@@ -46,33 +46,39 @@ export default function DistrictNewsScreen() {
         fetchSelectedDistrict();
     }, []);
 
-    useEffect(() => {
-        const getNews = async () => {
-            if (!selectedDistrict) return;
+    // useEffect(() => {
 
-            try {
-                setLoading(true);
-                const data = await fetchDistrictNewsScreen(selectedDistrict.district_id);
-                if (data.length > 0) {
-                    setNews(data);
-                    await AsyncStorage.setItem('districtNews', JSON.stringify(data));
-                    setError('');
-                } else {
-                    setError('No information posted');
-                }
-            } catch {
-                setError('Check your connection');
-                const cachedNews = await AsyncStorage.getItem('districtNews');
-                if (cachedNews) {
-                    setNews(JSON.parse(cachedNews));
-                }
-            } finally {
-                setLoading(false);
+    // }, [selectedDistrict]);
+
+    const getNews = async () => {
+        if (!selectedDistrict) return;
+
+        try {
+            setLoading(true);
+            const data = await fetchDistrictNewsScreen(selectedDistrict.district_id);
+            if (data.length > 0) {
+                setNews(data);
+                await AsyncStorage.setItem('districtNews', JSON.stringify(data));
+                setError('');
+            } else {
+                setError('No information posted');
             }
-        };
+        } catch {
+            setError('Check your connection');
+            const cachedNews = await AsyncStorage.getItem('districtNews');
+            if (cachedNews) {
+                setNews(JSON.parse(cachedNews));
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        getNews();
-    }, [selectedDistrict]);
+    useFocusEffect(
+        useCallback(() => {
+            getNews();
+        }, [selectedDistrict])
+    );
 
     const formatDate = (isoString) => {
         const postDate = new Date(isoString);

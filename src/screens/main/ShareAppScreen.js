@@ -165,7 +165,7 @@ const getStyle = (theme) => {
         appName: {
             marginTop: 20,
             bottom: 130,
-            fontSize: 24,
+            fontSize: 30,
             fontFamily: 'Archivo_700Bold',
             color: isDarkTheme ? '#fff' : '#000',
         },

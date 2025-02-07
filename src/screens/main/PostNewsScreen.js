@@ -87,17 +87,24 @@ const PostNewsScreen = ({ navigation }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Title"
-                    placeholderTextColor="#999"
+                    placeholderTextColor={isDarkTheme ? '#ddd' : '#8c8c8c'}
+                    fontFamily='Inter_600SemiBold'
+                    fontSize={16}
+                    selectionColor={isDarkTheme ? '#ccc' : '#666666'}
                     value={title}
                     onChangeText={setTitle}
                 />
                 <TextInput
                     style={styles.commentInput}
                     placeholder="Write something..."
-                    placeholderTextColor="#999"
+                    placeholderTextColor={isDarkTheme ? '#ccc' : '#666666'}
+                    fontFamily='Archivo_700Bold'
+                    fontSize={17}
                     value={content}
                     onChangeText={setContent}
                     multiline
+                    color={isDarkTheme ? '#fff' : '#000'}
+                    selectionColor={isDarkTheme ? '#ccc' : '#000'}
                 />
             </View>
 
@@ -113,10 +120,10 @@ const PostNewsScreen = ({ navigation }) => {
                 animationType="fade"
                 onRequestClose={() => setIsSuccessModalVisible(false)}
             >
-                <View style={styles.modalContainer}>
+                <View style={styles.successModalContainer}>
                     <View style={styles.modalContent}>
                         <Ionicons name="checkmark-circle" size={80} color="#32d15d" />
-                        <Text style={styles.modalText} maxFontSizeMultiplier={1.2}>News posted successfully!</Text>
+                        <Text style={styles.modalText} maxFontSizeMultiplier={1.2}>Message posted successfully!</Text>
                         <TouchableOpacity
                             style={styles.modalButton}
                             onPress={() => {
@@ -179,7 +186,7 @@ const getStyle = (theme) => {
         input: {
             height: 40,
             borderWidth: 1,
-            borderColor: '#ccc',
+            borderColor: '#8c8c8c',
             borderRadius: 8,
             paddingHorizontal: 10,
             marginBottom: 15,
@@ -189,12 +196,12 @@ const getStyle = (theme) => {
         commentInput: {
             height: 100,
             borderWidth: 1,
-            borderColor: '#ccc',
+            borderColor: isDarkTheme ? '#393939' : '#e4e4e4',
             borderRadius: 8,
             paddingHorizontal: 10,
             paddingTop: 10,
             textAlignVertical: 'top',
-            backgroundColor: isDarkTheme ? '#ccc' : '#f7f7f7',
+            backgroundColor: isDarkTheme ? '#393939' : '#e6e6e6',
         },
         sendButton: {
             marginTop: 20,
@@ -208,6 +215,12 @@ const getStyle = (theme) => {
             color: '#fff',
             fontSize: 16,
             fontFamily: 'Archivo_700Bold',
+        },
+        successModalContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
         },
         modalContainer: {
             flex: 1,

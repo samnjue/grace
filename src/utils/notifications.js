@@ -20,6 +20,10 @@ export function usePushNotifications() {
 
         notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
             console.log('Notification Received:', notification);
+            Notifications.presentNotificationAsync({
+                title: notification.request.content.title,
+                body: notification.request.content.body,
+            });
         });
 
         responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {

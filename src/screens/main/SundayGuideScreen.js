@@ -45,7 +45,7 @@ export default function SundayGuideScreen() {
                 setCardScales(data.map(() => new Animated.Value(1)));
             }
         } catch (error) {
-            console.error('Error loading guide data:', error);
+            //console.error('Error loading guide data:', error);
         }
     };
 

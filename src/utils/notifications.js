@@ -54,7 +54,7 @@ async function registerForPushNotificationsAsync() {
     }
 
     if (finalStatus !== 'granted') {
-        Alert.alert('Failed to get push token for push notification!');
+        Alert.alert('Enable notifications in settings');
         return;
     }
 
@@ -76,12 +76,12 @@ async function savePushTokenToSupabase(token) {
             .eq('id', user.id);
 
         if (error) {
-            console.error('Error saving push token:', error.message);
+            //console.error('Error saving push token:', error.message);
         } else {
-            console.log('Push token saved to Supabase successfully');
+            //console.log('Push token saved to Supabase successfully');
         }
     } catch (err) {
-        console.error('Error retrieving user session:', err);
+        //console.error('Error retrieving user session:', err);
     }
 }
 

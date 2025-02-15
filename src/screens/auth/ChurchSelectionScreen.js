@@ -34,7 +34,7 @@ export default function ChurchSelectionScreen({ navigation }) {
                 }
                 setChurches(data);
             } catch (error) {
-                setError('Failed to load churches. Please try again.');
+                setError('Failed to load churches. Relaunch the app and try again.');
             } finally {
                 setIsLoading(false);
             }

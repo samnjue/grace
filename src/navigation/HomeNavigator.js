@@ -5,6 +5,10 @@ import VerseHistoryScreen from '../screens/main/VerseHistoryScreen';
 import DistrictNewsScreen from '../screens/main/DistrictNewsScreen';
 import PostNewsScreen from '../screens/main/PostNewsScreen';
 import SundayGuideScreen from '../screens/main/SundayGuideScreen';
+import SelectedSongScreen from '../screens/main/SelectedSongScreen.js';
+import ChapterScreen from '../screens/main/ChapterScreen.js';
+import SermonScreen from '../screens/main/SermonScreen.js';
+import SundayGuideHistoryScreen from '../screens/main/SundayGuideHistoryScreen';
 import { TransitionSpecs } from '@react-navigation/stack';
 import { CardStyleInterpolators } from '@react-navigation/stack';
 
@@ -38,6 +42,34 @@ export default function HomeNavigator() {
                 },
             }} />
             <Stack.Screen name="SundayGuideScreen" component={SundayGuideScreen} options={{
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+                transitionSpec: {
+                    open: TransitionSpecs.TransitionIOSSpec,
+                    close: TransitionSpecs.TransitionIOSSpec,
+                },
+            }} />
+            <Stack.Screen name="SelectedSongScreen" component={SelectedSongScreen} options={{
+                cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+                transitionSpec: {
+                    open: TransitionSpecs.TransitionIOSSpec,
+                    close: TransitionSpecs.TransitionIOSSpec,
+                },
+            }} />
+            <Stack.Screen name="ChapterScreen" component={ChapterScreen} options={{
+                cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+                transitionSpec: {
+                    open: TransitionSpecs.TransitionIOSSpec,
+                    close: TransitionSpecs.TransitionIOSSpec,
+                },
+            }} />
+            <Stack.Screen name="SermonScreen" component={SermonScreen} options={{
+                cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+                transitionSpec: {
+                    open: TransitionSpecs.TransitionIOSSpec,
+                    close: TransitionSpecs.TransitionIOSSpec,
+                },
+            }} />
+            <Stack.Screen name="SundayGuideHistoryScreen" component={SundayGuideHistoryScreen} options={{
                 cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
                 transitionSpec: {
                     open: TransitionSpecs.TransitionIOSSpec,

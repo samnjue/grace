@@ -245,7 +245,7 @@ const ChapterScreen = () => {
         }
 
         ranges.push(rangeStart === previous ? `${rangeStart}` : `${rangeStart}-${previous}`);
-        formattedText += ` ${ranges.join(', ')}`;
+        formattedText += `${ranges.join(', ')}`;
 
         formattedText += ' ';
 

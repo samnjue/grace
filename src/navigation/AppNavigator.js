@@ -35,6 +35,75 @@ export default function AppNavigator() {
 
     const expoPushToken = usePushNotifications();
 
+    const refreshSession = async () => {
+        try {
+            const savedSession = await AsyncStorage.getItem('supabaseSession');
+            if (!savedSession) return;
+
+            const session = JSON.parse(savedSession);
+            const { expires_at, refresh_token } = session;
+
+            const currentTime = Math.floor(Date.now() / 1000);
+            if (expires_at - currentTime > 300) {
+                return;
+            }
+
+            const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+
+            if (error) {
+                console.error('Session refresh error:', error);
+                return;
+            }
+
+            if (data?.session) {
+                await AsyncStorage.setItem('supabaseSession', JSON.stringify(data.session));
+                await AsyncStorage.setItem('userSession', JSON.stringify(data.session));
+
+                dispatch(logIn({ email: data.session.user.email, session: data.session }));
+                console.log('Session refreshed successfully');
+            }
+        } catch (err) {
+            console.error('Error refreshing session:', err);
+        }
+    };
+
+    useEffect(() => {
+        const interval = setInterval(refreshSession, 1000 * 60 * 5);
+        refreshSession();
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        const restoreSession = async () => {
+            try {
+                const savedSession = await AsyncStorage.getItem('supabaseSession');
+                if (!savedSession) {
+                    console.log('No session found, redirecting to login.');
+                    return;
+                }
+
+                const session = JSON.parse(savedSession);
+                const currentTime = Math.floor(Date.now() / 1000);
+
+                if (session.expires_at < currentTime) {
+                    console.log('Session expired, attempting to refresh...');
+                    await refreshSession();
+                } else {
+                    await supabase.auth.setSession({
+                        access_token: session.access_token,
+                        refresh_token: session.refresh_token,
+                    });
+                }
+            } catch (error) {
+                console.error('Error restoring session:', error);
+            }
+        };
+
+        restoreSession();
+    }, []);
+
+
     useEffect(() => {
         const checkUserSession = async () => {
             try {

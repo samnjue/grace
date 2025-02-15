@@ -5,6 +5,7 @@ import BibleNavigator from './BibleNavigator';
 import SongNavigator from './SongNavigator';
 import ProfileNavigator from './ProfileNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import Octicons from 'react-native-vector-icons/Octicons';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import HomeNavigator from './HomeNavigator';
 import { useSelector } from 'react-redux';
@@ -53,6 +54,12 @@ export default function MainTabNavigator() {
         if (routeName === 'SundayGuideScreen') {
             return { display: 'none' };
         }
+        if (routeName === 'SermonScreen') {
+            return { display: 'none' };
+        }
+        if (routeName === 'SundayGuideHistoryScreen') {
+            return { display: 'none' };
+        }
         return {
             position: 'absolute',
             backgroundColor: isDarkTheme ? '#121212' : '#ffffff',
@@ -76,11 +83,15 @@ export default function MainTabNavigator() {
                 },
                 tabBarIconStyle: { marginTop: -4 },
                 tabBarIcon: ({ focused, color, size }) => {
-                    let iconName;
-
                     if (route.name === 'Home') {
-                        iconName = focused ? 'home' : 'home-outline';
-                    } else if (route.name === 'Bible') {
+                        return <Octicons
+                            name={focused ? 'home' : 'home'}
+                            size={size}
+                            color={color}
+                        />;
+                    }
+                    let iconName;
+                    if (route.name === 'Bible') {
                         iconName = focused ? 'book' : 'book-outline';
                     } else if (route.name === 'Songs') {
                         iconName = focused ? 'musical-notes' : 'musical-notes-outline';
@@ -89,7 +100,6 @@ export default function MainTabNavigator() {
                     }
 
                     return <Ionicons name={iconName} size={size} color={color} />;
-
                 },
                 tabBarItemStyle: {
                     borderRadius: 8,
@@ -124,4 +134,3 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
-

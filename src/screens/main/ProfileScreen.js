@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Modal, Pressable, Linking, ScrollView, BackHandler, StatusBar, Image, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { setTheme } from '../../redux/slices/themeSlice';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ProfileScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
@@ -26,6 +27,45 @@ const ProfileScreen = ({ navigation }) => {
     const [selectedTheme, setSelectedTheme] = useState('');
     const theme = useSelector((state) => state.theme.theme);
     const isDarkTheme = theme.toLowerCase().includes('dark');
+
+    const refreshSession = async () => {
+        try {
+            const savedSession = await AsyncStorage.getItem('supabaseSession');
+            if (!savedSession) return;
+
+            const session = JSON.parse(savedSession);
+            const { expires_at, refresh_token } = session;
+
+            const currentTime = Math.floor(Date.now() / 1000);
+            if (expires_at - currentTime > 300) {
+                return;
+            }
+
+            const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+
+            if (error) {
+                console.error('Session refresh error:', error);
+                return;
+            }
+
+            if (data?.session) {
+                await AsyncStorage.setItem('supabaseSession', JSON.stringify(data.session));
+                await AsyncStorage.setItem('userSession', JSON.stringify(data.session));
+
+                dispatch(logIn({ email: data.session.user.email, session: data.session }));
+                console.log('Session refreshed successfully');
+            }
+        } catch (err) {
+            console.error('Error refreshing session:', err);
+        }
+    };
+
+    useEffect(() => {
+        const interval = setInterval(refreshSession, 1000 * 60 * 5);
+        refreshSession();
+
+        return () => clearInterval(interval);
+    }, []);
 
     const fetchUserData = async () => {
         try {
@@ -57,6 +97,12 @@ const ProfileScreen = ({ navigation }) => {
             Alert.alert('Error', 'Something went wrong');
         }
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchUserData();
+        }, [])
+    );
 
     const loadOfflineData = async () => {
         try {
@@ -460,7 +506,7 @@ const ProfileScreen = ({ navigation }) => {
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-                        v1.13.28
+                        v1.13.29
                     </Text>
                     {/* <Text style={styles.versionText} maxFontSizeMultiplier={0}>
                         © 2025 ivory

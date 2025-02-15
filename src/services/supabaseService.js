@@ -1,4 +1,4 @@
-import { supabase } from "../utils/supabase";
+import { supabase } from "../utils/supabase.js";
 
 export const fetchVerseOfTheDay = async () => {
     const { data, error } = await supabase
@@ -22,7 +22,11 @@ export const fetchVerseHistory = async (limit = 20) => {
 };
 
 export const fetchDistrictNews = async (district) => {
-    const { data, error } = await supabase.from('districtNews').select('*').eq('district_id', district).order('created_at', { ascending: false }).limit(3);
+    const { data, error } = await supabase
+        .from('districtNews')
+        .select('*')
+        .eq('district_id', district)
+        .order('created_at', { ascending: false }).limit(3);
     if (error) throw error;
     return data;
 };
@@ -36,9 +40,7 @@ export const fetchDistrictNewsScreen = async (district) => {
             content,
             created_at,
             user_id,
-            users (
-                display_name
-            )
+            users (display_name)
         `)
         .eq('district_id', district)
         .order('created_at', { ascending: false });
@@ -77,7 +79,11 @@ export const deleteNewsItem = async (newsItemId) => {
 
 
 export const fetchSundayGuide = async (church) => {
-    const { data, error } = await supabase.from('sundayGuide').select('*').eq('church_id', church).order('created_at', { ascending: true });
+    const { data, error } = await supabase
+        .from('sundayGuide')
+        .select('*')
+        .eq('church_id', church)
+        .order('created_at', { ascending: true });
     if (error) throw error;
     return data;
 };

@@ -27,18 +27,46 @@ export default function SignUpScreen({ navigation }) {
         NavigationBar.setButtonStyleAsync(isDarkTheme ? 'dark' : 'light');
     }, [isDarkTheme]);
 
+    const [displayName, setDisplayName] = useState('');
+
     const handleSignUp = async () => {
         setError('');
         setSignUpSuccess(false);
         setIsLoading(true);
 
+        if (!/^[a-zA-Z\s]*$/.test(displayName) || displayName.length > 25) {
+            setError('Invalid display name. Only letters and spaces allowed, max 25 characters.');
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            const { error: authError } = await supabase.auth.signUp({ email, password });
+            const { data, error: authError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { display_name: displayName },
+                },
+            });
+
             if (authError) {
                 if (authError.message.includes("already registered")) {
                     throw new Error('An account with this email already exists. Please log in or use a different email.');
                 }
-                throw new Error(authError.message || 'An unexpected error occurred during sign up.');
+                throw new Error(authError.message || 'An unexpected error occurred during sign-up.');
+            }
+
+            if (!data.user) {
+                throw new Error('User sign-up failed. Please try again.');
+            }
+
+            const { error: tableError } = await supabase
+                .from('users')
+                .upsert([{ id: data.user.id, display_name: displayName }]);
+
+
+            if (tableError) {
+                throw new Error('Failed to save display name. Please try again.');
             }
 
             if (rememberMe) {
@@ -52,6 +80,7 @@ export default function SignUpScreen({ navigation }) {
             setIsLoading(false);
         }
     };
+
 
     useEffect(() => {
         const handleDeepLink = async (event) => {
@@ -120,6 +149,15 @@ export default function SignUpScreen({ navigation }) {
                 )}
 
                 <TextInput
+                    style={styles.nameInput}
+                    placeholder="Name"
+                    placeholderTextColor={isDarkTheme ? "#aaa" : "#666"}
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                    maxFontSizeMultiplier={1.2}
+                />
+
+                <TextInput
                     style={styles.input}
                     placeholder="Email"
                     placeholderTextColor={isDarkTheme ? "#aaa" : "#666"}
@@ -175,6 +213,18 @@ export default function SignUpScreen({ navigation }) {
                     )}
                 </TouchableOpacity>
             </View>
+
+            <View style={styles.privacyContainer}>
+                <Text style={styles.privacyText}>
+                    By signing up, you agree to Grace's{' '}
+                    <Text
+                        style={styles.privacyLink}
+                        onPress={() => Linking.openURL('https://ivorykenya.wordpress.com/grace-privacy-policy/')}
+                    >
+                        Privacy Policy
+                    </Text>
+                </Text>
+            </View>
         </View>
     );
 }
@@ -194,6 +244,17 @@ const getStyle = (theme) => {
             height: 300,
             marginBottom: -20,
             bottom: 55,
+        },
+        nameInput: {
+            backgroundColor: isDarkTheme ? '#333' : '#f5f5f5',
+            color: isDarkTheme ? '#f5f5f5' : '',
+            width: 350,
+            paddingVertical: 14,
+            paddingHorizontal: 18,
+            borderRadius: 8,
+            marginBottom: 15,
+            fontSize: 16,
+            bottom: 100,
         },
         input: {
             backgroundColor: isDarkTheme ? '#333' : '#f5f5f5',
@@ -289,6 +350,21 @@ const getStyle = (theme) => {
             fontSize: 17,
             color: isDarkTheme ? '#fff' : '#333',
             fontFamily: 'Inter',
+        },
+        privacyContainer: {
+            position: 'absolute',
+            bottom: 20,
+            alignSelf: 'center',
+            paddingHorizontal: 20,
+        },
+        privacyText: {
+            fontSize: 14,
+            color: isDarkTheme ? '#ccc' : '#333',
+            textAlign: 'center',
+        },
+        privacyLink: {
+            color: isDarkTheme ? "#9e44ff" : "#5f2999",
+            fontWeight: 'bold',
         },
     }
 };

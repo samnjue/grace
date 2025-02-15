@@ -11,6 +11,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setTheme } from '../../redux/slices/themeSlice';
 import { supabase } from '../../utils/supabase';
+import { logIn } from '../../redux/slices/userSlice';
 
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
@@ -23,6 +24,45 @@ export default function HomeScreen() {
     const theme = useSelector((state) => state.theme.theme);
     const isDarkTheme = theme.toLowerCase().includes('dark');
     const styles = getStyle(theme);
+
+    const refreshSession = async () => {
+        try {
+            const savedSession = await AsyncStorage.getItem('supabaseSession');
+            if (!savedSession) return;
+
+            const session = JSON.parse(savedSession);
+            const { expires_at, refresh_token } = session;
+
+            const currentTime = Math.floor(Date.now() / 1000);
+            if (expires_at - currentTime > 300) {
+                return;
+            }
+
+            const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+
+            if (error) {
+                console.error('Session refresh error:', error);
+                return;
+            }
+
+            if (data?.session) {
+                await AsyncStorage.setItem('supabaseSession', JSON.stringify(data.session));
+                await AsyncStorage.setItem('userSession', JSON.stringify(data.session));
+
+                dispatch(logIn({ email: data.session.user.email, session: data.session }));
+                console.log('Session refreshed successfully');
+            }
+        } catch (err) {
+            console.error('Error refreshing session:', err);
+        }
+    };
+
+    useEffect(() => {
+        const interval = setInterval(refreshSession, 1000 * 60 * 5);
+        refreshSession();
+
+        return () => clearInterval(interval);
+    }, []);
 
     const fetchUserData = async () => {
         try {

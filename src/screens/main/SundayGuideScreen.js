@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Animated } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 
 export default function SundayGuideScreen() {
@@ -15,6 +15,9 @@ export default function SundayGuideScreen() {
     const [cardPositions, setCardPositions] = useState({});
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
+    const route = useRoute();
+    const { selectedDay } = route.params || {};
+    const [isHistoryData, setIsHistoryData] = useState(false);
 
     const theme = useSelector((state) => state.theme.theme);
     const isDarkTheme = theme.toLowerCase().includes('dark');
@@ -22,9 +25,10 @@ export default function SundayGuideScreen() {
 
     useEffect(() => {
         loadGuideData();
-    }, []);
+    }, [selectedDay]);
 
     const getFormattedDate = () => {
+        if (selectedDay) return selectedDay;
         const date = new Date();
         const options = { weekday: 'long', day: 'numeric', month: 'long' };
         return date.toLocaleDateString('en-US', options);
@@ -32,6 +36,7 @@ export default function SundayGuideScreen() {
 
     const loadGuideData = async () => {
         try {
+            const storedHistoryData = await AsyncStorage.getItem('SundayGuideHistory');
             const storedData = await AsyncStorage.getItem('sundayGuide');
             const storedPosition = await AsyncStorage.getItem('currentPosition');
 
@@ -39,15 +44,30 @@ export default function SundayGuideScreen() {
                 setCurrentPosition(parseInt(storedPosition, 10));
             }
 
-            if (storedData) {
-                const data = JSON.parse(storedData);
-                setGuideData(data);
-                setCardScales(data.map(() => new Animated.Value(1)));
+            let data = [];
+
+            if (storedHistoryData) {
+                const parsedHistory = JSON.parse(storedHistoryData);
+                if (selectedDay) {
+                    data = parsedHistory.filter(item => item.day === selectedDay);
+                }
             }
+
+            if (data.length === 0 && storedData) {
+                data = JSON.parse(storedData);
+                setIsHistoryData(false);
+            } else {
+                setIsHistoryData(true);
+            }
+
+            setGuideData(data);
+            setCardScales(data.map(() => new Animated.Value(1)));
+
         } catch (error) {
-            //console.error('Error loading guide data:', error);
+            console.error('Error loading guide data:', error);
         }
     };
+
 
     const handleRadioPress = async (index) => {
         if (!cardScales[currentPosition] || !cardScales[index]) return;
@@ -75,35 +95,37 @@ export default function SundayGuideScreen() {
         }
     };
 
-    const renderTimeline = () => (
-        <View style={styles.timelineContainer}>
-            {/* Continuous line that spans entire height */}
-            <View style={styles.continuousLine} />
+    const renderTimeline = () => {
+        if (isHistoryData) return null;
 
-            {guideData.map((_, index) => {
-                const isActivated = index <= currentPosition;
-                const topPosition = cardPositions[index]
-                    ? cardPositions[index] + (cardHeights[index] / 2) - 10
-                    : 40 + (index * 60);
+        return (
+            <View style={styles.timelineContainer}>
+                <View style={styles.continuousLine} />
+                {guideData.map((_, index) => {
+                    const isActivated = index <= currentPosition;
+                    const topPosition = cardPositions[index]
+                        ? cardPositions[index] + (cardHeights[index] / 2) - 10
+                        : 40 + (index * 60);
 
-                return (
-                    <TouchableOpacity
-                        key={index}
-                        onPress={() => handleRadioPress(index)}
-                        style={[
-                            styles.radioButton,
-                            isActivated && styles.radioButtonActivated,
-                            { position: 'absolute', top: topPosition }
-                        ]}
-                    >
-                        {isActivated && (
-                            <Ionicons name="checkmark" size={14} color={isDarkTheme ? '#fff' : "#fff"} style={styles.radioCheckmark} />
-                        )}
-                    </TouchableOpacity>
-                );
-            })}
-        </View>
-    );
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => handleRadioPress(index)}
+                            style={[
+                                styles.radioButton,
+                                isActivated && styles.radioButtonActivated,
+                                { position: 'absolute', top: topPosition }
+                            ]}
+                        >
+                            {isActivated && (
+                                <Ionicons name="checkmark" size={23} color={isDarkTheme ? '#fff' : "#fff"} style={styles.radioCheckmark} />
+                            )}
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+        );
+    };
 
     const measureCard = (index, event) => {
         const { height, y } = event.nativeEvent.layout;
@@ -125,14 +147,80 @@ export default function SundayGuideScreen() {
                     onLayout={(event) => measureCard(index, event)}
                     style={[
                         styles.cardContainer,
-                        {
-                            transform: [{ scale: cardScales[index] }]
-                        }
+                        { transform: [{ scale: cardScales[index] }] }
                     ]}
                 >
-                    <View style={styles.card}>
+                    <View style={[
+                        styles.card,
+                        item.tenzi_number ? { paddingBottom: 45 } : {},
+                        item.chapter ? { paddingBottom: 45 } : {},
+                        item.sermon ? { paddingBottom: 45 } : {},
+                    ]}>
                         <Text style={styles.title}>{item.title}</Text>
                         <Text style={styles.content}>{item.content}</Text>
+
+                        {item.tenzi_number && (
+                            <TouchableOpacity
+                                style={styles.viewButton}
+                                onPress={() => {
+
+                                    let parsedSongData;
+                                    try {
+                                        parsedSongData = JSON.parse(item.songData);
+                                    } catch (error) {
+                                        //console.error('Error parsing song data:', error);
+                                        return;
+                                    }
+
+                                    navigation.navigate('SelectedSongScreen', {
+                                        songTitle: item.songTitle,
+                                        songData: parsedSongData,
+                                        type: 'Tenzi'
+                                    });
+                                }}
+                            >
+                                <Text style={styles.buttonText}>View</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {item.chapter && (
+                            <TouchableOpacity
+                                style={styles.viewButton}
+                                onPress={() => {
+
+                                    let parsedSongData;
+                                    try {
+                                        parsedSongData = JSON.parse(item.songData);
+                                    } catch (error) {
+                                        //console.error('Error parsing song data:', error);
+                                        return;
+                                    }
+
+                                    navigation.navigate('ChapterScreen', {
+                                        book: item.book,
+                                        chapter: item.chapter
+                                    });
+                                }}
+                            >
+                                <Text style={styles.buttonText}>View</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {item.sermon && (
+                            <TouchableOpacity
+                                style={styles.viewButton}
+                                onPress={() => {
+                                    navigation.navigate('SermonScreen', {
+                                        sermon_image: item.sermon_image,
+                                        sermon: item.sermon,
+                                        sermon_metadata: item.sermon_metadata,
+                                        sermon_content: item.sermon_content
+                                    });
+                                }}
+                            >
+                                <Text style={styles.buttonText}>Open</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </Animated.View>
             ))}
@@ -145,7 +233,22 @@ export default function SundayGuideScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={isDarkTheme ? '#fff' : "#000"} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{getFormattedDate()}</Text>
+                <Text
+                    style={styles.headerTitle}
+                    numberOfLines={1}
+                    ellipsizeMode='tail'
+                >
+                    {getFormattedDate()}
+                </Text>
+
+                {!isHistoryData && (
+                    <TouchableOpacity
+                        style={styles.timeButton}
+                        onPress={() => navigation.navigate('SundayGuideHistoryScreen')}
+                    >
+                        <Ionicons name="time-outline" size={24} color={isDarkTheme ? '#fff' : "#000"} />
+                    </TouchableOpacity>
+                )}
             </View>
 
             <ScrollView
@@ -161,6 +264,7 @@ export default function SundayGuideScreen() {
             </ScrollView>
         </View>
     );
+
 }
 
 const getStyle = (theme) => {
@@ -221,9 +325,9 @@ const getStyle = (theme) => {
             backgroundColor: '#d3d3d3',
         },
         radioButton: {
-            width: 20,
-            height: 20,
-            borderRadius: 10,
+            width: 30,
+            height: 30,
+            borderRadius: 20,
             borderWidth: 3,
             borderColor: isDarkTheme ? '#555' : '#d3d3d3',
             backgroundColor: isDarkTheme ? '#999' : '#fff',
@@ -234,13 +338,17 @@ const getStyle = (theme) => {
             backgroundColor: '#6a5acd',
             zIndex: 5,
         },
+        radioCheckmark: {
+            alignItems: 'center',
+            justifyContent: 'center'
+        },
         cardContainer: {
             marginBottom: 40,
         },
         card: {
             backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
             borderRadius: 10,
-            padding: 20,
+            padding: 19,
             elevation: 2,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
@@ -258,6 +366,26 @@ const getStyle = (theme) => {
             fontFamily: 'SourceSerif4_700Bold',
             color: isDarkTheme ? '#dedede' : '#555',
             lineHeight: 20,
+        },
+        viewButton: {
+            position: 'absolute',
+            bottom: 10,
+            right: 10,
+            backgroundColor: '#6a5acd',
+            paddingVertical: 6,
+            paddingHorizontal: 15,
+            borderRadius: 20,
+        },
+        buttonText: {
+            color: 'white',
+            fontFamily: 'Inter_700Bold'
+        },
+        timeButton: {
+            marginLeft: 'auto',
+            padding: 8,
+            borderRadius: 20,
+            backgroundColor: isDarkTheme ? '#333' : '#f0f0f0',
+            elevation: 3,
         },
     }
 };

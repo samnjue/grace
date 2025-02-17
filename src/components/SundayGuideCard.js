@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Text, View, FlatList, TouchableOpacity, Animated } from 'react-native';
+import { Text, View, FlatList, TouchableOpacity, Animated, ScrollView } from 'react-native';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fetchSundayGuide } from '../services/supabaseService';
@@ -10,6 +10,8 @@ import { useSelector } from 'react-redux';
 
 export default function SundayGuideCard({ refreshKey }) {
     const [guideData, setGuideData] = useState([]);
+    const [groupedData, setGroupedData] = useState({});
+    const [selectedService, setSelectedService] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedChurch, setSelectedChurch] = useState(null);
@@ -64,10 +66,14 @@ export default function SundayGuideCard({ refreshKey }) {
             const matchingEntries = data.filter((entry) => entry.day === todayString);
 
             if (matchingEntries.length > 0) {
+                const grouped = groupByService(matchingEntries);
+                setGroupedData(grouped);
+                setSelectedService(Object.keys(grouped)[0] || null);
                 setGuideData(matchingEntries);
                 await AsyncStorage.setItem('sundayGuide', JSON.stringify(matchingEntries));
             } else {
                 setGuideData([]);
+                setGroupedData({});
                 setError('No new content available at this time');
                 await AsyncStorage.setItem('sundayGuide', JSON.stringify([]));
             }
@@ -75,7 +81,10 @@ export default function SundayGuideCard({ refreshKey }) {
             setError('Check your connection');
             const cachedGuide = await AsyncStorage.getItem('sundayGuide');
             if (cachedGuide) {
-                setGuideData(JSON.parse(cachedGuide));
+                const cachedData = JSON.parse(cachedGuide);
+                setGuideData(cachedData);
+                setGroupedData(groupByService(cachedData));
+                setSelectedService(Object.keys(groupByService(cachedData))[0] || null);
             }
         } finally {
             setLoading(false);
@@ -116,6 +125,8 @@ export default function SundayGuideCard({ refreshKey }) {
 
                     if (JSON.stringify(matchingEntries) !== JSON.stringify(cachedData)) {
                         setGuideData(matchingEntries);
+                        setGroupedData(groupByService(matchingEntries));
+                        setSelectedService(Object.keys(groupByService(matchingEntries))[0] || null);
                         await AsyncStorage.setItem('sundayGuide', JSON.stringify(matchingEntries));
                     }
                 } catch (err) {
@@ -126,6 +137,14 @@ export default function SundayGuideCard({ refreshKey }) {
             checkForUpdates();
         }, [selectedChurch])
     );
+
+    const groupByService = (data) => {
+        return data.reduce((acc, item) => {
+            if (!acc[item.service]) acc[item.service] = [];
+            acc[item.service].push(item);
+            return acc;
+        }, {});
+    };
 
     return (
         <View>
@@ -151,15 +170,40 @@ export default function SundayGuideCard({ refreshKey }) {
                 </Animated.View>
             ) : (
                 <Animated.View style={[styles.card]}>
+                    <Text style={styles.title}>Sunday Guide</Text>
                     <TouchableOpacity
                         style={styles.historyButton}
                         onPress={() => navigation.navigate('SundayGuideScreen')}
                     >
                         <Ionicons name="chevron-forward" size={22} color="white" />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Sunday Guide</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                        {Object.keys(groupedData).map((service) => (
+                            <TouchableOpacity
+                                key={service}
+                                style={[
+                                    styles.servicePillButton,
+                                    selectedService === service && {
+                                        backgroundColor: isDarkTheme ? '#444' : '#bbb',
+                                        borderColor: isDarkTheme ? '#fff' : '#222',
+                                    },
+                                ]}
+                                onPress={() => setSelectedService(service)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.historyPillButtonText,
+                                        selectedService === service && { color: isDarkTheme ? '#fff' : '#222' },
+                                    ]}
+                                >
+                                    {service}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+
                     <FlatList
-                        data={guideData.slice(0, 3)}
+                        data={(groupedData[selectedService] || []).slice(0, 3)}
                         renderItem={({ item }) => (
                             <View style={styles.guideItem}>
                                 <Text style={styles.guideTitle}>{item.title}</Text>
@@ -167,7 +211,7 @@ export default function SundayGuideCard({ refreshKey }) {
                             </View>
                         )}
                         keyExtractor={(item) => item.id.toString()}
-                        ListEmptyComponent={<Text style={styles.emptyText}>No new content available at this time</Text>}
+                        ListEmptyComponent={<Text style={styles.emptyText}>No new content available</Text>}
                         contentContainerStyle={{ flexGrow: 1 }}
                         scrollEnabled={false}
                     />
@@ -280,10 +324,21 @@ const getStyle = (theme) => {
             borderWidth: 3,
             borderColor: isDarkTheme ? '#fff' : '#555'
         },
+        servicePillButton: {
+            marginTop: 2,
+            marginHorizontal: 7,
+            alignSelf: 'center',
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#EDEDED',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 25,
+            borderWidth: 3,
+            borderColor: isDarkTheme ? '#fff' : '#555'
+        },
         historyPillButtonText: {
             color: isDarkTheme ? '#fff' : '#555',
             fontSize: 15,
             fontFamily: 'Inter_700Bold'
         },
     };
-};
+}

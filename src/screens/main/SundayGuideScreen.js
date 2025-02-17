@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -8,15 +8,13 @@ import { useSelector } from 'react-redux';
 
 export default function SundayGuideScreen() {
     const [guideData, setGuideData] = useState([]);
-    const [currentPosition, setCurrentPosition] = useState(0);
+    const [groupedData, setGroupedData] = useState({});
+    const [selectedService, setSelectedService] = useState(null);
     const scrollViewRef = useRef(null);
-    const [cardScales, setCardScales] = useState([]);
-    const [cardHeights, setCardHeights] = useState({});
-    const [cardPositions, setCardPositions] = useState({});
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const route = useRoute();
-    const { selectedDay } = route.params || {};
+    const { selectedDay, initialService } = route.params || {};
     const [isHistoryData, setIsHistoryData] = useState(false);
 
     const theme = useSelector((state) => state.theme.theme);
@@ -34,15 +32,18 @@ export default function SundayGuideScreen() {
         return date.toLocaleDateString('en-US', options);
     };
 
+    const groupByService = (data) => {
+        return data.reduce((acc, item) => {
+            if (!acc[item.service]) acc[item.service] = [];
+            acc[item.service].push(item);
+            return acc;
+        }, {});
+    };
+
     const loadGuideData = async () => {
         try {
             const storedHistoryData = await AsyncStorage.getItem('SundayGuideHistory');
             const storedData = await AsyncStorage.getItem('sundayGuide');
-            const storedPosition = await AsyncStorage.getItem('currentPosition');
-
-            if (storedPosition) {
-                setCurrentPosition(parseInt(storedPosition, 10));
-            }
 
             let data = [];
 
@@ -50,182 +51,109 @@ export default function SundayGuideScreen() {
                 const parsedHistory = JSON.parse(storedHistoryData);
                 if (selectedDay) {
                     data = parsedHistory.filter(item => item.day === selectedDay);
+                    setIsHistoryData(true);
                 }
             }
 
             if (data.length === 0 && storedData) {
                 data = JSON.parse(storedData);
                 setIsHistoryData(false);
-            } else {
+            } else if (data.length > 0) {
                 setIsHistoryData(true);
             }
 
+            const grouped = groupByService(data);
+            setGroupedData(grouped);
+            setSelectedService(initialService || Object.keys(grouped)[0] || null);
             setGuideData(data);
-            setCardScales(data.map(() => new Animated.Value(1)));
-
         } catch (error) {
             console.error('Error loading guide data:', error);
         }
     };
 
-
-    const handleRadioPress = async (index) => {
-        if (!cardScales[currentPosition] || !cardScales[index]) return;
-
-        Animated.timing(cardScales[currentPosition], {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-        }).start();
-
-        Animated.timing(cardScales[index], {
-            toValue: 1.09,
-            duration: 200,
-            useNativeDriver: true,
-        }).start();
-
-        setCurrentPosition(index);
-        await AsyncStorage.setItem('currentPosition', index.toString());
-
-        if (cardPositions[index]) {
-            scrollViewRef.current?.scrollTo({
-                y: cardPositions[index],
-                animated: true,
-            });
-        }
-    };
-
-    const renderTimeline = () => {
-        if (isHistoryData) return null;
+    const renderCards = () => {
+        const currentServiceData = groupedData[selectedService] || [];
 
         return (
-            <View style={styles.timelineContainer}>
-                <View style={styles.continuousLine} />
-                {guideData.map((_, index) => {
-                    const isActivated = index <= currentPosition;
-                    const topPosition = cardPositions[index]
-                        ? cardPositions[index] + (cardHeights[index] / 2) - 10
-                        : 40 + (index * 60);
+            <View style={styles.cardsContainer}>
+                {currentServiceData.map((item, index) => (
+                    <View
+                        key={index}
+                        style={styles.cardContainer}
+                    >
+                        <View style={[
+                            styles.card,
+                            item.tenzi_number ? { paddingBottom: 45 } : {},
+                            item.chapter ? { paddingBottom: 45 } : {},
+                            item.sermon ? { paddingBottom: 45 } : {},
+                        ]}>
+                            <Text style={styles.title}>{item.title}</Text>
+                            <Text style={styles.content}>{item.content}</Text>
 
-                    return (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() => handleRadioPress(index)}
-                            style={[
-                                styles.radioButton,
-                                isActivated && styles.radioButtonActivated,
-                                { position: 'absolute', top: topPosition }
-                            ]}
-                        >
-                            {isActivated && (
-                                <Ionicons name="checkmark" size={23} color={isDarkTheme ? '#fff' : "#fff"} style={styles.radioCheckmark} />
+                            {item.tenzi_number && (
+                                <TouchableOpacity
+                                    style={styles.viewButton}
+                                    onPress={() => {
+                                        let parsedSongData;
+                                        try {
+                                            parsedSongData = JSON.parse(item.songData);
+                                        } catch (error) {
+                                            return;
+                                        }
+
+                                        navigation.navigate('SelectedSongScreen', {
+                                            songTitle: item.songTitle,
+                                            songData: parsedSongData,
+                                            type: 'Tenzi'
+                                        });
+                                    }}
+                                >
+                                    <Text style={styles.buttonText}>View</Text>
+                                </TouchableOpacity>
                             )}
-                        </TouchableOpacity>
-                    );
-                })}
+
+                            {item.chapter && (
+                                <TouchableOpacity
+                                    style={styles.viewButton}
+                                    onPress={() => {
+                                        let parsedSongData;
+                                        try {
+                                            parsedSongData = JSON.parse(item.songData);
+                                        } catch (error) {
+                                            return;
+                                        }
+
+                                        navigation.navigate('ChapterScreen', {
+                                            book: item.book,
+                                            chapter: item.chapter
+                                        });
+                                    }}
+                                >
+                                    <Text style={styles.buttonText}>View</Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {item.sermon && (
+                                <TouchableOpacity
+                                    style={styles.viewButton}
+                                    onPress={() => {
+                                        navigation.navigate('SermonScreen', {
+                                            sermon_image: item.sermon_image,
+                                            sermon: item.sermon,
+                                            sermon_metadata: item.sermon_metadata,
+                                            sermon_content: item.sermon_content
+                                        });
+                                    }}
+                                >
+                                    <Text style={styles.buttonText}>Open</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
+                ))}
             </View>
         );
     };
-
-    const measureCard = (index, event) => {
-        const { height, y } = event.nativeEvent.layout;
-        setCardHeights(prev => ({
-            ...prev,
-            [index]: height
-        }));
-        setCardPositions(prev => ({
-            ...prev,
-            [index]: y
-        }));
-    };
-
-    const renderCards = () => (
-        <View style={styles.cardsContainer}>
-            {guideData.map((item, index) => (
-                <Animated.View
-                    key={index}
-                    onLayout={(event) => measureCard(index, event)}
-                    style={[
-                        styles.cardContainer,
-                        { transform: [{ scale: cardScales[index] }] }
-                    ]}
-                >
-                    <View style={[
-                        styles.card,
-                        item.tenzi_number ? { paddingBottom: 45 } : {},
-                        item.chapter ? { paddingBottom: 45 } : {},
-                        item.sermon ? { paddingBottom: 45 } : {},
-                    ]}>
-                        <Text style={styles.title}>{item.title}</Text>
-                        <Text style={styles.content}>{item.content}</Text>
-
-                        {item.tenzi_number && (
-                            <TouchableOpacity
-                                style={styles.viewButton}
-                                onPress={() => {
-
-                                    let parsedSongData;
-                                    try {
-                                        parsedSongData = JSON.parse(item.songData);
-                                    } catch (error) {
-                                        //console.error('Error parsing song data:', error);
-                                        return;
-                                    }
-
-                                    navigation.navigate('SelectedSongScreen', {
-                                        songTitle: item.songTitle,
-                                        songData: parsedSongData,
-                                        type: 'Tenzi'
-                                    });
-                                }}
-                            >
-                                <Text style={styles.buttonText}>View</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {item.chapter && (
-                            <TouchableOpacity
-                                style={styles.viewButton}
-                                onPress={() => {
-
-                                    let parsedSongData;
-                                    try {
-                                        parsedSongData = JSON.parse(item.songData);
-                                    } catch (error) {
-                                        //console.error('Error parsing song data:', error);
-                                        return;
-                                    }
-
-                                    navigation.navigate('ChapterScreen', {
-                                        book: item.book,
-                                        chapter: item.chapter
-                                    });
-                                }}
-                            >
-                                <Text style={styles.buttonText}>View</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {item.sermon && (
-                            <TouchableOpacity
-                                style={styles.viewButton}
-                                onPress={() => {
-                                    navigation.navigate('SermonScreen', {
-                                        sermon_image: item.sermon_image,
-                                        sermon: item.sermon,
-                                        sermon_metadata: item.sermon_metadata,
-                                        sermon_content: item.sermon_content
-                                    });
-                                }}
-                            >
-                                <Text style={styles.buttonText}>Open</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </Animated.View>
-            ))}
-        </View>
-    );
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -251,20 +179,49 @@ export default function SundayGuideScreen() {
                 )}
             </View>
 
+            {/* Service Selection Pills */}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.servicePillsContainer}
+                contentContainerStyle={styles.servicePillsContent}
+            >
+                {Object.keys(groupedData).map((service) => (
+                    <TouchableOpacity
+                        key={service}
+                        style={[
+                            styles.servicePillButton,
+                            selectedService === service && {
+                                backgroundColor: isDarkTheme ? '#6a5acd' : '#928ddf',
+                                borderColor: isDarkTheme ? '#928ddf' : '#a09de4',
+                            },
+                        ]}
+                        onPress={() => {
+                            setSelectedService(service);
+                        }}
+                    >
+                        <Text
+                            style={[
+                                styles.servicePillButtonText,
+                                selectedService === service && { color: isDarkTheme ? '#fff' : '#222' },
+                            ]}
+                        >
+                            {service}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
             <ScrollView
                 ref={scrollViewRef}
                 style={styles.scrollContainer}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.contentContainer}>
-                    {renderTimeline()}
-                    {renderCards()}
-                </View>
+                {renderCards()}
             </ScrollView>
         </View>
     );
-
 }
 
 const getStyle = (theme) => {
@@ -292,58 +249,17 @@ const getStyle = (theme) => {
         },
         scrollContent: {
             flexGrow: 1,
-        },
-        contentContainer: {
-            flexDirection: 'row',
-            paddingHorizontal: 20,
             paddingBottom: 20,
-            minHeight: '100%',
-        },
-        timelineContainer: {
-            position: 'relative',
-            width: 30,
-            height: '100%',
         },
         cardsContainer: {
-            flex: 1,
-            paddingTop: 40,
-            paddingLeft: 20,
-        },
-        timelineBar: {
-            width: 4,
-            height: 60,
-        },
-        topTimelineBar: {
-            position: 'absolute',
-            top: 0,
-            height: 40,
-        },
-        activatedBar: {
-            backgroundColor: '#6a5acd',
-        },
-        deactivatedBar: {
-            backgroundColor: '#d3d3d3',
-        },
-        radioButton: {
-            width: 30,
-            height: 30,
-            borderRadius: 20,
-            borderWidth: 3,
-            borderColor: isDarkTheme ? '#555' : '#d3d3d3',
-            backgroundColor: isDarkTheme ? '#999' : '#fff',
-            zIndex: 5,
-        },
-        radioButtonActivated: {
-            borderColor: '#6a5acd',
-            backgroundColor: '#6a5acd',
-            zIndex: 5,
-        },
-        radioCheckmark: {
+            paddingHorizontal: 20,
             alignItems: 'center',
-            justifyContent: 'center'
+            marginTop: 16,
         },
         cardContainer: {
-            marginBottom: 40,
+            marginBottom: 20,
+            width: '100%',
+            maxWidth: 500,
         },
         card: {
             backgroundColor: isDarkTheme ? '#2c2c2c' : '#ededed',
@@ -387,5 +303,28 @@ const getStyle = (theme) => {
             backgroundColor: isDarkTheme ? '#333' : '#f0f0f0',
             elevation: 3,
         },
-    }
+        servicePillsContainer: {
+            maxHeight: 60,
+            marginBottom: 10,
+        },
+        servicePillsContent: {
+            paddingHorizontal: 16,
+        },
+        servicePillButton: {
+            marginTop: 2,
+            marginHorizontal: 7,
+            alignSelf: 'center',
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#EDEDED',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 25,
+            borderWidth: 3,
+            borderColor: isDarkTheme ? '#fff' : '#555'
+        },
+        servicePillButtonText: {
+            color: isDarkTheme ? '#fff' : '#555',
+            fontSize: 14,
+            fontFamily: 'Inter_700Bold'
+        },
+    };
 };

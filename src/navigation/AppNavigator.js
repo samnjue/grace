@@ -15,7 +15,6 @@ import NetInfo from '@react-native-community/netinfo';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { supabase } from '../utils/supabase';
 import { usePushNotifications } from '../utils/notifications';
-import * as InAppUpdates from 'expo-in-app-updates';
 import * as ExpoInAppUpdates from 'expo-in-app-updates';
 
 const Stack = createStackNavigator();
@@ -37,91 +36,44 @@ export default function AppNavigator() {
 
     const expoPushToken = usePushNotifications();
 
-    // const checkForUpdates = async () => {
-    //     try {
-    //         const netInfo = await NetInfo.fetch();
-    //         if (!netInfo.isConnected) return;
+    const checkForUpdates = async () => {
+        if (__DEV__ || Platform.OS === "web") return;
 
-    //         const result = await InAppUpdates.checkForUpdateAsync();
-
-    //         if (result.isAvailable) {
-    //             // For production, you might want to show a custom UI instead of an alert
-    //             Alert.alert(
-    //                 "Update Available",
-    //                 "A new version of the app is available. Would you like to update now?",
-    //                 [
-    //                     {
-    //                         text: "Update",
-    //                         onPress: async () => {
-    //                             try {
-    //                                 const result = await InAppUpdates.startUpdateAsync(
-    //                                     Platform.OS === 'android'
-    //                                         ? InAppUpdates.AndroidUpdateType.FLEXIBLE
-    //                                         : InAppUpdates.AndroidUpdateType.IMMEDIATE
-    //                                 );
-
-    //                                 if (result === InAppUpdates.UpdateStatus.ERROR) {
-    //                                     console.error('Update failed');
-    //                                 }
-    //                             } catch (error) {
-    //                                 console.error('Error during update:', error);
-    //                             }
-    //                         }
-    //                     },
-    //                     {
-    //                         text: "Later",
-    //                         style: "cancel"
-    //                     }
-    //                 ]
-    //             );
-    //         }
-    //     } catch (error) {
-    //         console.error('Error checking for updates:', error);
-    //     }
-    // };
-
-    const useInAppUpdates = () => {
-        useEffect(() => {
-            if (__DEV__ || Platform.OS === "web") return;
-
+        try {
             if (Platform.OS === "android") {
-                ExpoInAppUpdates.checkAndStartUpdate(
-                    // If you want an immediate update that will cover the app with the update overlay, set it to true.
-                    // More details : https://developer.android.com/guide/playcore/in-app-updates#update-flows
-                    false
-                );
+                await ExpoInAppUpdates.checkAndStartUpdate(false);
             } else {
-                ExpoInAppUpdates.checkForUpdate().then(({ updateAvailable }) => {
-                    if (!updateAvailable) return;
+                const { updateAvailable } = await ExpoInAppUpdates.checkForUpdate();
+                if (!updateAvailable) return;
 
-                    Alert.alert(
-                        "Update available",
-                        "A new version of the app is available with many improvements and bug fixes. Would you like to update now?",
-                        [
-                            {
-                                text: "Update",
-                                isPreferred: true,
-                                async onPress() {
-                                    await ExpoInAppUpdates.startUpdate();
-                                },
+                Alert.alert(
+                    "Update available",
+                    "A new version of the app is available with many improvements and bug fixes. Would you like to update now?",
+                    [
+                        {
+                            text: "Update",
+                            isPreferred: true,
+                            async onPress() {
+                                await ExpoInAppUpdates.startUpdate();
                             },
-                            { text: "Cancel" },
-                        ]
-                    );
-                });
+                        },
+                        { text: "Cancel" },
+                    ]
+                );
             }
-        }, []);
+        } catch (error) {
+            console.error('Error checking for updates:', error);
+        }
     };
 
-    // Add update check to your existing session refresh interval
     useEffect(() => {
         const interval = setInterval(() => {
             refreshSession();
-            useInAppUpdates();
-        }, 1000 * 60 * 5); // Check every 5 minutes
+            checkForUpdates();
+        }, 1000 * 60 * 5);
 
         refreshSession();
-        useInAppUpdates(); // Initial check
+        checkForUpdates();
 
         return () => clearInterval(interval);
     }, []);

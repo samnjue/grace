@@ -15,7 +15,7 @@ export default function SongScreen({ navigation }) {
 
     const songTypes = useMemo(() => ({
         Tenzi: tenziData,
-        Hymns: hymnsData,
+        //Hymns: hymnsData,
     }), []);
 
     const typeKeys = Object.keys(songTypes);

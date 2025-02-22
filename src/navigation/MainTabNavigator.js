@@ -60,6 +60,9 @@ export default function MainTabNavigator() {
         if (routeName === 'SundayGuideHistoryScreen') {
             return { display: 'none' };
         }
+        if (routeName === 'HighlightScreen') {
+            return { display: 'none' };
+        }
         return {
             position: 'absolute',
             backgroundColor: isDarkTheme ? '#121212' : '#ffffff',

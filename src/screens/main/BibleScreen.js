@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, TextInput, Modal, ScrollView, StatusBar, Keyboard } from 'react-native';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Image, TextInput, Modal, ScrollView, StatusBar, Keyboard, Animated, Easing, PanResponder } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import nkjvBibleData from '../../data/bible.json';
 // import kswBibleData from '../../data/biblia.json';
@@ -9,8 +9,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setTheme } from '../../redux/slices/themeSlice';
 import * as NavigationBar from 'expo-navigation-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-export default function BibleScreen({ navigation }) {
+export default function BibleScreen({ }) {
     const insets = useSafeAreaInsets();
     const bibleVersions = useMemo(() => ({
         NKJV: nkjvBibleData,
@@ -32,6 +33,77 @@ export default function BibleScreen({ navigation }) {
     const isDarkTheme = theme.toLowerCase().includes('dark');
 
     const styles = getStyle(theme);
+
+    const [menuVisible, setMenuVisible] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(300)).current;
+    const navigation = useNavigation();
+
+    const toggleMenu = () => {
+        if (menuVisible) {
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    easing: Easing.ease,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 300,
+                    duration: 300,
+                    easing: Easing.ease,
+                    useNativeDriver: true,
+                }),
+            ]).start(() => setMenuVisible(false));
+        } else {
+            setMenuVisible(true);
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 300,
+                    easing: Easing.ease,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    easing: Easing.ease,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    };
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: (_, gestureState) => {
+                return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
+            },
+            onMoveShouldSetPanResponder: (_, gestureState) => {
+                return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
+            },
+            onPanResponderMove: (_, gestureState) => {
+                if (gestureState.dy > 0) {
+                    slideAnim.setValue(gestureState.dy);
+                }
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                if (gestureState.dy > 50) {
+                    Animated.timing(slideAnim, {
+                        toValue: 300,
+                        duration: 200,
+                        useNativeDriver: true,
+                    }).start(() => setMenuVisible(false));
+                } else {
+                    Animated.timing(slideAnim, {
+                        toValue: 0,
+                        duration: 200,
+                        useNativeDriver: true,
+                    }).start();
+                }
+            },
+        })
+    ).current;
 
     useEffect(() => {
         const loadTheme = async () => {
@@ -121,6 +193,8 @@ export default function BibleScreen({ navigation }) {
                 version={currentVersion}
                 onVersionPress={toggleVersion}
                 showVersionButton={true}
+                showMenuButton={true}
+                onMenuPress={toggleMenu}
             />
             <View style={styles.container}>
                 <View style={styles.search}>
@@ -150,6 +224,10 @@ export default function BibleScreen({ navigation }) {
                         </TouchableOpacity>
                     )}
                 </View>
+
+                {/* <TouchableOpacity style={styles.imageButton} onPress={() => console.log('Button Pressed')}>
+                    <Image source={require('../../../assets/highlight_dark.jpg')} style={styles.image} />
+                </TouchableOpacity> */}
 
                 <FlatList
                     data={filteredBooks}
@@ -194,6 +272,42 @@ export default function BibleScreen({ navigation }) {
                             </View>
                         </View>
                     </Modal>
+                )}
+
+                {/* Sliding and Draggable Modal */}
+                {menuVisible && (
+                    <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
+                        <TouchableOpacity style={styles.menuModalBackground} onPress={toggleMenu} activeOpacity={1} />
+
+                        <Animated.View
+                            style={[
+                                styles.menuModalContainer,
+                                { transform: [{ translateY: slideAnim }] },
+                                { paddingBottom: insets.bottom + 60 },
+                            ]}
+                            pointerEvents="box-none"
+                            {...panResponder.panHandlers}
+                        >
+
+                            {/* Handlebar */}
+                            <View style={styles.handleBar} />
+
+                            {/* Image Button */}
+                            <TouchableOpacity
+                                style={styles.imageButton}
+                                onPress={() => {
+                                    setMenuVisible(false);
+                                    navigation.navigate('HighlightScreen');
+                                }}
+                                onStartShouldSetResponder={() => true}
+                            >
+                                <Image
+                                    source={isDarkTheme ? require('../../../assets/highlight_dark.jpg') : require('../../../assets/highlight_light.jpg')}
+                                    style={styles.image}
+                                />
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </Animated.View>
                 )}
             </View>
         </View>
@@ -299,6 +413,68 @@ const getStyle = (theme) => {
             padding: 8,
             position: 'absolute',
             right: 0,
+        },
+        imageButton: {
+            marginVertical: 15,
+            alignItems: 'center',
+            zIndex: 50
+        },
+        image: {
+            width: 360,
+            height: 100,
+            resizeMode: 'contain',
+            borderWidth: isDarkTheme ? 0.2 : 1,
+            borderColor: isDarkTheme ? '#ccc' : '#aaa',
+            borderRadius: 10
+        },
+        modalOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: isDarkTheme ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)',
+            justifyContent: 'flex-end',
+        },
+        menuModalBackground: {
+            flex: 1,
+        },
+        menuModalContainer: {
+            backgroundColor: isDarkTheme ? '#121212' : '#fff',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+            alignItems: 'center',
+            elevation: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 5,
+            borderWidth: 0.2,
+            borderColor: '#eee'
+        },
+        handleBar: {
+            width: 80,
+            height: 5,
+            backgroundColor: '#aaa',
+            borderRadius: 3,
+            marginBottom: 10,
+        },
+        menuModalText: {
+            fontSize: 18,
+            color: isDarkTheme ? '#fff' : '#000',
+            marginBottom: 20,
+        },
+        menuCloseButton: {
+            backgroundColor: '#007AFF',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 10,
+        },
+        menuCloseButtonText: {
+            color: '#fff',
+            fontSize: 16,
+            fontWeight: 'bold',
         },
     }
 };

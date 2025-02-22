@@ -304,11 +304,11 @@ const getStyle = (theme) => {
             elevation: 3,
         },
         servicePillsContainer: {
-            maxHeight: 60,
+            maxHeight: 50,
             marginBottom: 10,
         },
         servicePillsContent: {
-            paddingHorizontal: 16,
+            paddingHorizontal: 12,
         },
         servicePillButton: {
             marginTop: 2,

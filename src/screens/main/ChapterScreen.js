@@ -138,15 +138,21 @@ const ChapterScreen = () => {
 
     const applyHighlight = (color) => {
         const updatedHighlights = { ...highlightedVerses };
+
         selectedVerses.forEach((verse) => {
             const uniqueKey = `${book}_${chapter}_${verse}`;
-            updatedHighlights[uniqueKey] = color;
+            updatedHighlights[uniqueKey] = {
+                color, // Store the color
+                timestamp: Date.now(), // Store the timestamp
+            };
         });
+
         setHighlightedVerses(updatedHighlights);
         saveHighlightsToStorage(updatedHighlights);
         setSelectedVerses([]);
         setIsPanelVisible(false);
     };
+
 
 
     const removeHighlight = () => {
@@ -164,7 +170,9 @@ const ChapterScreen = () => {
     const renderVerse = (verseText, verseKey) => {
         const parts = verseText.split(/`/);
         const isSelected = selectedVerses.includes(verseKey);
-        const highlightColor = highlightedVerses[`${book}_${chapter}_${verseKey}`];
+        const highlightData = highlightedVerses[`${book}_${chapter}_${verseKey}`];
+        const highlightColor = highlightData ? highlightData.color : null;
+
 
         return (
             <TouchableOpacity

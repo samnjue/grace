@@ -7,10 +7,67 @@ import { useSelector } from 'react-redux';
 import { StatusBar } from 'react-native';
 
 const SermonScreen = ({ route }) => {
-    const { sermon_image, sermon, sermon_metadata, sermon_content } = route.params;
+    const { sermon_image, sermon, sermon_metadata, sermon_content, sermon_audio } = route.params;
     const navigation = useNavigation();
     const theme = useSelector((state) => state.theme.theme);
     const insets = useSafeAreaInsets();
+
+    const [sound, setSound] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [position, setPosition] = useState(0);
+    const [duration, setDuration] = useState(1);
+
+    useEffect(() => {
+        if (sermon_audio) {
+            loadAudio();
+        }
+        return () => {
+            if (sound) {
+                sound.unloadAsync();
+            }
+        };
+    }, [sermon_audio]);
+
+    const loadAudio = async () => {
+        const { sound } = await Audio.Sound.createAsync(
+            { uri: sermon_audio },
+            { shouldPlay: false },
+            onPlaybackStatusUpdate
+        );
+        setSound(sound);
+    };
+
+    const onPlaybackStatusUpdate = (status) => {
+        if (status.isLoaded) {
+            setPosition(status.positionMillis);
+            setDuration(status.durationMillis || 1);
+            setIsPlaying(status.isPlaying);
+        }
+    };
+
+    const togglePlayPause = async () => {
+        if (sound) {
+            if (isPlaying) {
+                await sound.pauseAsync();
+            } else {
+                await sound.playAsync();
+            }
+        }
+    };
+
+    const seekAudio = async (newPosition) => {
+        if (sound) {
+            await sound.setPositionAsync(newPosition);
+        }
+    };
+
+    const forwardAudio = async () => {
+        seekAudio(position + 10000);
+    };
+
+    const rewindAudio = async () => {
+        seekAudio(position - 10000);
+    };
 
     const [scrollY] = useState(new Animated.Value(0));
 
@@ -49,6 +106,40 @@ const SermonScreen = ({ route }) => {
                 <View style={styles.contentContainer}>
                     <Text style={styles.title}>{sermon}</Text>
                     <Text style={styles.metadata}>{sermon_metadata}</Text>
+                    {sermon_audio && (
+                        <View style={styles.audioPlayer}>
+                            <Slider
+                                style={{ width: '100%', height: 40 }}
+                                minimumValue={0}
+                                maximumValue={duration}
+                                value={position}
+                                onSlidingComplete={seekAudio}
+                                minimumTrackTintColor={isDarkTheme ? '#fff' : '#000'}
+                                maximumTrackTintColor="#777"
+                            />
+                            <View style={styles.audioControls}>
+                                <Text style={styles.audioTime}>
+                                    {Math.floor(position / 60000)}:{((position % 60000) / 1000).toFixed(0).padStart(2, '0')}
+                                </Text>
+
+                                <TouchableOpacity onPress={rewindAudio}>
+                                    <Ionicons name="play-back" size={30} color={isDarkTheme ? '#fff' : '#000'} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity onPress={togglePlayPause}>
+                                    <Ionicons name={isPlaying ? 'pause' : 'play'} size={40} color={isDarkTheme ? '#fff' : '#000'} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity onPress={forwardAudio}>
+                                    <Ionicons name="play-forward" size={30} color={isDarkTheme ? '#fff' : '#000'} />
+                                </TouchableOpacity>
+
+                                <Text style={styles.audioTime}>
+                                    {Math.floor(duration / 60000)}:{((duration % 60000) / 1000).toFixed(0).padStart(2, '0')}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
                     <Text style={styles.content}>{sermon_content}</Text>
                 </View>
             </ScrollView>
@@ -137,6 +228,25 @@ const getStyle = (theme, insets) => {
             color: isDarkTheme ? '#fff' : '#121212',
             marginLeft: 10,
             flex: 1,
+        },
+        audioPlayer: {
+            marginVertical: 20,
+            padding: 15,
+            borderRadius: 10,
+            backgroundColor: '#f2f2f2',
+            alignItems: 'center',
+        },
+        audioControls: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            marginTop: 10,
+        },
+        audioTime: {
+            fontSize: 14,
+            fontFamily: 'Inter_700Bold',
+            color: '#444',
         },
     });
 };

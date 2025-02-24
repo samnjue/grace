@@ -223,7 +223,6 @@ const SermonScreen = ({ route }) => {
     );
 };
 
-// Style definition remains the same
 const getStyle = (theme, insets) => {
     const isDarkTheme = theme.toLowerCase().includes('dark');
 

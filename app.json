@@ -56,10 +56,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Grace to access your microphone",
-          "backgroundMode": {
-            "audio": true
-          }
+          "microphonePermission": "Allow Grace to access your microphone"
         }
       ]
     ],

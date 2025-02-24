@@ -1,10 +1,7 @@
 import { Audio } from 'expo-av';
-import * as BackgroundFetch from 'expo-background-fetch';
-import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const BACKGROUND_AUDIO_TASK = 'background-audio-task';
-
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 class AudioService {
     static sound = null;
     static isPlaying = false;
@@ -13,7 +10,6 @@ class AudioService {
     static statusUpdateCallbacks = [];
 
     static async init() {
-        // Request audio mode permissions for background playback
         await Audio.setAudioModeAsync({
             allowsRecordingIOS: false,
             staysActiveInBackground: true,
@@ -24,24 +20,6 @@ class AudioService {
             playThroughEarpieceAndroid: false
         });
 
-        // Register background task
-        TaskManager.defineTask(BACKGROUND_AUDIO_TASK, async () => {
-            // This task keeps the audio service alive in background
-            return BackgroundFetch.BackgroundFetchResult.NewData;
-        });
-
-        // Try to register the task (it's okay if it fails because it's already registered)
-        try {
-            await BackgroundFetch.registerTaskAsync(BACKGROUND_AUDIO_TASK, {
-                minimumInterval: 60, // 1 minute
-                stopOnTerminate: false,
-                startOnBoot: true,
-            });
-        } catch (err) {
-            console.log('Background task already registered');
-        }
-
-        // Try to restore last session if app was closed
         await AudioService.tryRestoreSession();
     }
 
@@ -85,19 +63,16 @@ class AudioService {
     }
 
     static registerStatusCallback(callback) {
-        // Add callback to array if not already present
         if (!AudioService.statusUpdateCallbacks.includes(callback)) {
             AudioService.statusUpdateCallbacks.push(callback);
         }
         return () => {
-            // Return a function to unregister
             AudioService.statusUpdateCallbacks =
                 AudioService.statusUpdateCallbacks.filter(cb => cb !== callback);
         };
     }
 
     static updateAllCallbacks(status) {
-        // Call all registered callbacks with the status
         AudioService.statusUpdateCallbacks.forEach(callback => {
             try {
                 callback(status);
@@ -109,35 +84,37 @@ class AudioService {
 
     static async loadAudio(uri, metadata = {}, initialStatus = {}) {
         try {
-            // If we already have this sound loaded, don't reload it
             if (AudioService.sound && AudioService.currentUri === uri) {
                 return AudioService.sound;
             }
 
-            // Unload any existing sound
             if (AudioService.sound) {
                 await AudioService.sound.unloadAsync();
             }
 
-            // Configure playback with metadata for notification
-            const playbackConfig = {
+            const source = { uri };
+            const initialStatusWithMetadata = {
                 shouldPlay: false,
-                ...initialStatus
+                ...initialStatus,
+                androidImplementation: 'MediaPlayer',
+                progressUpdateIntervalMillis: 1000
             };
 
-            // Create sound object
+            if (Platform.OS === 'ios') {
+                initialStatusWithMetadata.positionMillis = 0;
+                initialStatusWithMetadata.progressUpdateIntervalMillis = 1000;
+            }
+
             const { sound } = await Audio.Sound.createAsync(
-                { uri },
-                playbackConfig,
+                source,
+                initialStatusWithMetadata,
                 (status) => AudioService.onPlaybackStatusUpdate(status)
             );
 
-            // Store references
             AudioService.sound = sound;
             AudioService.currentUri = uri;
             AudioService.currentMetadata = metadata;
 
-            // Set up notification controls
             await AudioService.setupNotificationControls(metadata);
 
             return sound;
@@ -151,26 +128,19 @@ class AudioService {
         if (!AudioService.sound) return;
 
         try {
-            // Set the metadata for the notification
-            await Audio.setAudioModeAsync({
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: true,
-            });
+            if (Platform.OS === 'android') {
+                await AudioService.sound.setStatusAsync({
+                    androidImplementation: 'MediaPlayer',
+                    android: {
+                        appPackageName: Constants.manifest?.android?.package || undefined,
+                        ...(metadata.title && { title: metadata.title }),
+                        ...(metadata.author && { artist: metadata.author }),
+                        ...(metadata.imageUri && { imageUrl: metadata.imageUri }),
+                        showNotification: true
+                    }
+                });
+            }
 
-            await AudioService.sound.setStatusAsync({
-                progressUpdateIntervalMillis: 1000,
-                androidImplementation: 'MediaPlayer',
-            });
-
-            // Configure notification
-            const title = metadata.title || 'Sermon';
-            const author = metadata.author || 'Speaker';
-            const albumArt = metadata.imageUri;
-
-            await AudioService.sound.setOnPlaybackStatusUpdate(null);
-            await AudioService.sound.setOnPlaybackStatusUpdate(
-                (status) => AudioService.onPlaybackStatusUpdate(status)
-            );
         } catch (error) {
             console.error("Error setting up notification:", error);
         }
@@ -180,10 +150,8 @@ class AudioService {
         if (status.isLoaded) {
             AudioService.isPlaying = status.isPlaying;
 
-            // Update all registered callbacks
             AudioService.updateAllCallbacks(status);
 
-            // Save session periodically
             if (status.positionMillis % 5000 < 1000) {
                 AudioService.saveSession(status.positionMillis);
             }

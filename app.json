@@ -48,7 +48,7 @@
             "node_modules/@expo-google-fonts/inter/Inter_400Regular.ttf",
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold_Italic.ttf",
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_600SemiBold_Italic.ttf",
-            "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold.ttf.png",
+            "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold.ttf",
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_600SemiBold.ttf"
           ]
         }

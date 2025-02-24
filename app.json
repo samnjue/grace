@@ -2,7 +2,7 @@
   "expo": {
     "name": "Grace",
     "slug": "mark13",
-    "version": "1.13.33",
+    "version": "1.13.34",
     "scheme": "grace.ivory",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +29,8 @@
       "permissions": [
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
         "INTERNET"
       ],
       "softwareKeyboardLayoutMode": "pan",
@@ -44,6 +51,15 @@
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_700Bold.ttf.png",
             "node_modules/@expo-google-fonts/source-serif-4/SourceSerif4_600SemiBold.ttf"
           ]
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Grace to access your microphone",
+          "backgroundMode": {
+            "audio": true
+          }
         }
       ]
     ],

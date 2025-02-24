@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Animated, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { StatusBar } from 'react-native';
+import Slider from '@react-native-community/slider';
+import AudioService from '../../services/audioService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SermonScreen = ({ route }) => {
     const { sermon_image, sermon, sermon_metadata, sermon_content, sermon_audio } = route.params;
@@ -12,29 +15,92 @@ const SermonScreen = ({ route }) => {
     const theme = useSelector((state) => state.theme.theme);
     const insets = useSafeAreaInsets();
 
-    const [sound, setSound] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(1);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        if (sermon_audio) {
-            loadAudio();
-        }
-        return () => {
-            if (sound) {
-                sound.unloadAsync();
+        const setupAudio = async () => {
+            await AudioService.init();
+
+            if (AudioService.currentUri === sermon_audio) {
+                setIsLoaded(true);
+                setIsPlaying(AudioService.isPlaying);
+
+                if (AudioService.sound) {
+                    const status = await AudioService.sound.getStatusAsync();
+                    if (status.isLoaded) {
+                        setPosition(status.positionMillis);
+                        setDuration(status.durationMillis || 1);
+                    }
+                }
+            } else if (sermon_audio) {
+                await loadSermonAudio();
             }
         };
-    }, [sermon_audio]);
 
-    const loadAudio = async () => {
-        const { sound } = await Audio.Sound.createAsync(
-            { uri: sermon_audio },
-            { shouldPlay: false },
-            onPlaybackStatusUpdate
-        );
-        setSound(sound);
+        setupAudio();
+
+        return () => {
+            if (AudioService.sound && sermon_audio === AudioService.currentUri) {
+                AudioService.saveSession();
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const unregisterCallback = AudioService.registerStatusCallback(onPlaybackStatusUpdate);
+
+        return () => {
+            unregisterCallback();
+        };
+    }, []);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const syncUIWithAudioState = async () => {
+                if (AudioService.currentUri === sermon_audio && AudioService.sound) {
+                    setIsLoaded(true);
+                    setIsPlaying(AudioService.isPlaying);
+
+                    const status = await AudioService.sound.getStatusAsync();
+                    if (status.isLoaded) {
+                        setPosition(status.positionMillis);
+                        setDuration(status.durationMillis || 1);
+                    }
+                } else if (sermon_audio && !isLoaded) {
+                    await loadSermonAudio();
+                }
+            };
+
+            syncUIWithAudioState();
+
+            return () => { };
+        }, [sermon_audio, isLoaded])
+    );
+
+    const loadSermonAudio = async () => {
+        if (!sermon_audio) return;
+
+        try {
+            const metadata = {
+                title: sermon,
+                author: sermon_metadata.split(' • ')[0] || 'Speaker',
+                imageUri: sermon_image
+            };
+
+            await AudioService.loadAudio(sermon_audio, metadata);
+            setIsLoaded(true);
+
+            const savedPosition = await AsyncStorage.getItem(`audioPosition-${sermon_audio}`);
+            if (savedPosition) {
+                const startPosition = parseInt(savedPosition, 10);
+                await AudioService.seekTo(startPosition);
+            }
+        } catch (error) {
+            console.error("Error loading sermon audio:", error);
+        }
     };
 
     const onPlaybackStatusUpdate = (status) => {
@@ -46,31 +112,43 @@ const SermonScreen = ({ route }) => {
     };
 
     const togglePlayPause = async () => {
-        if (sound) {
+        requestAnimationFrame(async () => {
             if (isPlaying) {
-                await sound.pauseAsync();
+                await AudioService.pause();
             } else {
-                await sound.playAsync();
+                await AudioService.play();
+            }
+        });
+    };
+
+    const seekAudio = async (newPosition) => {
+        requestAnimationFrame(async () => {
+            if (AudioService.sound) {
+                await AudioService.seekTo(newPosition);
+            }
+        });
+    };
+
+    const forwardAudio = () => seekAudio(position + 5000);
+    const rewindAudio = () => seekAudio(position - 5000);
+
+    const saveAudioPosition = async () => {
+        if (sermon_audio && position > 0) {
+            try {
+                await AsyncStorage.setItem(`audioPosition-${sermon_audio}`, position.toString());
+            } catch (error) {
+                console.error("Error saving audio position:", error);
             }
         }
     };
 
-    const seekAudio = async (newPosition) => {
-        if (sound) {
-            await sound.setPositionAsync(newPosition);
-        }
-    };
-
-    const forwardAudio = async () => {
-        seekAudio(position + 10000);
-    };
-
-    const rewindAudio = async () => {
-        seekAudio(position - 10000);
-    };
+    useEffect(() => {
+        return () => {
+            saveAudioPosition();
+        };
+    }, [position]);
 
     const [scrollY] = useState(new Animated.Value(0));
-
     const fadeInOut = scrollY.interpolate({
         inputRange: [250, 330],
         outputRange: [0, 1],
@@ -82,11 +160,7 @@ const SermonScreen = ({ route }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar
-                barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
-                //backgroundColor={isDarkTheme ? '#121212' : '#fff'}
-                animated
-            />
+            <StatusBar barStyle={isDarkTheme ? 'light-content' : 'dark-content'} animated />
             <ScrollView
                 contentContainerStyle={{ paddingBottom: 20 }}
                 scrollEventThrottle={16}
@@ -114,29 +188,24 @@ const SermonScreen = ({ route }) => {
                                 maximumValue={duration}
                                 value={position}
                                 onSlidingComplete={seekAudio}
-                                minimumTrackTintColor={isDarkTheme ? '#fff' : '#000'}
-                                maximumTrackTintColor="#777"
+                                thumbTintColor='#6a5acd'
+                                minimumTrackTintColor={isDarkTheme ? '#6a5acd' : '#6a5acd'}
+                                maximumTrackTintColor={isDarkTheme ? '#999' : '#444'}
                             />
                             <View style={styles.audioControls}>
-                                <Text style={styles.audioTime}>
-                                    {Math.floor(position / 60000)}:{((position % 60000) / 1000).toFixed(0).padStart(2, '0')}
-                                </Text>
+                                <Text style={styles.audioTime}>{Math.floor(position / 60000)}:{((position % 60000) / 1000).toFixed(0).padStart(2, '0')}</Text>
 
                                 <TouchableOpacity onPress={rewindAudio}>
                                     <Ionicons name="play-back" size={30} color={isDarkTheme ? '#fff' : '#000'} />
                                 </TouchableOpacity>
-
                                 <TouchableOpacity onPress={togglePlayPause}>
-                                    <Ionicons name={isPlaying ? 'pause' : 'play'} size={40} color={isDarkTheme ? '#fff' : '#000'} />
+                                    <Ionicons name={isPlaying ? 'pause' : 'play'} size={47} color={isDarkTheme ? '#fff' : '#000'} />
                                 </TouchableOpacity>
-
                                 <TouchableOpacity onPress={forwardAudio}>
                                     <Ionicons name="play-forward" size={30} color={isDarkTheme ? '#fff' : '#000'} />
                                 </TouchableOpacity>
 
-                                <Text style={styles.audioTime}>
-                                    {Math.floor(duration / 60000)}:{((duration % 60000) / 1000).toFixed(0).padStart(2, '0')}
-                                </Text>
+                                <Text style={styles.audioTime}>{Math.floor(duration / 60000)}:{((duration % 60000) / 1000).toFixed(0).padStart(2, '0')}</Text>
                             </View>
                         </View>
                     )}
@@ -148,16 +217,13 @@ const SermonScreen = ({ route }) => {
                 <TouchableOpacity style={styles.topBarBackButton} onPress={() => navigation.goBack()}>
                     <Ionicons name="arrow-back" size={24} color={isDarkTheme ? '#fff' : '#000'} />
                 </TouchableOpacity>
-                <Text
-                    style={styles.topBarTitle}
-                    numberOfLines={1}
-                    ellipsizeMode='tail'
-                >{sermon}</Text>
+                <Text style={styles.topBarTitle} numberOfLines={1} ellipsizeMode='tail'>{sermon}</Text>
             </Animated.View>
         </View>
     );
 };
 
+// Style definition remains the same
 const getStyle = (theme, insets) => {
     const isDarkTheme = theme.toLowerCase().includes('dark');
 
@@ -233,7 +299,7 @@ const getStyle = (theme, insets) => {
             marginVertical: 20,
             padding: 15,
             borderRadius: 10,
-            backgroundColor: '#f2f2f2',
+            backgroundColor: isDarkTheme ? '#2c2c2c' : '#f2f2f2',
             alignItems: 'center',
         },
         audioControls: {
@@ -244,9 +310,18 @@ const getStyle = (theme, insets) => {
             marginTop: 10,
         },
         audioTime: {
-            fontSize: 14,
+            fontSize: 12,
             fontFamily: 'Inter_700Bold',
-            color: '#444',
+            color: isDarkTheme ? '#999' : '#444',
+        },
+        controlButton: {
+            alignItems: 'center',
+        },
+        controlLabel: {
+            fontSize: 10,
+            fontFamily: 'Inter_700Bold',
+            color: isDarkTheme ? '#bbb' : '#555',
+            marginTop: 2,
         },
     });
 };

@@ -506,7 +506,7 @@ const ProfileScreen = ({ navigation }) => {
                         </Text>
                     </TouchableOpacity>
                     <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-                        v1.13.33
+                        v1.13.34
                     </Text>
                     {/* <Text style={styles.versionText} maxFontSizeMultiplier={0}>
                         © 2025 ivory

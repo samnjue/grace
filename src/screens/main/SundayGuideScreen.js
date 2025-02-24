@@ -141,7 +141,8 @@ export default function SundayGuideScreen() {
                                             sermon_image: item.sermon_image,
                                             sermon: item.sermon,
                                             sermon_metadata: item.sermon_metadata,
-                                            sermon_content: item.sermon_content
+                                            sermon_content: item.sermon_content,
+                                            sermon_audio: item.sermon_audio
                                         });
                                     }}
                                 >

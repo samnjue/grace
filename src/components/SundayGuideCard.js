@@ -297,8 +297,6 @@ export default function SundayGuideCard({ refreshKey }) {
         swipeDirection="down"
         style={{ justifyContent: "flex-end", margin: 0 }}
         backdropColor="rgba(0, 0, 0, 0.07)"
-        animationInTiming={400}
-        animationOutTiming={400}
       >
         <View style={styles.modalContent}>
           <View style={styles.modalBar} />

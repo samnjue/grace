@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "308235742721",
-    "project_id": "neema-b278c",
-    "storage_bucket": "neema-b278c.firebasestorage.app"
+    "project_number": "271830496820",
+    "project_id": "gracepesa-148fd",
+    "storage_bucket": "gracepesa-148fd.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:308235742721:android:499d8addc7d8968b9eda00",
+        "mobilesdk_app_id": "1:271830496820:android:bd38742d0f25721068fc61",
         "android_client_info": {
           "package_name": "com.grace.ivory"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA_KJ1pgp272Qym95EtukktihE9d1nhlGY"
+          "current_key": "AIzaSyB1sW7CLwLrE0ZTFoKgBDPg3gSLarp0kPw"
         }
       ],
       "services": {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Grace",
     "slug": "mark13",
-    "version": "1.13.34",
+    "version": "1.13.35",
     "scheme": "grace.ivory",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,9 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {

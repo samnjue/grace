@@ -2,7 +2,12 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, Alert } from "react-native";
 import { initiatePayment } from "../../services/mpesaService";
 import { useSelector } from "react-redux";
-import firestore from "@react-native-firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+} from "@react-native-firebase/firestore";
 
 const MpesaPaymentScreen = () => {
   const [phone, setPhone] = useState("");
@@ -24,13 +29,17 @@ const MpesaPaymentScreen = () => {
         Alert.alert("Success", "STK Push Sent. Check your phone!");
 
         setTimeout(async () => {
-          const transactionRef = firestore()
-            .collection("mpesaTransactions")
-            .doc(response.data.CheckoutRequestID);
-          const transaction = await transactionRef.get();
+          const db = getFirestore();
 
-          if (transaction.exists) {
-            const transactionData = transaction.data();
+          const transactionRef = doc(
+            db,
+            "mpesaTransactions",
+            response.data.CheckoutRequestID
+          );
+          const transactionSnap = await getDoc(transactionRef);
+
+          if (transactionSnap.exists()) {
+            const transactionData = transactionSnap.data();
             if (transactionData.ResultCode === 0) {
               Alert.alert("Payment Successful", "Thank you for your donation!");
             } else {

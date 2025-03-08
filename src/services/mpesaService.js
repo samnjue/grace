@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const FIREBASE_FUNCTION_URL =
-  "https://us-central1-gracepesa-148fd.cloudfunctions.net/initiateSTKPush";
+const FIREBASE_FUNCTION_URL = "https://initiatestkpush-gywqdew72q-uc.a.run.app";
 
 export const initiatePayment = async (phone, amount) => {
   try {

@@ -133,7 +133,9 @@ const EditScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Enter name"
-          placeholderTextColor="#aaa"
+          placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+          fontFamily="Inter_600SemiBold"
+          selectionColor={isDarkTheme ? "#ccc" : "#666666"}
           value={displayName}
           onChangeText={handleInputChange}
           maxFontSizeMultiplier={1.2}
@@ -245,7 +247,7 @@ const getStyle = (theme) => {
     input: {
       width: "85%",
       height: 50,
-      borderRadius: 25,
+      borderRadius: 10,
       borderWidth: 1,
       borderColor: "gray",
       paddingHorizontal: 20,

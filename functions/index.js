@@ -16,11 +16,11 @@ const CALLBACK_URL =
 
 const getAccessToken = async () => {
   const auth = Buffer.from(
-    `${MPESA_CONSUMER_KEY}:${MPESA_CONSUMER_SECRET}`
+      `${MPESA_CONSUMER_KEY}:${MPESA_CONSUMER_SECRET}`,
   ).toString("base64");
   const response = await axios.get(
-    "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
-    { headers: { Authorization: `Basic ${auth}` } }
+      "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+      {headers: {Authorization: `Basic ${auth}`}},
   );
   return response.data.access_token;
 };
@@ -29,7 +29,7 @@ exports.initiateSTKPush = functions.https.onRequest(async (req, res) => {
   try {
     console.log("STK Push Request:", req.body);
 
-    const { phone, amount } = req.body;
+    const {phone, amount, accountReference} = req.body;
     if (!phone || !amount) {
       return res.status(400).json({
         success: false,
@@ -37,45 +37,53 @@ exports.initiateSTKPush = functions.https.onRequest(async (req, res) => {
       });
     }
 
+    let formattedPhone = phone;
+    if (phone.startsWith("0")) {
+      formattedPhone = "254" + phone.substring(1);
+    } else if (phone.length === 9) {
+      formattedPhone = "254" + phone;
+    }
+    console.log("Formatted phone:", formattedPhone);
+
     const token = await getAccessToken();
     const timestamp = new Date()
-      .toISOString()
-      .replace(/[-T:.Z]/g, "")
-      .substring(0, 14);
+        .toISOString()
+        .replace(/[-T:.Z]/g, "")
+        .substring(0, 14);
     const password = Buffer.from(
-      `${MPESA_SHORTCODE}${MPESA_PASSKEY}${timestamp}`
+        `${MPESA_SHORTCODE}${MPESA_PASSKEY}${timestamp}`,
     ).toString("base64");
 
     const response = await axios.post(
-      "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
-      {
-        BusinessShortCode: MPESA_SHORTCODE,
-        Password: password,
-        Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
-        Amount: amount,
-        PartyA: phone,
-        PartyB: MPESA_SHORTCODE,
-        PhoneNumber: phone,
-        CallBackURL: CALLBACK_URL,
-        AccountReference: "GraceChurch",
-        TransactionDesc: "Church Donation",
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
+        "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+        {
+          BusinessShortCode: MPESA_SHORTCODE,
+          Password: password,
+          Timestamp: timestamp,
+          TransactionType: "CustomerPayBillOnline",
+          Amount: amount,
+          PartyA: formattedPhone,
+          PartyB: MPESA_SHORTCODE,
+          PhoneNumber: formattedPhone,
+          CallBackURL: CALLBACK_URL,
+          AccountReference: accountReference,
+          TransactionDesc: "Church Donation",
+        },
+        {headers: {Authorization: `Bearer ${token}`}},
     );
 
     console.log("STK Push Response:", response.data);
-    res.json({ success: true, data: response.data });
+    res.json({success: true, data: response.data});
   } catch (error) {
     console.error("Mpesa STK Push Error:", error.message);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({success: false, error: error.message});
   }
 });
 
 exports.callback = functions.https.onRequest(async (req, res) => {
   console.log(
-    "Callback received - Headers:",
-    JSON.stringify(req.headers, null, 2)
+      "Callback received - Headers:",
+      JSON.stringify(req.headers, null, 2),
   );
   console.log("Callback received - Body:", JSON.stringify(req.body, null, 2));
 
@@ -204,3 +212,43 @@ exports.callback = functions.https.onRequest(async (req, res) => {
     return res.status(200).send("Processed with errors");
   }
 });
+
+exports.checkTransactionStatus = functions.https.onCall(
+    async (data, context) => {
+      try {
+        const {checkoutRequestID} = data;
+
+        if (!checkoutRequestID) {
+          throw new Error("Checkout request ID is required");
+        }
+
+        const transactionRef = db
+            .collection("mpesa_transactions")
+            .doc(checkoutRequestID);
+        const transactionSnap = await transactionRef.get();
+
+        if (!transactionSnap.exists) {
+          return {
+            exists: false,
+            message: "Transaction not found",
+          };
+        }
+
+        const transactionData = transactionSnap.data();
+        return {
+          exists: true,
+          isSuccessful:
+          transactionData.is_successful || transactionData.result_code === 0,
+          resultCode: transactionData.result_code,
+          resultDesc: transactionData.result_desc || "No description",
+          status: transactionData.status,
+        };
+      } catch (error) {
+        console.error("Error in checkTransactionStatus:", error);
+        throw new functions.https.HttpsError(
+            "internal",
+            "Error checking transaction status",
+        );
+      }
+    },
+);

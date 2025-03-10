@@ -64,6 +64,15 @@ export default function MainTabNavigator() {
     if (routeName === "HighlightScreen") {
       return { display: "none" };
     }
+    if (routeName === "NumberScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "PayOptionsScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "PayCompletionScreen") {
+      return { display: "none" };
+    }
     return {
       position: "absolute",
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
@@ -101,7 +110,7 @@ export default function MainTabNavigator() {
             iconName = focused ? "book" : "book-outline";
           } else if (route.name === "Songs") {
             iconName = focused ? "musical-notes" : "musical-notes-outline";
-          } else if (route.name === "Money") {
+          } else if (route.name === "Giving") {
             iconName = focused ? "wallet" : "wallet-outline";
           } else if (route.name === "Profile") {
             iconName = focused ? "person-circle" : "person-circle-outline";
@@ -141,7 +150,7 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Money"
+        name="Giving"
         component={PesaNavigator}
         options={{
           tabBarButton: (props) => <CustomTabBarButton {...props} />,

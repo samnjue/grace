@@ -6,6 +6,7 @@ import GracePesaScreen from "../screens/main/GracePesaScreen";
 import NumberScreen from "../screens/main/NumberScreen";
 import PayOptionsScreen from "../screens/main/PayOptionsScreen";
 import PayCompletionScreen from "../screens/main/PayCompletionScreen";
+import PayDetailsScreen from "../screens/main/PayDetailsScreen.js";
 
 const Stack = createStackNavigator();
 
@@ -42,6 +43,17 @@ export default function PesaNavigator() {
       <Stack.Screen
         name="PayCompletionScreen"
         component={PayCompletionScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          transitionSpec: {
+            open: TransitionSpecs.TransitionIOSSpec,
+            close: TransitionSpecs.TransitionIOSSpec,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="PayDetailsScreen"
+        component={PayDetailsScreen}
         options={{
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           transitionSpec: {

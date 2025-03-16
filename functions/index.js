@@ -81,6 +81,8 @@ exports.initiateSTKPush = functions.https.onRequest(async (req, res) => {
 });
 
 exports.callback = functions.https.onRequest(async (req, res) => {
+  console.log("Callback function active");
+
   console.log(
       "Callback received - Headers:",
       JSON.stringify(req.headers, null, 2),
@@ -213,12 +215,58 @@ exports.callback = functions.https.onRequest(async (req, res) => {
   }
 });
 
+// exports.checkTransactionStatus = functions.https.onCall(
+//   async (data, context) => {
+//     try {
+//       console.log("Received data:", data);
+//       const { checkoutRequestID } = data;
+
+//       if (!checkoutRequestID) {
+//         console.log("Missing checkoutRequestID in data:", data);
+//         throw new Error("Checkout request ID is required");
+//       }
+
+//       const transactionRef = db
+//         .collection("mpesa_transactions")
+//         .doc(checkoutRequestID);
+//       const transactionSnap = await transactionRef.get();
+
+//       if (!transactionSnap.exists) {
+//         return {
+//           exists: false,
+//           message: "Transaction not found",
+//         };
+//       }
+
+//       const transactionData = transactionSnap.data();
+//       return {
+//         exists: true,
+//         isSuccessful:
+//           transactionData.is_successful || transactionData.result_code === 0,
+//         resultCode: transactionData.result_code,
+//         resultDesc: transactionData.result_desc || "No description",
+//         status: transactionData.status,
+//       };
+//     } catch (error) {
+//       console.error("Error in checkTransactionStatus:", error);
+//       throw new functions.https.HttpsError(
+//         "internal",
+//         "Error checking transaction status"
+//       );
+//     }
+//   }
+// );
+
 exports.checkTransactionStatus = functions.https.onCall(
     async (data, context) => {
       try {
-        const {checkoutRequestID} = data;
+        console.log("Received data:", data);
 
+        // Handle both direct data and nested data structures
+        const checkoutRequestID =
+        data.checkoutRequestID || (data.data && data.data.checkoutRequestID);
         if (!checkoutRequestID) {
+          console.log("Missing checkoutRequestID in data:", data);
           throw new Error("Checkout request ID is required");
         }
 
@@ -228,10 +276,7 @@ exports.checkTransactionStatus = functions.https.onCall(
         const transactionSnap = await transactionRef.get();
 
         if (!transactionSnap.exists) {
-          return {
-            exists: false,
-            message: "Transaction not found",
-          };
+          return {exists: false, message: "Transaction not found"};
         }
 
         const transactionData = transactionSnap.data();

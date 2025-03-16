@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Alert, Animated, Easing } from "react-native";
-import { initiatePayment } from "../../services/mpesaService";
+import { View, Text, Animated, Easing } from "react-native";
+import {
+  initiateSTKPush,
+  checkTransactionStatus,
+} from "../../services/mpesaService";
 import { useSelector } from "react-redux";
-import firebase from "@react-native-firebase/app";
-import "@react-native-firebase/functions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "../../utils/supabase.js";
 
 const PayCompletionScreen = ({ route, navigation }) => {
   const { amount, phone, accountReference } = route.params;
@@ -19,149 +21,154 @@ const PayCompletionScreen = ({ route, navigation }) => {
   const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    const startAnimation = () => {
-      animations.forEach((anim, index) => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(anim, {
-              toValue: 1,
-              duration: 300,
-              delay: index * 200,
-              easing: Easing.linear,
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim, {
-              toValue: 0,
-              duration: 300,
-              easing: Easing.linear,
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-      });
-    };
-
     startAnimation();
     initializePayment();
   }, []);
 
+  const startAnimation = () => {
+    animations.forEach((anim, index) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 300,
+            delay: index * 200,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 300,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    });
+  };
+
   const initializePayment = async () => {
     try {
       let phoneToUse = userPhone;
-
       if (!phoneToUse) {
-        try {
-          const storedPhone = await AsyncStorage.getItem("phoneNumber");
-          if (storedPhone) {
-            phoneToUse = storedPhone;
-            setUserPhone(storedPhone);
-          } else {
-            throw new Error("Phone number not available");
-          }
-        } catch (error) {
-          console.error("Error retrieving phone number:", error);
-          Alert.alert("Error", "Could not retrieve phone number");
-          navigation.goBack();
-          return;
+        const storedPhone = await AsyncStorage.getItem("phoneNumber");
+        if (storedPhone) {
+          phoneToUse = storedPhone;
+          setUserPhone(storedPhone);
+        } else {
+          throw new Error("Phone number not available");
         }
       }
 
       processPayment(phoneToUse);
     } catch (error) {
+      console.error("Error initializing payment:", error);
       setIsProcessing(false);
-      Alert.alert("Error", "Payment initialization failed");
-      navigation.goBack();
+      navigation.replace("PayDetailsScreen", {
+        transactionId: null,
+        error: "Payment initialization failed",
+        transactionData: null,
+      });
     }
   };
 
   const processPayment = async (phoneToUse) => {
     try {
-      const response = await initiatePayment(
+      const response = await initiateSTKPush(
         phoneToUse,
         amount,
         accountReference
       );
-      if (response && response.success) {
-        checkTransactionStatus(response.data.CheckoutRequestID);
+      if (response && response.CheckoutRequestID) {
+        checkTransactionStatusLoop(response.CheckoutRequestID);
       } else {
-        setIsProcessing(false);
-        Alert.alert("Payment Failed", "Please try again.");
-        navigation.goBack();
+        throw new Error("Payment request failed");
       }
     } catch (error) {
+      console.error("Error processing payment:", error);
       setIsProcessing(false);
-      Alert.alert("Error", "Payment initiation failed.");
-      navigation.goBack();
+      navigation.replace("PayDetailsScreen", {
+        transactionId: null,
+        error: "Payment request failed",
+        transactionData: null,
+      });
     }
   };
 
-  const checkTransactionStatus = async (checkoutRequestID) => {
-    setTimeout(async () => {
-      try {
-        // Use the Cloud Function instead of direct Firestore access
-        const checkStatus = firebase
-          .functions()
-          .httpsCallable("checkTransactionStatus");
-        const result = await checkStatus({ checkoutRequestID });
-
-        setIsProcessing(false);
-
-        if (result.data.exists) {
-          if (result.data.isSuccessful) {
-            Alert.alert("Payment Successful", "Thank you for your payment!");
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Giving" }], // Adjust to your app's main screen name
-            });
-          } else {
-            const errorMessage = result.data.resultDesc || "Transaction failed";
-            Alert.alert("Payment Failed", errorMessage);
-            navigation.goBack();
-          }
-        } else {
-          // Check again after a short delay as the transaction might still be processing
-          setTimeout(() => recheckTransaction(checkoutRequestID), 10000);
-        }
-      } catch (error) {
-        console.error("Error checking transaction:", error);
-        setIsProcessing(false);
-        Alert.alert("Error", "Could not verify payment status");
-        navigation.goBack();
-      }
-    }, 30000);
-  };
-
-  const recheckTransaction = async (checkoutRequestID) => {
+  const fetchTransactionDetails = async (checkoutRequestId) => {
     try {
-      // Use the Cloud Function instead of direct Firestore access
-      const checkStatus = firebase
-        .functions()
-        .httpsCallable("checkTransactionStatus");
-      const result = await checkStatus({ checkoutRequestID });
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("checkout_request_id", checkoutRequestId)
+        .single();
 
-      if (result.data.exists) {
-        if (result.data.isSuccessful) {
-          Alert.alert("Payment Successful", "Thank you for your payment!");
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Giving" }], // Adjust to your app's main screen name
-          });
-        } else {
-          const errorMessage = result.data.resultDesc || "Transaction failed";
-          Alert.alert("Payment Failed", errorMessage);
-        }
+      if (error) {
+        console.error("Error fetching transaction:", error);
+        return { data: null, error: error.message };
       } else {
-        Alert.alert(
-          "Payment Status Unknown",
-          "Your payment is being processed. Please check transaction history later."
-        );
+        return { data, error: null };
       }
-      navigation.goBack();
-    } catch (error) {
-      console.error("Error rechecking transaction:", error);
-      Alert.alert("Error", "Could not verify payment status");
-      navigation.goBack();
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      return { data: null, error: err.message };
     }
+  };
+
+  const checkTransactionStatusLoop = async (checkoutRequestId) => {
+    let attempts = 0;
+    const maxAttempts = 2;
+    const retryDelay = 10000;
+
+    const checkStatus = async () => {
+      console.log(`Checking status, attempt ${attempts + 1}/${maxAttempts}`);
+
+      const { data: statusData, error: statusError } =
+        await checkTransactionStatus(checkoutRequestId);
+
+      if (statusError) {
+        console.log("Error checking transaction status:", statusError);
+        if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(checkStatus, retryDelay);
+        } else {
+          const { data: transactionData, error: fetchError } =
+            await fetchTransactionDetails(checkoutRequestId);
+          navigation.replace("PayDetailsScreen", {
+            transactionId: checkoutRequestId,
+            error: fetchError || "Transaction is still processing",
+            transactionData,
+          });
+        }
+        return;
+      }
+
+      if (statusData) {
+        console.log("Transaction status:", statusData.status);
+        const { data: transactionData, error: fetchError } =
+          await fetchTransactionDetails(checkoutRequestId);
+        navigation.replace("PayDetailsScreen", {
+          transactionId: checkoutRequestId,
+          error: fetchError,
+          transactionData,
+        });
+      } else {
+        if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(checkStatus, retryDelay);
+        } else {
+          const { data: transactionData, error: fetchError } =
+            await fetchTransactionDetails(checkoutRequestId);
+          navigation.replace("PayDetailsScreen", {
+            transactionId: checkoutRequestId,
+            error: fetchError || "Transaction is still processing",
+            transactionData,
+          });
+        }
+      }
+    };
+
+    setTimeout(checkStatus, 10000);
   };
 
   return (

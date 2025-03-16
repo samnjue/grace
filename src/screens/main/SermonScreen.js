@@ -34,6 +34,8 @@ const SermonScreen = ({ route }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Add a separate state for seeking operations
+  const [isSeeking, setIsSeeking] = useState(false);
 
   // Animation value for the pulsating effect
   const pulsateAnim = useRef(new Animated.Value(1)).current;
@@ -162,14 +164,19 @@ const SermonScreen = ({ route }) => {
       setPosition(status.positionMillis);
       setDuration(status.durationMillis || 1);
       setIsPlaying(status.isPlaying);
-      setIsLoading(false);
-    } else if (status.isBuffering) {
+
+      // Only update loading state when not in the middle of a seek operation
+      if (!isSeeking) {
+        setIsLoading(false);
+      }
+    } else if (status.isBuffering && !isSeeking) {
+      // Only set loading if we're buffering and not just seeking
       setIsLoading(true);
     }
   };
 
   const togglePlayPause = async () => {
-    if (isLoading) return; // Prevent interaction while loading
+    if (isLoading && !isSeeking) return; // Prevent interaction while loading (but allow during seeking)
 
     requestAnimationFrame(async () => {
       if (isPlaying) {
@@ -182,18 +189,29 @@ const SermonScreen = ({ route }) => {
   };
 
   const seekAudio = async (newPosition) => {
-    if (isLoading) return; // Prevent interaction while loading
+    if (isLoading && !isSeeking) return; // Prevent interaction while loading (but allow new seeks during seeking)
 
     requestAnimationFrame(async () => {
       if (AudioService.sound) {
-        setIsLoading(true); // Show loading when seeking
+        // Don't show full loading UI for quick seek operations
+        setIsSeeking(true);
         await AudioService.seekTo(newPosition);
+        setIsSeeking(false);
       }
     });
   };
 
-  const forwardAudio = () => (isLoading ? null : seekAudio(position + 5000));
-  const rewindAudio = () => (isLoading ? null : seekAudio(position - 5000));
+  const forwardAudio = () => {
+    if (isLoading && !isSeeking) return null;
+    const newPosition = Math.min(position + 5000, duration);
+    seekAudio(newPosition);
+  };
+
+  const rewindAudio = () => {
+    if (isLoading && !isSeeking) return null;
+    const newPosition = Math.max(position - 5000, 0);
+    seekAudio(newPosition);
+  };
 
   const saveAudioPosition = async () => {
     if (sermon_audio && position > 0) {
@@ -223,6 +241,9 @@ const SermonScreen = ({ route }) => {
 
   const styles = getStyle(theme, insets);
   const isDarkTheme = theme.toLowerCase().includes("dark");
+
+  // Determine if controls should be disabled
+  const controlsDisabled = isLoading && !isSeeking;
 
   return (
     <View style={styles.container}>
@@ -257,7 +278,7 @@ const SermonScreen = ({ route }) => {
               <Animated.View
                 style={{
                   width: "100%",
-                  opacity: isLoading ? pulsateAnim : 1,
+                  opacity: isLoading && !isSeeking ? pulsateAnim : 1,
                 }}
               >
                 <Slider
@@ -269,7 +290,7 @@ const SermonScreen = ({ route }) => {
                   thumbTintColor="#6a5acd"
                   minimumTrackTintColor={isDarkTheme ? "#6a5acd" : "#6a5acd"}
                   maximumTrackTintColor={isDarkTheme ? "#999" : "#444"}
-                  disabled={isLoading}
+                  disabled={controlsDisabled}
                 />
               </Animated.View>
               <View style={styles.audioControls}>
@@ -280,14 +301,14 @@ const SermonScreen = ({ route }) => {
 
                 <TouchableOpacity
                   onPress={rewindAudio}
-                  disabled={isLoading}
-                  style={isLoading ? styles.disabledButton : null}
+                  disabled={controlsDisabled}
+                  style={controlsDisabled ? styles.disabledButton : null}
                 >
                   <Ionicons
                     name="play-back"
                     size={30}
                     color={
-                      isLoading
+                      controlsDisabled
                         ? isDarkTheme
                           ? "#666"
                           : "#aaa"
@@ -300,10 +321,10 @@ const SermonScreen = ({ route }) => {
 
                 <TouchableOpacity
                   onPress={togglePlayPause}
-                  disabled={isLoading}
-                  style={isLoading ? styles.disabledButton : null}
+                  disabled={controlsDisabled}
+                  style={controlsDisabled ? styles.disabledButton : null}
                 >
-                  {isLoading ? (
+                  {isLoading && !isSeeking ? (
                     <Animated.View style={{ opacity: pulsateAnim }}>
                       <Ionicons
                         name="infinite-outline"
@@ -322,14 +343,14 @@ const SermonScreen = ({ route }) => {
 
                 <TouchableOpacity
                   onPress={forwardAudio}
-                  disabled={isLoading}
-                  style={isLoading ? styles.disabledButton : null}
+                  disabled={controlsDisabled}
+                  style={controlsDisabled ? styles.disabledButton : null}
                 >
                   <Ionicons
                     name="play-forward"
                     size={30}
                     color={
-                      isLoading
+                      controlsDisabled
                         ? isDarkTheme
                           ? "#666"
                           : "#aaa"
@@ -345,7 +366,7 @@ const SermonScreen = ({ route }) => {
                   {((duration % 60000) / 1000).toFixed(0).padStart(2, "0")}
                 </Text>
               </View>
-              {isLoading && (
+              {isLoading && !isSeeking && (
                 <Text style={styles.loadingText}>Loading audio...</Text>
               )}
             </View>

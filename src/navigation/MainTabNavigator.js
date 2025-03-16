@@ -73,6 +73,9 @@ export default function MainTabNavigator() {
     if (routeName === "PayCompletionScreen") {
       return { display: "none" };
     }
+    if (routeName === "PayDetailsScreen") {
+      return { display: "none" };
+    }
     return {
       position: "absolute",
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",

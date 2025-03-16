@@ -38,7 +38,7 @@ const PayOptionsScreen = ({ route, navigation }) => {
       navigation.navigate("PayCompletionScreen", {
         amount: amount,
         phone: phoneNumber,
-        accountReference: title + " " + group,
+        accountReference: title + " - " + group,
       });
     }
   };

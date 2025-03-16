@@ -1,0 +1,115 @@
+export const OPTIONS = { isPublic: true };
+
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+
+serve(async (req) => {
+  try {
+    const { phone, amount, accountReference } = await req.json();
+
+    const consumerKey = "mwlhG06Fwd9ZIjXmX9sorGjUyLJroBNiSdgik4Xuuk2OcRAW";
+    const consumerSecret =
+      "7AfHhEgVIflnSejIQ2XeICIAfGPY47wtYRM4kkPawkJuZ5yox8DIAcgR3nB2S6lO";
+    const shortCode = "174379";
+    const passKey =
+      "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919";
+
+    // Get access token
+    const auth = btoa(`${consumerKey}:${consumerSecret}`);
+    const tokenRes = await fetch(
+      "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+      { headers: { Authorization: `Basic ${auth}` } }
+    );
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok) {
+      return new Response(
+        JSON.stringify({
+          error: "Failed to get access token",
+          details: tokenData,
+        }),
+        { status: 500 }
+      );
+    }
+    const { access_token } = tokenData;
+
+    let formattedPhone = phone;
+    if (phone.startsWith("0")) {
+      formattedPhone = "254" + phone.substring(1);
+    } else if (phone.length === 9) {
+      formattedPhone = "254" + phone;
+    }
+
+    // Initiate STK Push
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-T:Z]/g, "")
+      .slice(0, 14);
+    const password = btoa(shortCode + passKey + timestamp);
+
+    const response = await fetch(
+      "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          BusinessShortCode: shortCode,
+          Password: password,
+          Timestamp: timestamp,
+          TransactionType: "CustomerPayBillOnline",
+          Amount: amount,
+          PartyA: formattedPhone,
+          PartyB: shortCode,
+          PhoneNumber: formattedPhone,
+          CallBackURL:
+            "https://dabljjonrpbnidwnkwgz.supabase.co/functions/v1/callback",
+          AccountReference: accountReference,
+          TransactionDesc: "Payment",
+        }),
+      }
+    );
+
+    const stkResponse = await response.json();
+    console.log("M-Pesa STK Response:", stkResponse); // <-- Log API Response
+
+    if (!stkResponse.CheckoutRequestID) {
+      return new Response(
+        JSON.stringify({
+          error: "M-Pesa STK request failed",
+          details: stkResponse,
+        }),
+        { status: 500 }
+      );
+    }
+    // Save transaction request to Supabase
+    const supabaseUrl = "https://dabljjonrpbnidwnkwgz.supabase.co";
+    const supabaseKey =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhYmxqam9ucnBibmlkd25rd2d6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMTE2MjMxMiwiZXhwIjoyMDQ2NzM4MzEyfQ.zCTqC188P8VBkUOAo8n7jDkS4nlOaz8q1ZYhfQk2JgQ";
+
+    await fetch(`${supabaseUrl}/rest/v1/transactions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${supabaseKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        phone,
+        amount,
+        account_reference: accountReference,
+        checkout_request_id: stkResponse.CheckoutRequestID,
+      }),
+    });
+
+    // if (error) {
+    //   return new Response(JSON.stringify({ error }), { status: 500 });
+    // }
+
+    return new Response(JSON.stringify(stkResponse), { status: 200 });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+    });
+  }
+});

@@ -186,8 +186,8 @@ const PayDetailsScreen = ({ route }) => {
 
             {success && transactionData && (
               <View style={{ width: "100%", marginTop: 10 }}>
-                {renderDetailRow("Amount", `KES ${transactionData.amount}`)}
-                {renderDetailRow("Phone", transactionData.phone)}
+                {renderDetailRow("Amount", `KSH ${transactionData.amount}`)}
+                {renderDetailRow("Phone", `+${transactionData.phone}`)}
                 {renderDetailRow(
                   "M-Pesa Receipt",
                   transactionData.mpesa_receipt_number

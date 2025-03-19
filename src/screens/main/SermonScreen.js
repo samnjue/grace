@@ -34,13 +34,11 @@ const SermonScreen = ({ route }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // Add a separate state for seeking operations
   const [isSeeking, setIsSeeking] = useState(false);
+  const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
 
-  // Animation value for the pulsating effect
   const pulsateAnim = useRef(new Animated.Value(1)).current;
 
-  // Start the pulsating animation when loading
   useEffect(() => {
     if (isLoading) {
       Animated.loop(
@@ -58,7 +56,6 @@ const SermonScreen = ({ route }) => {
         ])
       ).start();
     } else {
-      // Stop animation when not loading
       pulsateAnim.setValue(1);
       Animated.timing(pulsateAnim).stop();
     }
@@ -66,7 +63,6 @@ const SermonScreen = ({ route }) => {
 
   useEffect(() => {
     const setupAudio = async () => {
-      // Set loading state to true when starting to set up audio
       setIsLoading(true);
       await AudioService.init();
 
@@ -74,6 +70,7 @@ const SermonScreen = ({ route }) => {
         setIsLoaded(true);
         setIsLoading(false);
         setIsPlaying(AudioService.isPlaying);
+        setHasPlayedBefore(true);
 
         if (AudioService.sound) {
           const status = await AudioService.sound.getStatusAsync();
@@ -113,6 +110,7 @@ const SermonScreen = ({ route }) => {
           setIsLoaded(true);
           setIsLoading(false);
           setIsPlaying(AudioService.isPlaying);
+          setHasPlayedBefore(true);
 
           const status = await AudioService.sound.getStatusAsync();
           if (status.isLoaded) {
@@ -165,35 +163,41 @@ const SermonScreen = ({ route }) => {
       setDuration(status.durationMillis || 1);
       setIsPlaying(status.isPlaying);
 
-      // Only update loading state when not in the middle of a seek operation
+      if (status.isPlaying) {
+        setHasPlayedBefore(true);
+      }
+
       if (!isSeeking) {
         setIsLoading(false);
       }
     } else if (status.isBuffering && !isSeeking) {
-      // Only set loading if we're buffering and not just seeking
       setIsLoading(true);
     }
   };
 
   const togglePlayPause = async () => {
-    if (isLoading && !isSeeking) return; // Prevent interaction while loading (but allow during seeking)
+    if (isLoading && !isSeeking) return;
 
     requestAnimationFrame(async () => {
       if (isPlaying) {
         await AudioService.pause();
       } else {
-        setIsLoading(true); // Show loading when starting playback
+        const shouldShowLoading = !hasPlayedBefore || position < 1000;
+
+        if (shouldShowLoading) {
+          setIsLoading(true);
+        }
+
         await AudioService.play();
       }
     });
   };
 
   const seekAudio = async (newPosition) => {
-    if (isLoading && !isSeeking) return; // Prevent interaction while loading (but allow new seeks during seeking)
+    if (isLoading && !isSeeking) return;
 
     requestAnimationFrame(async () => {
       if (AudioService.sound) {
-        // Don't show full loading UI for quick seek operations
         setIsSeeking(true);
         await AudioService.seekTo(newPosition);
         setIsSeeking(false);
@@ -242,7 +246,6 @@ const SermonScreen = ({ route }) => {
   const styles = getStyle(theme, insets);
   const isDarkTheme = theme.toLowerCase().includes("dark");
 
-  // Determine if controls should be disabled
   const controlsDisabled = isLoading && !isSeeking;
 
   return (

@@ -40,16 +40,15 @@ serve(async (req) => {
 
   console.log(`Transaction: ${CheckoutRequestID}, Result Code: ${ResultCode}`);
 
-  // Extract metadata
   let metadata: Record<string, any> = {};
-  let amount = 0; // Default to 0 if not found
+  let amount = 0;
   let mpesaReceiptNumber = null;
   let phoneNumber = null;
 
   if (CallbackMetadata?.Item) {
     try {
       CallbackMetadata.Item.forEach((item) => {
-        if (item.Name === "Amount") amount = item.Value; // ✅ Ensure amount is set
+        if (item.Name === "Amount") amount = item.Value;
         if (item.Name === "MpesaReceiptNumber") mpesaReceiptNumber = item.Value;
         if (item.Name === "PhoneNumber") phoneNumber = item.Value;
         metadata[item.Name.toLowerCase()] = item.Value;
@@ -60,10 +59,8 @@ serve(async (req) => {
     }
   }
 
-  // Ensure phone number is in the correct format
   phoneNumber = phoneNumber || metadata.phonenumber || null;
 
-  // Determine transaction status
   let status = "failed";
   switch (ResultCode) {
     case 0:
@@ -80,7 +77,6 @@ serve(async (req) => {
       break;
   }
 
-  // ✅ Prepare update data
   const updateData = {
     result_code: ResultCode,
     result_desc: ResultDesc,
@@ -89,7 +85,7 @@ serve(async (req) => {
     status,
     metadata,
     phone: phoneNumber,
-    amount, // ✅ Ensure amount is included in the update
+    amount,
   };
 
   if (MerchantRequestID !== "N/A") {
@@ -97,7 +93,6 @@ serve(async (req) => {
   }
 
   try {
-    // ✅ Check if the transaction exists
     const existingTransactionRes = await fetch(
       `${supabaseUrl}/rest/v1/transactions?checkout_request_id=eq.${CheckoutRequestID}`,
       {
@@ -113,8 +108,29 @@ serve(async (req) => {
     const existingTransaction = await existingTransactionRes.json();
 
     if (existingTransaction.length === 0) {
-      // ✅ Insert a new transaction if it doesn't exist
       console.log("Transaction not found. Inserting a new record...");
+
+      await fetch(
+        `${supabaseUrl}/rest/v1/mpesa?checkout_request_id=eq.${CheckoutRequestID}`,
+        {
+          method: "PATCH",
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            mpesa_receipt_number: mpesaReceiptNumber,
+            status,
+            result_code: ResultCode,
+            result_desc: ResultDesc,
+            is_successful: ResultCode === 0,
+            metadata,
+            amount,
+          }),
+        }
+      );
 
       const insertRes = await fetch(`${supabaseUrl}/rest/v1/transactions`, {
         method: "POST",
@@ -133,7 +149,7 @@ serve(async (req) => {
           status,
           metadata,
           phone: phoneNumber,
-          amount, // ✅ Ensure amount is included in the insert
+          amount,
         }),
       });
 
@@ -147,8 +163,8 @@ serve(async (req) => {
       return new Response("Transaction inserted", { status: 201 });
     }
 
-    // ✅ If record exists, update it
     console.log("Transaction found. Updating existing record...");
+
     const updateRes = await fetch(
       `${supabaseUrl}/rest/v1/transactions?checkout_request_id=eq.${CheckoutRequestID}`,
       {

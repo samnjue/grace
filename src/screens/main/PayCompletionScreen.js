@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Animated, Easing } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { View, Text, Animated, Easing, BackHandler } from "react-native";
 import {
   initiateSTKPush,
   checkTransactionStatus,
@@ -66,7 +67,7 @@ const PayCompletionScreen = ({ route, navigation }) => {
       setIsProcessing(false);
       navigation.replace("PayDetailsScreen", {
         transactionId: null,
-        error: "Payment initialization failed",
+        error: "Add your phone number",
         transactionData: null,
       });
     }
@@ -170,6 +171,20 @@ const PayCompletionScreen = ({ route, navigation }) => {
 
     setTimeout(checkStatus, 10000);
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        return true;
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+      };
+    }, [])
+  );
 
   return (
     <View

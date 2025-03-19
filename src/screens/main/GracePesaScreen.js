@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { useSelector } from "react-redux";
@@ -6,12 +6,15 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import Header from "../../components/Header";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "react-native-gesture-handler";
+import { supabase } from "../../utils/supabase";
 
 const GracePesaScreen = ({ navigation }) => {
   const theme = useSelector((state) => state.theme.theme);
   const styles = getStyle(theme);
 
   const [phoneNumber, setPhoneNumber] = useState(null);
+
+  const [isPesa, setIsPesa] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -23,9 +26,34 @@ const GracePesaScreen = ({ navigation }) => {
     }, [])
   );
 
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("pesa")
+        .eq("id", user.id)
+        .single();
+
+      if (!error && data) {
+        setIsPesa(data.pesa);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
   return (
     <View style={styles.container}>
-      <Header title="Giving" />
+      <Header
+        title="Giving"
+        showStatsButton={isPesa ? true : false}
+        onStatsPress={() => navigation.navigate("PayStatsScreen")}
+      />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}

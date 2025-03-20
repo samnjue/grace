@@ -461,9 +461,9 @@ const getStyle = (theme) => {
       width: 360,
       height: 100,
       resizeMode: "contain",
-      borderWidth: isDarkTheme ? 0.2 : 1,
+      borderWidth: isDarkTheme ? 0.07 : 0.01,
       borderColor: isDarkTheme ? "#ccc" : "#aaa",
-      borderRadius: 10,
+      borderRadius: 0,
     },
     modalOverlay: {
       position: "absolute",
@@ -490,7 +490,7 @@ const getStyle = (theme) => {
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.2,
       shadowRadius: 5,
-      borderWidth: 0.2,
+      borderWidth: isDarkTheme ? 0.05 : 0.2,
       borderColor: "#eee",
     },
     handleBar: {

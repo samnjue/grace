@@ -257,7 +257,7 @@ export default function AppNavigator() {
         setInitialRoute("AuthStack");
         setIsLoading(false);
       }
-    }, 10000);
+    }, 30000);
 
     checkUserSession();
 

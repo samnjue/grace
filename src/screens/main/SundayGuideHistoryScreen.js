@@ -125,11 +125,11 @@ export default function SundayGuideHistoryScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color={isDarkTheme ? "#fff" : "#000"}
-          style={{ marginTop: 20 }}
-        />
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#6a5acd" />
+        </View>
       ) : (
         <ScrollView
           ref={scrollViewRef}

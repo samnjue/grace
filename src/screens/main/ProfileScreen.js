@@ -392,7 +392,9 @@ const ProfileScreen = ({ navigation }) => {
       >
         {/* Profile Section */}
         <View style={styles.profileSection}>
-          <TouchableOpacity onPress={() => navigation.navigate("mpesaScreen")}>
+          <TouchableOpacity
+          /*onPress={() => navigation.navigate("mpesaScreen")}*/
+          >
             {profileImage ? (
               <Image
                 source={{ uri: profileImage }}

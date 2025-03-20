@@ -36,8 +36,113 @@ const SermonScreen = ({ route }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
   const [hasPlayedBefore, setHasPlayedBefore] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [audioCardReady, setAudioCardReady] = useState(false);
 
   const pulsateAnim = useRef(new Animated.Value(1)).current;
+  const imageOpacity = useRef(new Animated.Value(0)).current;
+  const placeholderOpacity = useRef(new Animated.Value(1)).current;
+  const placeholderScale = useRef(new Animated.Value(1)).current;
+
+  const audioCardOpacity = useRef(new Animated.Value(0)).current;
+  const audioPlaceholderOpacity = useRef(new Animated.Value(1)).current;
+  const audioPlaceholderScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(placeholderScale, {
+            toValue: 1.05,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(placeholderOpacity, {
+            toValue: 0.7,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(placeholderScale, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(placeholderOpacity, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(audioPlaceholderScale, {
+            toValue: 1.03,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(audioPlaceholderOpacity, {
+            toValue: 0.8,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(audioPlaceholderScale, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(audioPlaceholderOpacity, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    ).start();
+  }, []);
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+
+    Animated.parallel([
+      Animated.timing(imageOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(placeholderOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  useEffect(() => {
+    if (isLoaded && !isLoading && sermon_audio) {
+      setAudioCardReady(true);
+
+      Animated.parallel([
+        Animated.timing(audioCardOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(audioPlaceholderOpacity, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isLoaded, isLoading, sermon_audio]);
 
   useEffect(() => {
     if (isLoading) {
@@ -264,7 +369,37 @@ const SermonScreen = ({ route }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.imageContainer}>
-          <Image source={{ uri: sermon_image }} style={styles.image} />
+          {/* Hidden image that triggers onLoad */}
+          <Animated.Image
+            source={{ uri: sermon_image }}
+            style={[styles.image, { opacity: imageOpacity }]}
+            onLoad={handleImageLoad}
+          />
+
+          {/* Image placeholder with animation */}
+          <Animated.View
+            style={[
+              styles.imagePlaceholder,
+              {
+                opacity: placeholderOpacity,
+                //transform: [{ scale: placeholderScale }],
+              },
+            ]}
+          >
+            <View style={styles.placeholderContent}>
+              <Ionicons
+                name="image-outline"
+                size={70}
+                color={isDarkTheme ? "#ffffff80" : "#00000080"}
+              />
+              {/* <View style={styles.placeholderMountains}>
+                <View style={[styles.mountain, styles.mountain1]} />
+                <View style={[styles.mountain, styles.mountain2]} />
+              </View>
+              <View style={styles.placeholderSun} /> */}
+            </View>
+          </Animated.View>
+
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -277,101 +412,142 @@ const SermonScreen = ({ route }) => {
           <Text style={styles.title}>{sermon}</Text>
           <Text style={styles.metadata}>{sermon_metadata}</Text>
           {sermon_audio && (
-            <View style={styles.audioPlayer}>
+            <View style={styles.audioPlayerContainer}>
+              {/* Audio card placeholder */}
               <Animated.View
-                style={{
-                  width: "100%",
-                  opacity: isLoading && !isSeeking ? pulsateAnim : 1,
-                }}
+                style={[
+                  styles.audioPlayerPlaceholder,
+                  {
+                    opacity: audioPlaceholderOpacity,
+                    transform: [{ scale: audioPlaceholderScale }],
+                  },
+                ]}
               >
-                <Slider
-                  style={{ width: "100%", height: 40 }}
-                  minimumValue={0}
-                  maximumValue={duration}
-                  value={position}
-                  onSlidingComplete={seekAudio}
-                  thumbTintColor="#6a5acd"
-                  minimumTrackTintColor={isDarkTheme ? "#6a5acd" : "#6a5acd"}
-                  maximumTrackTintColor={isDarkTheme ? "#999" : "#444"}
-                  disabled={controlsDisabled}
-                />
-              </Animated.View>
-              <View style={styles.audioControls}>
-                <Text style={styles.audioTime}>
-                  {Math.floor(position / 60000)}:
-                  {((position % 60000) / 1000).toFixed(0).padStart(2, "0")}
-                </Text>
-
-                <TouchableOpacity
-                  onPress={rewindAudio}
-                  disabled={controlsDisabled}
-                  style={controlsDisabled ? styles.disabledButton : null}
-                >
+                <View style={styles.audioPlaceholderContent}>
                   <Ionicons
-                    name="play-back"
-                    size={30}
-                    color={
-                      controlsDisabled
-                        ? isDarkTheme
-                          ? "#666"
-                          : "#aaa"
-                        : isDarkTheme
-                          ? "#fff"
-                          : "#000"
-                    }
+                    name="musical-notes-outline"
+                    size={40}
+                    color={isDarkTheme ? "#ffffff80" : "#00000080"}
                   />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={togglePlayPause}
-                  disabled={controlsDisabled}
-                  style={controlsDisabled ? styles.disabledButton : null}
-                >
-                  {isLoading && !isSeeking ? (
-                    <Animated.View style={{ opacity: pulsateAnim }}>
-                      <Ionicons
-                        name="infinite-outline"
-                        size={47}
-                        color={isDarkTheme ? "#aaa" : "#888"}
+                  <Text style={styles.audioPlaceholderText}>
+                    Loading audio...
+                  </Text>
+                  <View style={styles.audioPlaceholderWaveform}>
+                    {[...Array(12)].map((_, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.audioPlaceholderBar,
+                          {
+                            height: 10 + Math.random() * 25,
+                            marginHorizontal: 3,
+                          },
+                        ]}
                       />
-                    </Animated.View>
-                  ) : (
-                    <Ionicons
-                      name={isPlaying ? "pause" : "play"}
-                      size={47}
-                      color={isDarkTheme ? "#fff" : "#000"}
-                    />
-                  )}
-                </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </Animated.View>
 
-                <TouchableOpacity
-                  onPress={forwardAudio}
-                  disabled={controlsDisabled}
-                  style={controlsDisabled ? styles.disabledButton : null}
+              {/* Real audio player */}
+              <Animated.View
+                style={[styles.audioPlayer, { opacity: audioCardOpacity }]}
+              >
+                <Animated.View
+                  style={{
+                    width: "100%",
+                    opacity: isLoading && !isSeeking ? pulsateAnim : 1,
+                  }}
                 >
-                  <Ionicons
-                    name="play-forward"
-                    size={30}
-                    color={
-                      controlsDisabled
-                        ? isDarkTheme
-                          ? "#666"
-                          : "#aaa"
-                        : isDarkTheme
-                          ? "#fff"
-                          : "#000"
-                    }
+                  <Slider
+                    style={{ width: "100%", height: 40 }}
+                    minimumValue={0}
+                    maximumValue={duration}
+                    value={position}
+                    onSlidingComplete={seekAudio}
+                    thumbTintColor="#6a5acd"
+                    minimumTrackTintColor={isDarkTheme ? "#6a5acd" : "#6a5acd"}
+                    maximumTrackTintColor={isDarkTheme ? "#999" : "#444"}
+                    disabled={controlsDisabled}
                   />
-                </TouchableOpacity>
+                </Animated.View>
+                <View style={styles.audioControls}>
+                  <Text style={styles.audioTime}>
+                    {Math.floor(position / 60000)}:
+                    {((position % 60000) / 1000).toFixed(0).padStart(2, "0")}
+                  </Text>
 
-                <Text style={styles.audioTime}>
-                  {Math.floor(duration / 60000)}:
-                  {((duration % 60000) / 1000).toFixed(0).padStart(2, "0")}
-                </Text>
-              </View>
-              {isLoading && !isSeeking && (
-                <Text style={styles.loadingText}>Loading audio...</Text>
-              )}
+                  <TouchableOpacity
+                    onPress={rewindAudio}
+                    disabled={controlsDisabled}
+                    style={controlsDisabled ? styles.disabledButton : null}
+                  >
+                    <Ionicons
+                      name="play-back"
+                      size={30}
+                      color={
+                        controlsDisabled
+                          ? isDarkTheme
+                            ? "#666"
+                            : "#aaa"
+                          : isDarkTheme
+                            ? "#fff"
+                            : "#000"
+                      }
+                    />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={togglePlayPause}
+                    disabled={controlsDisabled}
+                    style={controlsDisabled ? styles.disabledButton : null}
+                  >
+                    {isLoading && !isSeeking ? (
+                      <Animated.View style={{ opacity: pulsateAnim }}>
+                        <Ionicons
+                          name="infinite-outline"
+                          size={47}
+                          color={isDarkTheme ? "#aaa" : "#888"}
+                        />
+                      </Animated.View>
+                    ) : (
+                      <Ionicons
+                        name={isPlaying ? "pause" : "play"}
+                        size={47}
+                        color={isDarkTheme ? "#fff" : "#000"}
+                      />
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={forwardAudio}
+                    disabled={controlsDisabled}
+                    style={controlsDisabled ? styles.disabledButton : null}
+                  >
+                    <Ionicons
+                      name="play-forward"
+                      size={30}
+                      color={
+                        controlsDisabled
+                          ? isDarkTheme
+                            ? "#666"
+                            : "#aaa"
+                          : isDarkTheme
+                            ? "#fff"
+                            : "#000"
+                      }
+                    />
+                  </TouchableOpacity>
+
+                  <Text style={styles.audioTime}>
+                    {Math.floor(duration / 60000)}:
+                    {((duration % 60000) / 1000).toFixed(0).padStart(2, "0")}
+                  </Text>
+                </View>
+                {isLoading && !isSeeking && (
+                  <Text style={styles.loadingText}>Loading audio...</Text>
+                )}
+              </Animated.View>
             </View>
           )}
           <Text style={styles.content}>{sermon_content}</Text>
@@ -413,6 +589,64 @@ const getStyle = (theme, insets) => {
       width: "100%",
       height: "100%",
       resizeMode: "cover",
+      position: "absolute",
+    },
+    imagePlaceholder: {
+      width: "100%",
+      height: "100%",
+      backgroundColor: isDarkTheme ? "#2c2c2c" : "#f2f2f2",
+      position: "absolute",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    placeholderContent: {
+      width: "100%",
+      height: "100%",
+      justifyContent: "center",
+      alignItems: "center",
+      position: "relative",
+    },
+    placeholderMountains: {
+      width: "100%",
+      height: "100%",
+      position: "absolute",
+      bottom: 0,
+      overflow: "hidden",
+    },
+    mountain: {
+      position: "absolute",
+      width: 0,
+      height: 0,
+      backgroundColor: "transparent",
+      borderStyle: "solid",
+      bottom: 40,
+    },
+    mountain1: {
+      borderLeftWidth: 100,
+      borderRightWidth: 100,
+      borderBottomWidth: 140,
+      borderLeftColor: "transparent",
+      borderRightColor: "transparent",
+      borderBottomColor: isDarkTheme ? "#3a3a3a" : "#d8d8d8",
+      left: 40,
+    },
+    mountain2: {
+      borderLeftWidth: 130,
+      borderRightWidth: 130,
+      borderBottomWidth: 180,
+      borderLeftColor: "transparent",
+      borderRightColor: "transparent",
+      borderBottomColor: isDarkTheme ? "#4a4a4a" : "#e8e8e8",
+      right: 20,
+    },
+    placeholderSun: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: isDarkTheme ? "#5a5a5a" : "#ffd700",
+      position: "absolute",
+      top: 70,
+      right: 70,
     },
     backButton: {
       position: "absolute",
@@ -421,6 +655,7 @@ const getStyle = (theme, insets) => {
       backgroundColor: "rgba(0, 0, 0, 0.5)",
       padding: 10,
       borderRadius: 50,
+      zIndex: 10,
     },
     contentContainer: {
       padding: 20,
@@ -438,38 +673,50 @@ const getStyle = (theme, insets) => {
       marginLeft: 15,
       lineHeight: 21,
     },
-    content: {
-      fontSize: 20,
-      fontWeight: "600",
-      fontFamily: "SourceSerif4_400Regular",
-      color: isDarkTheme ? "#f7f7f7" : "#222",
-      marginTop: 20,
-      lineHeight: 24,
+    audioPlayerContainer: {
+      position: "relative",
+      marginVertical: 20,
+      height: 135,
     },
-    topBar: {
+    audioPlayerPlaceholder: {
       position: "absolute",
       top: 0,
       left: 0,
       right: 0,
-      height: 60,
-      backgroundColor: isDarkTheme ? "#121212" : "#fff",
-      flexDirection: "row",
+      padding: 15,
+      borderRadius: 10,
+      backgroundColor: isDarkTheme ? "#2c2c2c" : "#f2f2f2",
+      height: 135,
+      justifyContent: "center",
       alignItems: "center",
-      paddingHorizontal: 15,
-      paddingTop: insets.top,
     },
-    topBarBackButton: {
-      padding: 10,
+    audioPlaceholderContent: {
+      alignItems: "center",
+      justifyContent: "center",
     },
-    topBarTitle: {
-      fontSize: 18,
-      fontFamily: "Archivo_700Bold",
-      color: isDarkTheme ? "#fff" : "#121212",
-      marginLeft: 10,
-      flex: 1,
+    audioPlaceholderText: {
+      fontSize: 14,
+      fontFamily: "Inter_700Bold",
+      color: isDarkTheme ? "#999" : "#666",
+      marginTop: 8,
+      marginBottom: 12,
+    },
+    audioPlaceholderWaveform: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      height: 35,
+      marginTop: 5,
+    },
+    audioPlaceholderBar: {
+      width: 4,
+      backgroundColor: isDarkTheme ? "#4a4a4a" : "#c4c4c4",
+      borderRadius: 2,
     },
     audioPlayer: {
-      marginVertical: 20,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
       padding: 15,
       borderRadius: 10,
       backgroundColor: isDarkTheme ? "#2c2c2c" : "#f2f2f2",
@@ -505,6 +752,36 @@ const getStyle = (theme, insets) => {
       color: isDarkTheme ? "#999" : "#666",
       marginTop: 10,
       textAlign: "center",
+    },
+    content: {
+      fontSize: 20,
+      fontWeight: "600",
+      fontFamily: "SourceSerif4_400Regular",
+      color: isDarkTheme ? "#f7f7f7" : "#222",
+      marginTop: 20,
+      lineHeight: 24,
+    },
+    topBar: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 60,
+      backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 15,
+      paddingTop: insets.top,
+    },
+    topBarBackButton: {
+      padding: 10,
+    },
+    topBarTitle: {
+      fontSize: 18,
+      fontFamily: "Archivo_700Bold",
+      color: isDarkTheme ? "#fff" : "#121212",
+      marginLeft: 10,
+      flex: 1,
     },
   });
 };

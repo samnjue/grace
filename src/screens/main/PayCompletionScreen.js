@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, Animated, Easing, BackHandler } from "react-native";
 import {
@@ -14,38 +14,40 @@ const PayCompletionScreen = ({ route, navigation }) => {
   const [userPhone, setUserPhone] = useState(phone || "");
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
-  const [animations] = useState([
-    new Animated.Value(0),
-    new Animated.Value(0),
-    new Animated.Value(0),
-  ]);
   const [isProcessing, setIsProcessing] = useState(true);
 
+  const dot1Animation = useRef(new Animated.Value(0)).current;
+  const dot2Animation = useRef(new Animated.Value(0)).current;
+  const dot3Animation = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    startAnimation();
+    startDotAnimation();
     initializePayment();
   }, []);
 
-  const startAnimation = () => {
-    animations.forEach((anim, index) => {
-      Animated.loop(
+  const startDotAnimation = () => {
+    const createDotAnimation = (dotAnim) => {
+      return Animated.loop(
         Animated.sequence([
-          Animated.timing(anim, {
+          Animated.timing(dotAnim, {
             toValue: 1,
-            duration: 300,
-            delay: index * 200,
-            easing: Easing.linear,
+            duration: 400,
             useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
           }),
-          Animated.timing(anim, {
+          Animated.timing(dotAnim, {
             toValue: 0,
-            duration: 300,
-            easing: Easing.linear,
+            duration: 400,
             useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
           }),
         ])
-      ).start();
-    });
+      );
+    };
+
+    createDotAnimation(dot1Animation).start();
+    setTimeout(() => createDotAnimation(dot2Animation).start(), 150);
+    setTimeout(() => createDotAnimation(dot3Animation).start(), 300);
   };
 
   const initializePayment = async () => {
@@ -186,6 +188,28 @@ const PayCompletionScreen = ({ route, navigation }) => {
     }, [])
   );
 
+  const getDotStyle = (animValue) => {
+    return {
+      width: 15,
+      height: 15,
+      borderRadius: 10,
+      backgroundColor: "#6a5acd",
+      marginHorizontal: 5,
+      transform: [
+        {
+          scale: animValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.7, 1.2],
+          }),
+        },
+      ],
+      opacity: animValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.4, 1],
+      }),
+    };
+  };
+
   return (
     <View
       style={{
@@ -224,33 +248,15 @@ const PayCompletionScreen = ({ route, navigation }) => {
       <View
         style={{
           flexDirection: "row",
-          width: 60,
-          justifyContent: "space-between",
+          width: 80,
+          justifyContent: "center",
+          alignItems: "center",
+          height: 20,
         }}
       >
-        {[0, 1, 2].map((_, index) => {
-          return (
-            <Animated.View
-              key={index}
-              style={{
-                right: 7,
-                marginRight: 5,
-                width: 20,
-                height: 20,
-                borderRadius: 10,
-                backgroundColor: "#6a5acd",
-                transform: [
-                  {
-                    translateY: animations[index].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, -15],
-                    }),
-                  },
-                ],
-              }}
-            />
-          );
-        })}
+        <Animated.View style={getDotStyle(dot1Animation)} />
+        <Animated.View style={getDotStyle(dot2Animation)} />
+        <Animated.View style={getDotStyle(dot3Animation)} />
       </View>
     </View>
   );

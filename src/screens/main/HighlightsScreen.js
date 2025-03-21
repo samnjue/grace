@@ -79,18 +79,15 @@ const HighlightScreen = ({ navigation }) => {
     return grouped;
   };
 
-  // New helper function to render verse text with backtick formatting
   const renderVerseText = (verseText, highlightColor) => {
     const parts = verseText.split(/`/);
 
     return parts.map((part, index) =>
       index % 2 === 1 ? (
-        // This is content inside backticks - render in red
         <Text key={index} style={styles.redText} maxFontSizeMultiplier={1.2}>
           {part}
         </Text>
       ) : (
-        // Regular text
         <Text
           key={index}
           style={[isDarkTheme && highlightColor && { color: "#121212" }]}

@@ -98,7 +98,7 @@ const ProfileScreen = ({ navigation }) => {
         return;
       }
 
-      setUserUID(user.id);
+      //setUserUID(user.id);
 
       const { data: userData, error: userError } = await supabase
         .from("users")
@@ -407,15 +407,26 @@ const ProfileScreen = ({ navigation }) => {
 
           <View style={styles.uidContainer}>
             <Text style={styles.uidText} maxFontSizeMultiplier={0}>
-              {errorMessage || (displayName ? displayName : `#${userUID}`)}
+              {errorMessage ||
+                (displayName ? (
+                  displayName
+                ) : (
+                  <Ionicons name="cog-outline" size={30} color="gray" />
+                ))}
             </Text>
-            <TouchableOpacity onPress={() => navigation.navigate("EditScreen")}>
-              <Ionicons
-                name="create-outline"
-                size={25}
-                color={isDarkTheme ? "#fff" : "#000"}
-              />
-            </TouchableOpacity>
+            {displayName ? (
+              <TouchableOpacity
+                onPress={() => navigation.navigate("EditScreen")}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={25}
+                  color={isDarkTheme ? "#fff" : "#000"}
+                />
+              </TouchableOpacity>
+            ) : (
+              ""
+            )}
           </View>
         </View>
 
@@ -493,7 +504,7 @@ const ProfileScreen = ({ navigation }) => {
         <Modal
           visible={isThemeModalVisible}
           transparent={true}
-          animationType="none"
+          animationType="fade"
           onRequestClose={() => setThemeModalVisible(false)}
         >
           <View style={styles.modalContainer}>

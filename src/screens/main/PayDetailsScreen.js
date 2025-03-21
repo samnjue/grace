@@ -5,10 +5,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  BackHandler,
 } from "react-native";
 import { useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 
 const PayDetailsScreen = ({ route }) => {
   const { transactionId, transactionData, error } = route.params;
@@ -93,6 +95,20 @@ const PayDetailsScreen = ({ route }) => {
         {value || "N/A"}
       </Text>
     </View>
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        return true;
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+      };
+    }, [])
   );
 
   return (

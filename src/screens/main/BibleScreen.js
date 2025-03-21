@@ -339,7 +339,7 @@ export default function BibleScreen({}) {
                   source={
                     isDarkTheme
                       ? require("../../../assets/highlight_dark.jpg")
-                      : require("../../../assets/highlight_light.jpg")
+                      : require("../../../assets/highlight_light1.jpg")
                   }
                   style={styles.image}
                 />
@@ -463,7 +463,7 @@ const getStyle = (theme) => {
       resizeMode: "contain",
       borderWidth: isDarkTheme ? 0.07 : 0.01,
       borderColor: isDarkTheme ? "#ccc" : "#aaa",
-      borderRadius: 0,
+      borderRadius: 3,
     },
     modalOverlay: {
       position: "absolute",
@@ -473,7 +473,7 @@ const getStyle = (theme) => {
       bottom: 0,
       backgroundColor: isDarkTheme
         ? "rgba(0, 0, 0, 0.3)"
-        : "rgba(0, 0, 0, 0.1)",
+        : "rgba(0, 0, 0, 0.03)",
       justifyContent: "flex-end",
     },
     menuModalBackground: {

@@ -79,6 +79,12 @@ export default function MainTabNavigator() {
     if (routeName === "PayStatsScreen") {
       return { display: "none" };
     }
+    if (routeName === "NewGuideScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "MainGuideScreen") {
+      return { display: "none" };
+    }
     return {
       position: "absolute",
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",

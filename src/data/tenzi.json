@@ -830,9 +830,12 @@
     "6": "Aliyetupenda hivyo \nNasi tumpende, \nTukamtumai vivyo \nNasi tumpende."
   },
   "116. Bwana, U Sehemu Yangu": {
-    "1": "Bwana, U sehemu yangu, \nRafiki yangu, Wewe, \nKatika safari yangu \nTatembea na Wewe; \nPamoja na Wewe, \nPamoja na Wewe, \nKatika safari yangu \nTatembea na Wewe.",
-    "2": "Mali hapa sikutaka \nIli niheshimiwe, \nNa yanikute mashaka \nSawasawa na Wewe \nPamoja na Wewe, \nPamoja na Wewe, \nHeri nikute mashaka \nSawasawa na Wewe.",
-    "3": "Niongoze safarini, \nMbele unichukue, \nMlangoni kwa Mbinguni \nNiingie na Wewe, \nPamoja na Wewe, \nPamoja na Wewe, \nMlangoni kwa Mbinguni \nNiingie na Wewe."
+    "1": "Bwana, U sehemu yangu, \nRafiki yangu, Wewe, \nKatika safari yangu \nTatembea na Wewe;",
+    "*1": "Pamoja na Wewe, \nPamoja na Wewe, \nKatika safari yangu \nTatembea na Wewe.",
+    "2": "Mali hapa sikutaka \nIli niheshimiwe, \nNa yanikute mashaka \nSawasawa na Wewe",
+    "*2": "Pamoja na Wewe, \nPamoja na Wewe, \nHeri nikute mashaka \nSawasawa na Wewe.",
+    "3": "Niongoze safarini, \nMbele unichukue, \nMlangoni kwa Mbinguni \nNiingie na Wewe,",
+    "*3": "Pamoja na Wewe, \nPamoja na Wewe, \nMlangoni kwa Mbinguni \nNiingie na Wewe."
   },
   "117. Tufani Inapovuma": {
     "1": "Tufani inapovuma \nSana moyoni mwangu, \nHuona pa kujificha \nMkononi mwa Mungu.",

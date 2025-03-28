@@ -62,7 +62,7 @@ export default function AppNavigator() {
         );
       }
     } catch (error) {
-      console.error("Error checking for updates:", error);
+      //console.error("Error checking for updates:", error);
     }
   };
 
@@ -99,7 +99,7 @@ export default function AppNavigator() {
       });
 
       if (error) {
-        console.error("Session refresh error:", error);
+        //console.error("Session refresh error:", error);
         return;
       }
 
@@ -113,10 +113,10 @@ export default function AppNavigator() {
         dispatch(
           logIn({ email: data.session.user.email, session: data.session })
         );
-        console.log("Session refreshed successfully");
+        //console.log("Session refreshed successfully");
       }
     } catch (err) {
-      console.error("Error refreshing session:", err);
+      //console.error("Error refreshing session:", err);
     }
   };
 
@@ -132,7 +132,7 @@ export default function AppNavigator() {
       try {
         const savedSession = await AsyncStorage.getItem("supabaseSession");
         if (!savedSession) {
-          console.log("No session found, redirecting to login.");
+          //console.log("No session found, redirecting to login.");
           return;
         }
 
@@ -140,7 +140,7 @@ export default function AppNavigator() {
         const currentTime = Math.floor(Date.now() / 1000);
 
         if (session.expires_at < currentTime) {
-          console.log("Session expired, attempting to refresh...");
+          //console.log("Session expired, attempting to refresh...");
           await refreshSession();
         } else {
           await supabase.auth.setSession({
@@ -149,7 +149,7 @@ export default function AppNavigator() {
           });
         }
       } catch (error) {
-        console.error("Error restoring session:", error);
+        //console.error("Error restoring session:", error);
       }
     };
 
@@ -212,7 +212,7 @@ export default function AppNavigator() {
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Error checking session:", error);
+        //console.error("Error checking session:", error);
         setIsLoading(false);
       }
     };
@@ -242,7 +242,7 @@ export default function AppNavigator() {
           setInitialRoute("ChurchSelection");
         }
       } catch (error) {
-        console.error("Error loading cached profile:", error);
+        //console.error("Error loading cached profile:", error);
         setInitialRoute("ChurchSelection");
       } finally {
         setIsLoading(false);
@@ -251,9 +251,9 @@ export default function AppNavigator() {
 
     const safetyTimeout = setTimeout(() => {
       if (isLoading) {
-        console.warn(
-          "Safety timeout triggered - forcing navigation to AuthStack"
-        );
+        // console.warn(
+        //   "Safety timeout triggered - forcing navigation to AuthStack"
+        // );
         setInitialRoute("AuthStack");
         setIsLoading(false);
       }
@@ -284,7 +284,7 @@ export default function AppNavigator() {
           }
         }
       } catch (error) {
-        console.error("Error syncing state:", error);
+        //console.error("Error syncing state:", error);
       }
     };
     syncReduxWithStorage();
@@ -301,7 +301,7 @@ export default function AppNavigator() {
           dispatch(setTheme(storedTheme));
         }
       } catch (error) {
-        console.error("Error loading theme:", error);
+        //console.error("Error loading theme:", error);
       }
     };
     loadTheme();
@@ -312,7 +312,7 @@ export default function AppNavigator() {
       try {
         await AsyncStorage.setItem("appTheme", theme);
       } catch (error) {
-        console.error("Error saving theme:", error);
+        //console.error("Error saving theme:", error);
       }
     };
     saveTheme();

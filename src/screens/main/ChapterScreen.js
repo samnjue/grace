@@ -563,6 +563,7 @@ const getStyle = (theme) => {
     },
     selectedVerse: {
       textDecorationLine: "underline",
+      textDecorationThickness: 0.1,
     },
     panel: {
       position: "absolute",

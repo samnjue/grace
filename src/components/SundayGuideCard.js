@@ -300,8 +300,15 @@ export default function SundayGuideCard({ refreshKey }) {
       >
         <View style={styles.modalContent}>
           <View style={styles.modalBar} />
-          <Text style={styles.modalTitle}>Edit Sunday Guide</Text>
-          <TouchableOpacity style={styles.modalButton}>
+          <Text style={styles.modalTitle}>Sunday Guide</Text>
+          {/*New programme button*/}
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => {
+              setModalVisible(false);
+              navigation.navigate("NewGuideScreen");
+            }}
+          >
             <Text style={styles.modalButtonText}>Create new programme</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.modalButton}>

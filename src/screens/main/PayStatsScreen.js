@@ -49,10 +49,13 @@ const PayStatsScreen = () => {
 
   const groupTransactionsByDate = (transactions) => {
     return transactions.reduce((acc, transaction) => {
-      const date = new Date(transaction.created_at).toDateString();
+      const adjustedDate = new Date(transaction.created_at);
+      adjustedDate.setHours(adjustedDate.getHours() + 3);
+      const date = adjustedDate.toDateString();
+
       if (!acc[date]) acc[date] = { total: 0, transactions: [] };
       acc[date].total += transaction.amount;
-      acc[date].transactions.push(transaction);
+      acc[date].transactions.push({ ...transaction, adjustedDate });
       return acc;
     }, {});
   };
@@ -67,7 +70,6 @@ const PayStatsScreen = () => {
         padding: 20,
       }}
     >
-      {/* Header */}
       <View
         style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
       >
@@ -90,7 +92,6 @@ const PayStatsScreen = () => {
         </Text>
       </View>
 
-      {/* Loading Spinner */}
       {loading ? (
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
@@ -141,82 +142,75 @@ const PayStatsScreen = () => {
                   </Text>
                 </View>
 
-                {transactions.map((tx) => {
-                  const transactionDate = new Date(tx.created_at);
-                  transactionDate.setTime(
-                    transactionDate.getTime() + 3 * 60 * 60 * 1000
-                  );
-
-                  return (
-                    <View
-                      key={tx.mpesa_receipt_number}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        paddingVertical: 10,
-                      }}
-                    >
-                      <Ionicons
-                        name="person-circle"
-                        size={50}
-                        color={isDarkTheme ? "gray" : "#aaa"}
-                      />
-                      <View style={{ flex: 1, marginLeft: 10 }}>
-                        <Text
-                          style={{
-                            color: isDarkTheme ? "#fff" : "#000",
-                            fontSize: 14,
-                            fontFamily: "Inter_600SemiBold",
-                          }}
-                        >
-                          {tx.phone}
-                        </Text>
-                        <Text
-                          style={{
-                            color: isDarkTheme ? "#bbb" : "#666",
-                            fontSize: 12,
-                            fontFamily: "Archivo_700Bold",
-                          }}
-                        >
-                          {tx.account_reference}
-                        </Text>
-                        <Text
-                          style={{
-                            color: isDarkTheme ? "#bbb" : "#666",
-                            fontSize: 10,
-                            fontFamily: "Inter_700Bold",
-                          }}
-                        >
-                          {tx.mpesa_receipt_number}
-                        </Text>
-                      </View>
-                      <View style={{ alignItems: "flex-end" }}>
-                        <Text
-                          style={{
-                            color: isDarkTheme ? "#4CAF50" : "#50C878",
-                            fontSize: 14,
-                            fontFamily: "Inter_600SemiBold",
-                          }}
-                        >
-                          + KSH {tx.amount}
-                        </Text>
-                        <Text
-                          style={{
-                            color: isDarkTheme ? "#bbb" : "#666",
-                            fontSize: 11,
-                            fontFamily: "Inter_600SemiBold",
-                          }}
-                        >
-                          {transactionDate.toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
-                        </Text>
-                      </View>
+                {transactions.map((tx) => (
+                  <View
+                    key={tx.mpesa_receipt_number}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Ionicons
+                      name="person-circle"
+                      size={50}
+                      color={isDarkTheme ? "gray" : "#aaa"}
+                    />
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text
+                        style={{
+                          color: isDarkTheme ? "#fff" : "#000",
+                          fontSize: 14,
+                          fontFamily: "Inter_600SemiBold",
+                        }}
+                      >
+                        {tx.phone}
+                      </Text>
+                      <Text
+                        style={{
+                          color: isDarkTheme ? "#bbb" : "#666",
+                          fontSize: 12,
+                          fontFamily: "Archivo_700Bold",
+                        }}
+                      >
+                        {tx.account_reference}
+                      </Text>
+                      <Text
+                        style={{
+                          color: isDarkTheme ? "#bbb" : "#666",
+                          fontSize: 10,
+                          fontFamily: "Inter_700Bold",
+                        }}
+                      >
+                        {tx.mpesa_receipt_number}
+                      </Text>
                     </View>
-                  );
-                })}
+                    <View style={{ alignItems: "flex-end" }}>
+                      <Text
+                        style={{
+                          color: isDarkTheme ? "#4CAF50" : "#50C878",
+                          fontSize: 14,
+                          fontFamily: "Inter_600SemiBold",
+                        }}
+                      >
+                        + KSH {tx.amount}
+                      </Text>
+                      <Text
+                        style={{
+                          color: isDarkTheme ? "#bbb" : "#666",
+                          fontSize: 11,
+                          fontFamily: "Inter_600SemiBold",
+                        }}
+                      >
+                        {tx.adjustedDate.toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
               </View>
             )
           )}

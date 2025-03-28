@@ -4,7 +4,6 @@
     "slug": "mark13",
     "version": "1.13.36",
     "scheme": "grace.ivory",
-    "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -33,7 +32,8 @@
       ],
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.grace.ivory",
-      "googleServicesFile": "./android/app/google-services.json"
+      "googleServicesFile": "./android/app/google-services.json",
+      "androidNavigationBar": "sticky-immersive"
     },
     "web": {
       "favicon": "./assets/favicon.png"

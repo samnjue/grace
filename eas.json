@@ -13,14 +13,6 @@
     },
     "production": {
       "autoIncrement": true
-    },
-    "android": {
-      "buildType": "app-bundle",
-      "gradleCommand": ":app:bundleRelease",
-      "env": {
-        "MIN_SDK_VERSION": "21",
-        "TARGET_SDK_VERSION": "38"
-      }
     }
   },
   "submit": {

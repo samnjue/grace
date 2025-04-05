@@ -55,6 +55,7 @@
     "react-native-animatable": "^1.4.0",
     "react-native-bootsplash": "^6.3.2",
     "react-native-dotenv": "^3.4.11",
+    "react-native-edge-to-edge": "^1.5.1",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-ico": "^43.7.4",
     "react-native-ico-miscellaneous": "^5.1.2",

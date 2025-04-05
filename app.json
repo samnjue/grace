@@ -2,10 +2,10 @@
   "expo": {
     "name": "Grace",
     "slug": "mark13",
-    "version": "1.13.36",
+    "version": "1.13.37",
     "scheme": "grace.ivory",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/adaptive-icon.png",
@@ -32,8 +32,7 @@
       ],
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.grace.ivory",
-      "googleServicesFile": "./android/app/google-services.json",
-      "androidNavigationBar": "sticky-immersive"
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"

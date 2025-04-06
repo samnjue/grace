@@ -112,7 +112,7 @@ export default function SongScreen({ navigation }) {
         flex: 1,
         justifyContent: "space-between",
         alignItems: "center",
-        paddingTop: insets.top,
+        //paddingTop: insets.top,
         paddingBottom: insets.bottom,
         paddingLeft: insets.left,
         paddingRight: insets.right,

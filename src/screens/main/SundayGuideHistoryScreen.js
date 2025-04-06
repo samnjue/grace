@@ -109,7 +109,7 @@ export default function SundayGuideHistoryScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container]}>
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -146,10 +146,14 @@ export default function SundayGuideHistoryScreen() {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
   return {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      paddingBottom: insets.bottom,
+      paddingLeft: insets.left,
+      paddingRight: insets.right,
     },
     header: {
       flexDirection: "row",

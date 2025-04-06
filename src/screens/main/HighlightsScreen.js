@@ -107,7 +107,7 @@ const HighlightScreen = ({ navigation }) => {
         styles.container,
         {
           backgroundColor: isDarkTheme ? "#121212" : "#fff",
-          paddingTop: insets.top,
+          //paddingTop: insets.top,
         },
       ]}
     >

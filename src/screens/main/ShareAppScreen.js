@@ -91,7 +91,7 @@ const ShareAppScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerText} maxFontSizeMultiplier={1}>
-          Share App Link
+          Share Play Store Link
         </Text>
       </View>
 
@@ -164,8 +164,6 @@ const getStyle = (theme) => {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
-      paddingTop: insets.top,
-      paddingBottom: insets.bottom,
       paddingLeft: insets.left,
       paddingRight: insets.right,
     },

@@ -345,12 +345,7 @@ const ChapterScreen = () => {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-    >
+    <View style={[styles.container]}>
       <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
@@ -603,6 +598,7 @@ const getStyle = (theme) => {
       elevation: 5,
       maxWidth: 140,
       overflow: "hidden",
+      top: insets.top,
     },
     pillBackButton: {
       marginRight: 10,
@@ -686,9 +682,11 @@ const getStyle = (theme) => {
     },
     prevButton: {
       left: 20,
+      bottom: insets.bottom,
     },
     nextButton: {
       right: 20,
+      bottom: insets.bottom,
     },
     disabledButton: {
       backgroundColor: "#ccc",

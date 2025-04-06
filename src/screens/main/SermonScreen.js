@@ -575,6 +575,7 @@ const SermonScreen = ({ route }) => {
 
 const getStyle = (theme, insets) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  insets = useSafeAreaInsets();
 
   return StyleSheet.create({
     container: {
@@ -650,7 +651,7 @@ const getStyle = (theme, insets) => {
     },
     backButton: {
       position: "absolute",
-      top: insets.top + 10,
+      top: insets.top,
       left: 15,
       backgroundColor: "rgba(0, 0, 0, 0.5)",
       padding: 10,

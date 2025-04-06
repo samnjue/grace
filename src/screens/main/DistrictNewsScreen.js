@@ -327,7 +327,7 @@ const getStyle = (theme) => {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
-      paddingTop: insets.top,
+      //paddingTop: insets.top,
       paddingBottom: insets.bottom,
       paddingLeft: insets.left,
       paddingRight: insets.right,
@@ -391,7 +391,7 @@ const getStyle = (theme) => {
     },
     floatingButton: {
       position: "absolute",
-      bottom: 16,
+      bottom: 16 + insets.top,
       right: 16,
       flexDirection: "row",
       alignItems: "center",

@@ -201,10 +201,10 @@ export default function BibleScreen({}) {
         backgroundColor: "#fff",
       }}
     >
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      />
+      /> */}
       <Header
         title="Bible"
         version={currentVersion}
@@ -354,6 +354,7 @@ export default function BibleScreen({}) {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
   return {
     container: {
       flex: 1,
@@ -361,6 +362,8 @@ const getStyle = (theme) => {
       paddingTop: 5,
       paddingBottom: 0,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      //paddingTop: insets.top,
+      paddingBottom: insets.bottom,
     },
     searchBar: {
       flex: 1,

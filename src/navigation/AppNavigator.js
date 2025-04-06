@@ -318,10 +318,10 @@ export default function AppNavigator() {
     saveTheme();
   }, [theme]);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   const appTheme = isDarkTheme
     ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: "#121212" } }
@@ -340,10 +340,10 @@ export default function AppNavigator() {
           backgroundColor: isDarkTheme ? "#121212" : "#fff",
         }}
       >
-        <StatusBar
+        {/* <StatusBar
           barStyle={isDarkTheme ? "light-content" : "dark-content"}
           backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-        />
+        /> */}
         <ActivityIndicator size="large" color="#6a5acd" />
       </View>
     );
@@ -351,10 +351,10 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer theme={appTheme}>
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      />
+      /> */}
       <Stack.Navigator
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}

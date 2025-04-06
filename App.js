@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Provider } from "react-redux";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
 import store from "./src/redux/store";
 import { useFonts } from "expo-font";
@@ -93,10 +93,10 @@ function MainApp() {
     saveTheme();
   }, [theme]);
 
-  // useEffect(() => {
-  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  // }, [isDarkTheme]);
+  useEffect(() => {
+    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  }, [isDarkTheme]);
 
   useEffect(() => {
     const prepare = async () => {
@@ -124,7 +124,9 @@ function MainApp() {
         animated
       /> */}
       <SystemBars style="auto" />
-      <AppNavigator />
+      <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+        <AppNavigator />
+      </SafeAreaView>
     </SafeAreaProvider>
   );
 }

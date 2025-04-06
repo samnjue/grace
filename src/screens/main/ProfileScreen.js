@@ -368,12 +368,7 @@ const ProfileScreen = ({ navigation }) => {
   }, [isDarkTheme]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-    >
+    <View style={[styles.container]}>
       <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}

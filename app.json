@@ -18,7 +18,6 @@
         "UIBackgroundModes": ["audio"]
       }
     },
-    "androidNavigationBar": "immersive",
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -31,6 +30,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "INTERNET"
       ],
+      "navigationBar": "sticky-immersive",
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.grace.ivory",
       "googleServicesFile": "./android/app/google-services.json"

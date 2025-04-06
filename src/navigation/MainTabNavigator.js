@@ -1,5 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, StyleSheet, TouchableWithoutFeedback } from "react-native";
 import BibleNavigator from "./BibleNavigator";
 import SongNavigator from "./SongNavigator";
@@ -20,6 +21,7 @@ const CustomTabBarButton = ({ children, onPress }) => (
 );
 
 export default function MainTabNavigator() {
+  const insets = useSafeAreaInsets();
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
 
@@ -90,8 +92,9 @@ export default function MainTabNavigator() {
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
       borderTopWidth: 0.21,
       elevation: 0,
-      height: 60,
+      height: 60 + insets.bottom,
       keyboardHidesTabBar: true,
+      paddingBottom: insets.bottom,
     };
   };
 

@@ -556,6 +556,7 @@ const ChapterScreen = () => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
   return {
     container: {
       flex: 1,

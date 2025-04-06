@@ -5,6 +5,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import store from "./src/redux/store";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { SystemBars } from "react-native-edge-to-edge";
 import {
   Inter_200ExtraLight,
   Inter_400Regular,
@@ -92,10 +93,10 @@ function MainApp() {
     saveTheme();
   }, [theme]);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   useEffect(() => {
     const prepare = async () => {
@@ -117,11 +118,12 @@ function MainApp() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
         animated
-      />
+      /> */}
+      <SystemBars style="auto" />
       <AppNavigator />
     </SafeAreaProvider>
   );

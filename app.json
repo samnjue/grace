@@ -15,7 +15,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": ["audio"],
+        "UIViewControllerBasedStatusBarAppearance": true
       }
     },
     "android": {
@@ -33,7 +34,11 @@
       "navigationBar": "sticky-immersive",
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.grace.ivory",
-      "googleServicesFile": "./android/app/google-services.json"
+      "googleServicesFile": "./android/app/google-services.json",
+      "statusBar": {
+        "translucent": true,
+        "backgroundColor": "transparent"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

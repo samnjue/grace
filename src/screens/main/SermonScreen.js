@@ -348,7 +348,7 @@ const SermonScreen = ({ route }) => {
     extrapolate: "clamp",
   });
 
-  const styles = getStyle(theme, insets);
+  const styles = getStyle(theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
 
   const controlsDisabled = isLoading && !isSeeking;
@@ -651,7 +651,7 @@ const getStyle = (theme, insets) => {
     },
     backButton: {
       position: "absolute",
-      top: insets.top,
+      top: 0,
       left: 15,
       backgroundColor: "rgba(0, 0, 0, 0.5)",
       padding: 10,
@@ -772,7 +772,7 @@ const getStyle = (theme, insets) => {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 15,
-      paddingTop: insets.top,
+      paddingTop: 10,
     },
     topBarBackButton: {
       padding: 10,

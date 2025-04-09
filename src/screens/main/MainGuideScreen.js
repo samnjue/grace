@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Modal } from "react-native";
+import { View, Text, TouchableOpacity, Modal, FlatList } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import { supabase } from "../../utils/supabase";
@@ -12,11 +12,13 @@ const MainGuideScreen = ({ navigation, route }) => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [items, setItems] = useState([]); // To store items from the temp table
 
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
 
+  // Extract params from navigation
   useEffect(() => {
     const { tempTableName, service, day, churchId } = route.params || {};
     if (tempTableName && service && day && churchId !== null) {
@@ -24,15 +26,38 @@ const MainGuideScreen = ({ navigation, route }) => {
       setService(service);
       setDay(day);
       setChurchId(churchId);
+      fetchItems(tempTableName); // Fetch items from the temp table
     } else {
       setError("Missing required guide data");
     }
   }, [route.params]);
 
+  // Fetch items from the temporary table
+  const fetchItems = async (tableName) => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from(tableName)
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (error) throw new Error(`Fetch Error: ${error.message}`);
+      setItems(data || []);
+      console.log("Fetched Items:", data);
+    } catch (error) {
+      console.error("Fetch Items Error:", error.message, error.stack);
+      setError(`Failed to load items: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle back button press with modal
   const handleBackPress = () => {
     setIsDeleteModalVisible(true);
   };
 
+  // Confirm deletion, drop table, and reset navigation
   const confirmDelete = async () => {
     try {
       setIsLoading(true);
@@ -64,10 +89,84 @@ const MainGuideScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleFinishPress = () => {
-    // Add logic here (e.g., save guide, then navigate)
+  // Navigate to ItemScreen to add a new item
+  const handleAddItem = () => {
+    navigation.navigate("ItemScreen", {
+      tempTableName,
+      churchId,
+      service,
+      day,
+    });
+  };
+
+  // Placeholder for Edit button
+  const handleEditItem = (item) => {
+    console.log("Edit Item:", item);
+    // Navigate to ItemScreen with item data for editing (to be implemented)
+    navigation.navigate("ItemScreen", {
+      tempTableName,
+      churchId,
+      service,
+      day,
+      item, // Pass the item to edit
+    });
+  };
+
+  // Placeholder for Delete button
+  const handleDeleteItem = async (itemId) => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from(tempTableName)
+        .delete()
+        .eq("id", itemId);
+
+      if (error) throw new Error(`Delete Error: ${error.message}`);
+      setItems(items.filter((item) => item.id !== itemId));
+      console.log("Item Deleted:", itemId);
+    } catch (error) {
+      console.error("Delete Item Error:", error.message, error.stack);
+      setError(`Failed to delete item: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Placeholder for Post button (to save to permanent table)
+  const handlePostPress = () => {
+    console.log("Post Guide:", {
+      tempTableName,
+      service,
+      day,
+      churchId,
+      items,
+    });
+    // Add logic to save to a permanent table and drop the temp table (to be implemented)
     navigation.goBack(); // For now, just go back
   };
+
+  // Render each item in the list
+  const renderItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <Text style={styles.itemText}>
+        {item.title || "Item"}: {item.content || "N/A"}
+      </Text>
+      <View style={styles.itemActions}>
+        <TouchableOpacity
+          onPress={() => handleEditItem(item)}
+          style={styles.actionButton}
+        >
+          <Text style={styles.actionText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => handleDeleteItem(item.id)}
+          style={styles.actionButton}
+        >
+          <Text style={styles.actionText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -79,34 +178,40 @@ const MainGuideScreen = ({ navigation, route }) => {
             color={isDarkTheme ? "#fff" : "#000"}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Guide Details</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerText}>Sunday Guide</Text>
+          <Text style={styles.headerDay}>{day || "Not set"}</Text>
+        </View>
       </View>
 
-      <Text style={styles.label}>Service</Text>
-      <Text style={styles.value}>{service || "Not set"}</Text>
-
-      <Text style={styles.label}>Day</Text>
-      <Text style={styles.value}>{day || "Not set"}</Text>
-
-      <Text style={styles.label}>Church ID</Text>
-      <Text style={styles.value}>
-        {churchId !== null ? churchId : "Not set"}
-      </Text>
-
-      <Text style={styles.label}>Table Name</Text>
-      <Text style={styles.value}>{tempTableName || "Not set"}</Text>
+      <FlatList
+        data={items}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No items added yet.</Text>
+        }
+        contentContainerStyle={styles.listContainer}
+      />
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <TouchableOpacity
-        onPress={handleFinishPress}
-        style={[styles.finishButton, isLoading && styles.finishButtonDisabled]}
-        disabled={isLoading}
-      >
-        <Text style={styles.finishText}>
-          {isLoading ? "Processing..." : "Finish"}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={handleAddItem} style={styles.addButton}>
+          <Ionicons name="add" size={24} color="#fff" />
+          <Text style={styles.addButtonText}>Add Item</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handlePostPress}
+          style={[styles.postButton, isLoading && styles.postButtonDisabled]}
+          disabled={isLoading}
+        >
+          <Text style={styles.postText}>
+            {isLoading ? "Processing..." : "Post"}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -153,40 +258,87 @@ const getStyle = (theme) => {
       alignItems: "center",
       marginBottom: 20,
     },
+    headerContent: {
+      marginLeft: 10,
+    },
     headerText: {
       fontSize: 22,
       fontFamily: "Archivo_700Bold",
-      marginLeft: 10,
       color: isDarkTheme ? "#fff" : "#000",
     },
-    label: {
-      fontSize: 20,
-      fontFamily: "Inter_600SemiBold",
-      color: isDarkTheme ? "#fff" : "#000",
-      marginBottom: 5,
-    },
-    value: {
+    headerDay: {
       fontSize: 16,
       fontFamily: "Inter_400Regular",
-      color: isDarkTheme ? "#f5f5f5" : "#333",
-      marginBottom: 15,
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      borderWidth: 1,
-      borderColor: isDarkTheme ? "#ccc" : "#666",
-      borderRadius: 5,
+      color: isDarkTheme ? "#ccc" : "#666",
+      marginTop: 2,
     },
-    finishButton: {
+    listContainer: {
+      paddingBottom: 20,
+    },
+    itemContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 15,
+      backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
+      borderRadius: 10,
+      marginBottom: 10,
+    },
+    itemText: {
+      fontSize: 16,
+      fontFamily: "Inter_600SemiBold",
+      color: isDarkTheme ? "#fff" : "#000",
+      flex: 1,
+    },
+    itemActions: {
+      flexDirection: "row",
+    },
+    actionButton: {
+      marginLeft: 10,
+    },
+    actionText: {
+      fontSize: 14,
+      fontFamily: "Inter_600SemiBold",
+      color: isDarkTheme ? "#6a5acd" : "#6a5acd",
+    },
+    emptyText: {
+      fontSize: 16,
+      fontFamily: "Inter_400Regular",
+      color: isDarkTheme ? "#ccc" : "#666",
+      textAlign: "center",
+      marginTop: 20,
+    },
+    buttonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: 20,
+    },
+    addButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: "#6a5acd",
       paddingVertical: 12,
       borderRadius: 25,
-      alignItems: "center",
-      marginTop: 20,
+      width: "45%",
     },
-    finishButtonDisabled: {
+    addButtonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontFamily: "Archivo_700Bold",
+      marginLeft: 8,
+    },
+    postButton: {
+      backgroundColor: "green",
+      paddingVertical: 12,
+      borderRadius: 25,
+      alignItems: "center",
+      width: "45%",
+    },
+    postButtonDisabled: {
       backgroundColor: "#aaa",
     },
-    finishText: {
+    postText: {
       color: "#fff",
       fontSize: 16,
       fontFamily: "Archivo_700Bold",
@@ -195,6 +347,7 @@ const getStyle = (theme) => {
       color: "red",
       fontSize: 14,
       marginBottom: 15,
+      textAlign: "center",
     },
     modalContainer: {
       flex: 1,

@@ -598,7 +598,7 @@ const getStyle = (theme) => {
       elevation: 5,
       maxWidth: 140,
       overflow: "hidden",
-      top: insets.top,
+      top: 0,
     },
     pillBackButton: {
       marginRight: 10,

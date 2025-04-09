@@ -34,11 +34,11 @@
       "navigationBar": "sticky-immersive",
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.grace.ivory",
-      "googleServicesFile": "./android/app/google-services.json",
-      "statusBar": {
-        "translucent": true,
-        "backgroundColor": "transparent"
-      }
+      "googleServicesFile": "./android/app/google-services.json"
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#aaaaaa",
+      "translucent": true
     },
     "web": {
       "favicon": "./assets/favicon.png"

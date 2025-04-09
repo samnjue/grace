@@ -37,7 +37,6 @@
       "googleServicesFile": "./android/app/google-services.json"
     },
     "androidStatusBar": {
-      "backgroundColor": "#2c2c2c",
       "translucent": true
     },
     "web": {

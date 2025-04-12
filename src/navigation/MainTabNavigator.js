@@ -87,6 +87,18 @@ export default function MainTabNavigator() {
     if (routeName === "MainGuideScreen") {
       return { display: "none" };
     }
+    if (routeName === "TypeScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "ItemCreationScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "SelectHymnScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "SermonTextScreen") {
+      return { display: "none" };
+    }
     return {
       position: "absolute",
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",

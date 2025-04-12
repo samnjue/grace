@@ -11,6 +11,10 @@ import SermonScreen from "../screens/main/SermonScreen.js";
 import SundayGuideHistoryScreen from "../screens/main/SundayGuideHistoryScreen";
 import NewGuideScreen from "../screens/main/NewGuideScreen";
 import MainGuideScreen from "../screens/main/MainGuideScreen";
+import TypeScreen from "../screens/main/TypeScreen";
+import ItemCreationScreen from "../screens/main/ItemCreationScreen";
+import SelectHymnScreen from "../screens/main/SelectHymnScreen";
+import SermonTextScreen from "../screens/main/SermonTextScreen";
 import { TransitionSpecs } from "@react-navigation/stack";
 import { CardStyleInterpolators } from "@react-navigation/stack";
 
@@ -124,6 +128,50 @@ export default function HomeNavigator() {
       <Stack.Screen
         name="MainGuideScreen"
         component={MainGuideScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          transitionSpec: {
+            open: TransitionSpecs.TransitionIOSSpec,
+            close: TransitionSpecs.TransitionIOSSpec,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="TypeScreen"
+        component={TypeScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          transitionSpec: {
+            open: TransitionSpecs.TransitionIOSSpec,
+            close: TransitionSpecs.TransitionIOSSpec,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="ItemCreationScreen"
+        component={ItemCreationScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          transitionSpec: {
+            open: TransitionSpecs.TransitionIOSSpec,
+            close: TransitionSpecs.TransitionIOSSpec,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="SelectHymnScreen"
+        component={SelectHymnScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          transitionSpec: {
+            open: TransitionSpecs.TransitionIOSSpec,
+            close: TransitionSpecs.TransitionIOSSpec,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="SermonTextScreen"
+        component={SermonTextScreen}
         options={{
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           transitionSpec: {

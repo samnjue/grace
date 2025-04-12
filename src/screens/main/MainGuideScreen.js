@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, TouchableOpacity, Modal, FlatList } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
@@ -10,15 +10,17 @@ const MainGuideScreen = ({ navigation, route }) => {
   const [day, setDay] = useState("");
   const [churchId, setChurchId] = useState(null);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // For fetching operations
+  const [isPosting, setIsPosting] = useState(false); // For posting and discarding
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [items, setItems] = useState([]); // To store items from the temp table
+  const [items, setItems] = useState([]);
+  const [isDiscarded, setIsDiscarded] = useState(false);
+  const [shouldFetch, setShouldFetch] = useState(true);
 
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
 
-  // Extract params from navigation
   useEffect(() => {
     const { tempTableName, service, day, churchId } = route.params || {};
     if (tempTableName && service && day && churchId !== null) {
@@ -26,41 +28,95 @@ const MainGuideScreen = ({ navigation, route }) => {
       setService(service);
       setDay(day);
       setChurchId(churchId);
-      fetchItems(tempTableName); // Fetch items from the temp table
+      setShouldFetch(true);
     } else {
       setError("Missing required guide data");
     }
-  }, [route.params]);
 
-  // Fetch items from the temporary table
+    // Add focus listener to trigger fetch on return
+    const unsubscribeFocus = navigation.addListener("focus", () => {
+      if (tempTableName && !isDiscarded) {
+        setShouldFetch(true);
+      }
+    });
+
+    // Add listener for back navigation
+    const unsubscribeBeforeRemove = navigation.addListener(
+      "beforeRemove",
+      (e) => {
+        // Show discard modal if the table exists and hasn't been discarded
+        if (tempTableName && !isDiscarded && !isPosting) {
+          e.preventDefault();
+          setIsDeleteModalVisible(true);
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeFocus();
+      unsubscribeBeforeRemove();
+    };
+  }, [navigation, route.params, isPosting, isDiscarded, tempTableName]);
+
+  useEffect(() => {
+    if (shouldFetch && tempTableName && !isDiscarded) {
+      fetchItems(tempTableName);
+      setShouldFetch(false);
+    }
+  }, [shouldFetch, tempTableName, isDiscarded]);
+
+  useEffect(() => {
+    console.log("Current items state:", items);
+    console.log(
+      "Valid items:",
+      items.filter((item) =>
+        ["basic", "bible", "hymn", "sermon"].includes(item.item_type)
+      )
+    );
+  }, [items]);
+
   const fetchItems = async (tableName) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true); // Only affects fetching
+      console.log("Fetching items from table:", tableName);
       const { data, error } = await supabase
         .from(tableName)
         .select("*")
         .order("created_at", { ascending: true });
 
       if (error) throw new Error(`Fetch Error: ${error.message}`);
+      console.log("Fetched Items from Temp Table:", data);
       setItems(data || []);
-      console.log("Fetched Items:", data);
     } catch (error) {
       console.error("Fetch Items Error:", error.message, error.stack);
-      setError(`Failed to load items: ${error.message}`);
+      if (error.message.includes("does not exist")) {
+        setIsDiscarded(true);
+        setTempTableName("");
+        setItems([]);
+        setError("");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "HomeScreen" }],
+        });
+      } else {
+        setError(`Failed to load items: ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle back button press with modal
   const handleBackPress = () => {
-    setIsDeleteModalVisible(true);
+    if (tempTableName && !isDiscarded) {
+      setIsDeleteModalVisible(true);
+    } else {
+      navigation.goBack();
+    }
   };
 
-  // Confirm deletion, drop table, and reset navigation
   const confirmDelete = async () => {
     try {
-      setIsLoading(true);
+      setIsPosting(true); // Use isPosting for discarding
       setIsDeleteModalVisible(false);
 
       const {
@@ -70,12 +126,16 @@ const MainGuideScreen = ({ navigation, route }) => {
 
       const { error: dropError } = await supabase.rpc(
         "drop_temp_sunday_guide_table",
-        {
-          user_id: user.id,
-        }
+        { user_id: user.id }
       );
       if (dropError) throw new Error(`Drop Error: ${dropError.message}`);
       console.log("Table Dropped:", tempTableName);
+
+      setIsDiscarded(true);
+      setTempTableName("");
+      setItems([]);
+      setError("");
+      setShouldFetch(false);
 
       navigation.reset({
         index: 0,
@@ -85,13 +145,12 @@ const MainGuideScreen = ({ navigation, route }) => {
       console.error("Confirm Delete Error:", error.message, error.stack);
       setError(`Failed to discard programme: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      setIsPosting(false);
     }
   };
 
-  // Navigate to ItemScreen to add a new item
   const handleAddItem = () => {
-    navigation.navigate("ItemScreen", {
+    navigation.navigate("TypeScreen", {
       tempTableName,
       churchId,
       service,
@@ -99,23 +158,40 @@ const MainGuideScreen = ({ navigation, route }) => {
     });
   };
 
-  // Placeholder for Edit button
   const handleEditItem = (item) => {
     console.log("Edit Item:", item);
-    // Navigate to ItemScreen with item data for editing (to be implemented)
-    navigation.navigate("ItemScreen", {
+    let inferredType;
+    if (
+      item.title &&
+      item.content &&
+      !item.book &&
+      !item.tenzi_number &&
+      !item.sermon
+    ) {
+      inferredType = "Basic Item";
+    } else if (item.book && item.chapter) {
+      inferredType = "Bible Item";
+    } else if (item.tenzi_number && item.title) {
+      inferredType = "Hymn Item";
+    } else if (item.title && item.sermon) {
+      inferredType = "Sermon Item";
+    } else {
+      inferredType = "Unknown";
+    }
+
+    navigation.navigate("ItemCreationScreen", {
       tempTableName,
       churchId,
       service,
       day,
-      item, // Pass the item to edit
+      itemType: inferredType,
+      item,
     });
   };
 
-  // Placeholder for Delete button
   const handleDeleteItem = async (itemId) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true); // Only affects fetching
       const { error } = await supabase
         .from(tempTableName)
         .delete()
@@ -124,6 +200,7 @@ const MainGuideScreen = ({ navigation, route }) => {
       if (error) throw new Error(`Delete Error: ${error.message}`);
       setItems(items.filter((item) => item.id !== itemId));
       console.log("Item Deleted:", itemId);
+      setShouldFetch(true);
     } catch (error) {
       console.error("Delete Item Error:", error.message, error.stack);
       setError(`Failed to delete item: ${error.message}`);
@@ -132,46 +209,84 @@ const MainGuideScreen = ({ navigation, route }) => {
     }
   };
 
-  // Placeholder for Post button (to save to permanent table)
-  const handlePostPress = () => {
-    console.log("Post Guide:", {
-      tempTableName,
-      service,
-      day,
-      churchId,
-      items,
-    });
-    // Add logic to save to a permanent table and drop the temp table (to be implemented)
-    navigation.goBack(); // For now, just go back
+  const handlePostPress = async () => {
+    try {
+      setIsPosting(true); // Use isPosting for posting
+      console.log("Post Guide:", {
+        tempTableName,
+        service,
+        day,
+        churchId,
+        items,
+      });
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { error: dropError } = await supabase.rpc(
+        "drop_temp_sunday_guide_table",
+        { user_id: user.id }
+      );
+      if (dropError) throw new Error(`Drop Error: ${dropError.message}`);
+
+      setIsDiscarded(true);
+      setTempTableName("");
+      setItems([]);
+      setError("");
+      setShouldFetch(false);
+
+      navigation.goBack();
+    } catch (error) {
+      console.error("Post Guide Error:", error.message, error.stack);
+      setError(`Failed to post guide: ${error.message}`);
+    } finally {
+      setIsPosting(false);
+    }
   };
 
-  // Render each item in the list
-  const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <Text style={styles.itemText}>
-        {item.title || "Item"}: {item.content || "N/A"}
-      </Text>
-      <View style={styles.itemActions}>
-        <TouchableOpacity
-          onPress={() => handleEditItem(item)}
-          style={styles.actionButton}
-        >
-          <Text style={styles.actionText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => handleDeleteItem(item.id)}
-          style={styles.actionButton}
-        >
-          <Text style={styles.actionText}>Delete</Text>
-        </TouchableOpacity>
+  const renderItem = ({ item }) => {
+    return (
+      <View style={styles.itemContainer}>
+        <View style={styles.itemContent}>
+          <Text style={styles.itemTitle}>{item.title || "Untitled"}</Text>
+          <Text style={styles.itemText}>{item.content || "No content"}</Text>
+        </View>
+        <View style={styles.itemActions}>
+          <TouchableOpacity
+            onPress={() => handleEditItem(item)}
+            style={styles.actionButton}
+          >
+            <Ionicons
+              name="options"
+              size={25}
+              color={isDarkTheme ? "#6a5acd" : "#6a5acd"}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleDeleteItem(item.id)}
+            style={styles.actionButton}
+          >
+            <Ionicons
+              name="trash"
+              size={23}
+              color={isDarkTheme ? "#D2042D" : "#D2042D"}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    );
+  };
+
+  const validItems = items.filter((item) =>
+    ["basic", "bible", "hymn", "sermon"].includes(item.item_type)
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} disabled={isLoading}>
+        <TouchableOpacity onPress={handleBackPress} disabled={isPosting}>
           <Ionicons
             name="arrow-back"
             size={24}
@@ -185,13 +300,14 @@ const MainGuideScreen = ({ navigation, route }) => {
       </View>
 
       <FlatList
-        data={items}
+        data={validItems}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No items added yet.</Text>
         }
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -204,16 +320,15 @@ const MainGuideScreen = ({ navigation, route }) => {
 
         <TouchableOpacity
           onPress={handlePostPress}
-          style={[styles.postButton, isLoading && styles.postButtonDisabled]}
-          disabled={isLoading}
+          style={[styles.postButton, isPosting && styles.postButtonDisabled]}
+          disabled={isPosting}
         >
           <Text style={styles.postText}>
-            {isLoading ? "Processing..." : "Post"}
+            {isPosting ? "Processing..." : "Post"}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Delete Confirmation Modal */}
       <Modal
         visible={isDeleteModalVisible}
         transparent={true}
@@ -283,23 +398,34 @@ const getStyle = (theme) => {
       backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
       borderRadius: 10,
       marginBottom: 10,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
-    itemText: {
+    itemContent: {
+      flex: 1,
+      marginRight: 10,
+    },
+    itemTitle: {
       fontSize: 16,
       fontFamily: "Inter_600SemiBold",
       color: isDarkTheme ? "#fff" : "#000",
-      flex: 1,
+      marginBottom: 5,
+    },
+    itemText: {
+      fontSize: 14,
+      fontFamily: "Inter_400Regular",
+      color: isDarkTheme ? "#ccc" : "#666",
     },
     itemActions: {
       flexDirection: "row",
+      alignItems: "center",
     },
     actionButton: {
-      marginLeft: 10,
-    },
-    actionText: {
-      fontSize: 14,
-      fontFamily: "Inter_600SemiBold",
-      color: isDarkTheme ? "#6a5acd" : "#6a5acd",
+      padding: 5,
+      marginLeft: 7,
     },
     emptyText: {
       fontSize: 16,
@@ -317,7 +443,7 @@ const getStyle = (theme) => {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "#6a5acd",
+      backgroundColor: "#777",
       paddingVertical: 12,
       borderRadius: 25,
       width: "45%",
@@ -329,7 +455,7 @@ const getStyle = (theme) => {
       marginLeft: 8,
     },
     postButton: {
-      backgroundColor: "green",
+      backgroundColor: "#6a5acd",
       paddingVertical: 12,
       borderRadius: 25,
       alignItems: "center",
@@ -357,7 +483,7 @@ const getStyle = (theme) => {
     },
     modalContent: {
       width: "80%",
-      backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      backgroundColor: isDarkTheme ? "#000" : "#fff",
       borderRadius: 20,
       padding: 20,
       alignItems: "center",
@@ -383,6 +509,7 @@ const getStyle = (theme) => {
       paddingVertical: 12,
       alignItems: "center",
       marginLeft: 10,
+      marginRight: 10,
     },
     exitButtonText: {
       fontFamily: "Inter_700Bold",

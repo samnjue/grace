@@ -2,7 +2,7 @@
   "expo": {
     "name": "Grace",
     "slug": "mark13",
-    "version": "1.13.37",
+    "version": "1.13.38",
     "scheme": "grace.ivory",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -61,7 +61,14 @@
           "microphonePermission": "Allow Grace to access your microphone"
         }
       ],
-      "react-native-edge-to-edge"
+      "react-native-edge-to-edge",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to upload sermon images.",
+          "cameraPermission": "The app needs access to your camera to take sermon images."
+        }
+      ]
     ],
     "extra": {
       "eas": {

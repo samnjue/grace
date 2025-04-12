@@ -57,22 +57,16 @@ const NewGuideScreen = ({ navigation }) => {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
-      console.log("User ID:", user.id, "Role:", user.role);
 
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      console.log(
-        "Session Token:",
-        session?.access_token ? "Present" : "Missing"
-      );
       if (!session) throw new Error("No active session found");
 
       const { data: tempTableName, error: rpcError } = await supabase.rpc(
         "create_temp_sunday_guide_table",
         { user_id: user.id }
       );
-      console.log("RPC Response:", { tempTableName, rpcError });
 
       if (rpcError) {
         if (rpcError.message.includes("already exists")) {
@@ -89,35 +83,8 @@ const NewGuideScreen = ({ navigation }) => {
         .from(tempTableName)
         .select("id")
         .limit(1);
-      console.log("Table Accessibility Check:", { tableCheck, checkError });
       if (checkError)
         throw new Error(`Table Check Error: ${checkError.message}`);
-
-      const insertData = {
-        church_id: Number(churchId),
-        service,
-        day,
-      };
-      console.log("Insert Data:", insertData);
-
-      const {
-        data: insertResult,
-        error: insertError,
-        status,
-        statusText,
-      } = await supabase.from(tempTableName).insert(insertData).select();
-
-      if (insertError) {
-        console.error("Insert Error Details:", {
-          insertError,
-          status,
-          statusText,
-        });
-        throw new Error(
-          `Insert failed: ${insertError.message || statusText || "Unknown error"}`
-        );
-      }
-      console.log("Insert Result:", insertResult);
 
       navigation.navigate("MainGuideScreen", {
         tempTableName,

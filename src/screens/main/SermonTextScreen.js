@@ -4,7 +4,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 
 const SermonTextScreen = ({ navigation, route }) => {
-  const { sermonContent, onSave } = route.params || {};
+  const { sermonContent } = route.params || {};
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
@@ -12,8 +12,9 @@ const SermonTextScreen = ({ navigation, route }) => {
   const [text, setText] = useState(sermonContent || "");
 
   const handleSave = () => {
-    onSave(text);
+    console.log("Saving sermon text:", text);
     navigation.goBack();
+    route.params?.onSave?.(text);
   };
 
   return (

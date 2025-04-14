@@ -4,6 +4,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../../utils/supabase";
+import * as NavigationBar from "expo-navigation-bar";
 
 const NewGuideScreen = ({ navigation }) => {
   const [service, setService] = useState("");
@@ -14,7 +15,15 @@ const NewGuideScreen = ({ navigation }) => {
   const [isDayFocused, setDayFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validServices = ["Main", "Youth", "Kids"];
+  const validServices = [
+    "Main",
+    "Youth",
+    "Kids",
+    "Kiswahili",
+    "English",
+    "Morning",
+    "Test",
+  ];
   const isButtonEnabled =
     validServices.includes(service.trim()) &&
     day.trim().match(/^[A-Za-z]+, [A-Za-z]+ \d{1,2}, \d{4}$/) &&

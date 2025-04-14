@@ -5,6 +5,7 @@
     "version": "1.13.38",
     "scheme": "grace.ivory",
     "icon": "./assets/icon.png",
+    "orientation": "default",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -61,7 +62,15 @@
           "microphonePermission": "Allow Grace to access your microphone"
         }
       ],
-      "react-native-edge-to-edge",
+      [
+        "react-native-edge-to-edge",
+        {
+          "android": {
+            "parentTheme": "Default",
+            "enforceNavigationBarContrast": false
+          }
+        }
+      ],
       [
         "expo-image-picker",
         {

@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Alert,
+  ActivityIndicator,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import { supabase } from "../../utils/supabase";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system";
 
 const ItemCreationScreen = ({ navigation, route }) => {
   const {
@@ -27,7 +28,6 @@ const ItemCreationScreen = ({ navigation, route }) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
 
-  // State for form fields
   const [formData, setFormData] = useState({
     title: item?.title || "",
     content: item?.content || "",
@@ -44,13 +44,17 @@ const ItemCreationScreen = ({ navigation, route }) => {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isAudioUploading, setIsAudioUploading] = useState(false);
 
-  // Handle form input changes
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Initialize content with hymn details if selectedHymn is provided
+  const handleSermonTextSave = useCallback((sermonContent) => {
+    setFormData((prev) => ({ ...prev, sermon_content: sermonContent }));
+  }, []);
+
   useEffect(() => {
     if (selectedHymn && itemType === "Hymn Item") {
       const { tenzi_number, songTitle, songData } = selectedHymn;
@@ -62,9 +66,8 @@ const ItemCreationScreen = ({ navigation, route }) => {
         content: songTitle,
       }));
     }
-  }, [selectedHymn]);
+  }, [selectedHymn, itemType]);
 
-  // Navigate to SelectHymnScreen
   const handleSelectHymn = () => {
     navigation.navigate("SelectHymnScreen", {
       tempTableName,
@@ -76,26 +79,20 @@ const ItemCreationScreen = ({ navigation, route }) => {
     });
   };
 
-  // Navigate to SermonTextScreen
   const handleAddSermonText = () => {
     navigation.navigate("SermonTextScreen", {
       sermonContent: formData.sermon_content,
-      onSave: (text) => {
-        setFormData((prev) => ({ ...prev, sermon_content: text }));
-      },
+      onSave: handleSermonTextSave,
     });
   };
 
-  // Handle Image Upload for Sermon Image
   const handleSermonImage = async () => {
     try {
+      setIsImageUploading(true);
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert(
-          "Permission Denied",
-          "Please allow access to your photos to upload an image."
-        );
+        setError("Please allow access to your photos to upload an image.");
         return;
       }
 
@@ -110,13 +107,28 @@ const ItemCreationScreen = ({ navigation, route }) => {
       const image = result.assets[0];
       const fileExt = image.uri.split(".").pop();
       const fileName = `sermon_image_${Date.now()}.${fileExt}`;
-      const file = await fetch(image.uri);
-      const fileBlob = await file.blob();
+      const contentType =
+        image.mimeType || (fileExt === "png" ? "image/png" : "image/jpeg");
+
+      const fileInfo = await FileSystem.getInfoAsync(image.uri);
+      if (!fileInfo.exists) {
+        throw new Error("Image file does not exist at the specified URI.");
+      }
+
+      const fileData = await FileSystem.readAsStringAsync(image.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const binary = atob(fileData);
+      const arrayBuffer = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        arrayBuffer[i] = binary.charCodeAt(i);
+      }
 
       const { data, error: uploadError } = await supabase.storage
         .from("sermon_images")
-        .upload(fileName, fileBlob, {
-          contentType: image.mimeType || "image/jpeg",
+        .upload(fileName, arrayBuffer, {
+          contentType,
         });
 
       if (uploadError) {
@@ -127,20 +139,24 @@ const ItemCreationScreen = ({ navigation, route }) => {
         .from("sermon_images")
         .getPublicUrl(fileName);
 
+      if (!publicData.publicUrl) {
+        throw new Error("Failed to retrieve public URL for the image.");
+      }
+
       setFormData((prev) => ({
         ...prev,
         sermon_image: publicData.publicUrl,
       }));
-      Alert.alert("Success", "Sermon image uploaded successfully!");
     } catch (error) {
-      console.error("Sermon Image Error:", error.message);
-      Alert.alert("Error", `Failed to upload image: ${error.message}`);
+      setError(`Failed to upload image: ${error.message}`);
+    } finally {
+      setIsImageUploading(false);
     }
   };
 
-  // Handle Audio Upload for Sermon Audio
   const handleSermonAudio = async () => {
     try {
+      setIsAudioUploading(true);
       const result = await DocumentPicker.getDocumentAsync({
         type: "audio/*",
         copyToCacheDirectory: true,
@@ -151,13 +167,27 @@ const ItemCreationScreen = ({ navigation, route }) => {
       const audio = result.assets[0];
       const fileExt = audio.name.split(".").pop();
       const fileName = `sermon_audio_${Date.now()}.${fileExt}`;
-      const file = await fetch(audio.uri);
-      const fileBlob = await file.blob();
+      const contentType = audio.mimeType || "audio/mpeg";
+
+      const fileInfo = await FileSystem.getInfoAsync(audio.uri);
+      if (!fileInfo.exists) {
+        throw new Error("Audio file does not exist at the specified URI.");
+      }
+
+      const fileData = await FileSystem.readAsStringAsync(audio.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const binary = atob(fileData);
+      const arrayBuffer = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        arrayBuffer[i] = binary.charCodeAt(i);
+      }
 
       const { data, error: uploadError } = await supabase.storage
         .from("sermon_audio")
-        .upload(fileName, fileBlob, {
-          contentType: audio.mimeType || "audio/mpeg",
+        .upload(fileName, arrayBuffer, {
+          contentType,
         });
 
       if (uploadError) {
@@ -168,26 +198,29 @@ const ItemCreationScreen = ({ navigation, route }) => {
         .from("sermon_audio")
         .getPublicUrl(fileName);
 
+      if (!publicData.publicUrl) {
+        throw new Error("Failed to retrieve public URL for the audio.");
+      }
+
       setFormData((prev) => ({
         ...prev,
         sermon_audio: publicData.publicUrl,
       }));
-      Alert.alert("Success", "Sermon audio uploaded successfully!");
     } catch (error) {
-      console.error("Sermon Audio Error:", error.message);
-      Alert.alert("Error", `Failed to upload audio: ${error.message}`);
+      setError(`Failed to upload audio: ${error.message}`);
+    } finally {
+      setIsAudioUploading(false);
     }
   };
 
-  // Save the item to the temporary table
   const handleSave = async () => {
     try {
       setIsLoading(true);
       setError("");
 
-      if (!churchId || !service || !day) {
+      if (!churchId || !service || !day || !tempTableName) {
         throw new Error(
-          "Missing required metadata (churchId, service, or day)"
+          "Missing required metadata (churchId, service, day, or tempTableName)"
         );
       }
 
@@ -244,13 +277,6 @@ const ItemCreationScreen = ({ navigation, route }) => {
               "Tenzi Number, Title, and Song Title are required for Hymn Item"
             );
           }
-          console.log("Saving Hymn Item with data:", {
-            tenzi_number: formData.tenzi_number,
-            title: formData.title,
-            content: formData.content,
-            songTitle: formData.songTitle,
-            songData: formData.songData,
-          });
           dataToSave = {
             ...dataToSave,
             tenzi_number: formData.tenzi_number,
@@ -267,7 +293,7 @@ const ItemCreationScreen = ({ navigation, route }) => {
           dataToSave = {
             ...dataToSave,
             title: formData.title,
-            sermon: formData.title, // Title also populates sermon field
+            sermon: formData.title,
             content: formData.content,
             sermon_metadata: formData.sermon_metadata,
             sermon_content: formData.sermon_content,
@@ -287,14 +313,7 @@ const ItemCreationScreen = ({ navigation, route }) => {
 
         if (updateError)
           throw new Error(`Update Error: ${updateError.message}`);
-        console.log("Item Updated:", item.id);
       } else {
-        console.log(
-          "Inserting into table:",
-          tempTableName,
-          "with data:",
-          dataToSave
-        );
         const { data, error: insertError } = await supabase
           .from(tempTableName)
           .insert([dataToSave])
@@ -302,19 +321,16 @@ const ItemCreationScreen = ({ navigation, route }) => {
 
         if (insertError)
           throw new Error(`Insert Error: ${insertError.message}`);
-        console.log("Item Added:", data);
       }
 
       navigation.goBack();
     } catch (error) {
-      console.error("Save Item Error:", error.message, error.stack);
       setError(`Failed to save item: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Render the form based on itemType
   const renderForm = () => {
     switch (itemType) {
       case "Basic Item":
@@ -444,27 +460,62 @@ const ItemCreationScreen = ({ navigation, route }) => {
             >
               <Text style={styles.selectHymnButtonText}>Add Sermon Text</Text>
             </TouchableOpacity>
+            {formData.sermon_content ? (
+              <View style={styles.statusContainer}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color="#4CAF50"
+                  style={styles.statusIcon}
+                />
+                <Text style={styles.statusText}>Sermon Text Saved</Text>
+              </View>
+            ) : null}
             <TouchableOpacity
               style={styles.selectHymnButton}
               onPress={handleSermonImage}
+              disabled={isImageUploading}
             >
               <Text style={styles.selectHymnButtonText}>Sermon Image</Text>
             </TouchableOpacity>
-            {formData.sermon_image ? (
-              <Text style={styles.selectedHymnText}>
-                Image Uploaded: {formData.sermon_image}
-              </Text>
+            {isImageUploading ? (
+              <View style={styles.statusContainer}>
+                <ActivityIndicator size="small" color="#6a5acd" />
+                <Text style={styles.statusText}>Uploading Image...</Text>
+              </View>
+            ) : formData.sermon_image ? (
+              <View style={styles.statusContainer}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color="#4CAF50"
+                  style={styles.statusIcon}
+                />
+                <Text style={styles.statusText}>Sermon Image Saved</Text>
+              </View>
             ) : null}
             <TouchableOpacity
               style={styles.selectHymnButton}
               onPress={handleSermonAudio}
+              disabled={isAudioUploading}
             >
               <Text style={styles.selectHymnButtonText}>Sermon Audio</Text>
             </TouchableOpacity>
-            {formData.sermon_audio ? (
-              <Text style={styles.selectedHymnText}>
-                Audio Uploaded: {formData.sermon_audio}
-              </Text>
+            {isAudioUploading ? (
+              <View style={styles.statusContainer}>
+                <ActivityIndicator size="small" color="#6a5acd" />
+                <Text style={styles.statusText}>Uploading Audio...</Text>
+              </View>
+            ) : formData.sermon_audio ? (
+              <View style={styles.statusContainer}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color="#4CAF50"
+                  style={styles.statusIcon}
+                />
+                <Text style={styles.statusText}>Sermon Audio Saved</Text>
+              </View>
             ) : null}
           </ScrollView>
         );
@@ -505,7 +556,6 @@ const ItemCreationScreen = ({ navigation, route }) => {
   );
 };
 
-// getStyle remains unchanged
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
 
@@ -553,11 +603,18 @@ const getStyle = (theme) => {
       fontSize: 16,
       fontFamily: "Archivo_700Bold",
     },
-    selectedHymnText: {
+    statusContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 15,
+    },
+    statusIcon: {
+      marginRight: 5,
+    },
+    statusText: {
       fontSize: 14,
       fontFamily: "Inter_400Regular",
       color: isDarkTheme ? "#ccc" : "#666",
-      marginBottom: 15,
     },
     saveButton: {
       backgroundColor: "#6a5acd",

@@ -10,8 +10,8 @@ const MainGuideScreen = ({ navigation, route }) => {
   const [day, setDay] = useState("");
   const [churchId, setChurchId] = useState(null);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // For fetching operations
-  const [isPosting, setIsPosting] = useState(false); // For posting and discarding
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [items, setItems] = useState([]);
   const [isDiscarded, setIsDiscarded] = useState(false);
@@ -33,18 +33,15 @@ const MainGuideScreen = ({ navigation, route }) => {
       setError("Missing required guide data");
     }
 
-    // Add focus listener to trigger fetch on return
     const unsubscribeFocus = navigation.addListener("focus", () => {
       if (tempTableName && !isDiscarded) {
         setShouldFetch(true);
       }
     });
 
-    // Add listener for back navigation
     const unsubscribeBeforeRemove = navigation.addListener(
       "beforeRemove",
       (e) => {
-        // Show discard modal if the table exists and hasn't been discarded
         if (tempTableName && !isDiscarded && !isPosting) {
           e.preventDefault();
           setIsDeleteModalVisible(true);
@@ -65,30 +62,30 @@ const MainGuideScreen = ({ navigation, route }) => {
     }
   }, [shouldFetch, tempTableName, isDiscarded]);
 
-  useEffect(() => {
-    console.log("Current items state:", items);
-    console.log(
-      "Valid items:",
-      items.filter((item) =>
-        ["basic", "bible", "hymn", "sermon"].includes(item.item_type)
-      )
-    );
-  }, [items]);
+  // useEffect(() => {
+  //   console.log("Current items state:", items);
+  //   console.log(
+  //     "Valid items:",
+  //     items.filter((item) =>
+  //       ["basic", "bible", "hymn", "sermon"].includes(item.item_type)
+  //     )
+  //   );
+  // }, [items]);
 
   const fetchItems = async (tableName) => {
     try {
-      setIsLoading(true); // Only affects fetching
-      console.log("Fetching items from table:", tableName);
+      setIsLoading(true);
+      //console.log("Fetching items from table:", tableName);
       const { data, error } = await supabase
         .from(tableName)
         .select("*")
         .order("created_at", { ascending: true });
 
       if (error) throw new Error(`Fetch Error: ${error.message}`);
-      console.log("Fetched Items from Temp Table:", data);
+      //console.log("Fetched Items from Temp Table:", data);
       setItems(data || []);
     } catch (error) {
-      console.error("Fetch Items Error:", error.message, error.stack);
+      //console.error("Fetch Items Error:", error.message, error.stack);
       if (error.message.includes("does not exist")) {
         setIsDiscarded(true);
         setTempTableName("");
@@ -116,7 +113,7 @@ const MainGuideScreen = ({ navigation, route }) => {
 
   const confirmDelete = async () => {
     try {
-      setIsPosting(true); // Use isPosting for discarding
+      setIsPosting(true);
       setIsDeleteModalVisible(false);
 
       const {
@@ -129,7 +126,7 @@ const MainGuideScreen = ({ navigation, route }) => {
         { user_id: user.id }
       );
       if (dropError) throw new Error(`Drop Error: ${dropError.message}`);
-      console.log("Table Dropped:", tempTableName);
+      //onsole.log("Table Dropped:", tempTableName);
 
       setIsDiscarded(true);
       setTempTableName("");
@@ -142,7 +139,7 @@ const MainGuideScreen = ({ navigation, route }) => {
         routes: [{ name: "HomeScreen" }],
       });
     } catch (error) {
-      console.error("Confirm Delete Error:", error.message, error.stack);
+      //console.error("Confirm Delete Error:", error.message, error.stack);
       setError(`Failed to discard programme: ${error.message}`);
     } finally {
       setIsPosting(false);
@@ -159,7 +156,7 @@ const MainGuideScreen = ({ navigation, route }) => {
   };
 
   const handleEditItem = (item) => {
-    console.log("Edit Item:", item);
+    //console.log("Edit Item:", item);
     let inferredType;
     if (
       item.title &&
@@ -191,7 +188,7 @@ const MainGuideScreen = ({ navigation, route }) => {
 
   const handleDeleteItem = async (itemId) => {
     try {
-      setIsLoading(true); // Only affects fetching
+      setIsLoading(true);
       const { error } = await supabase
         .from(tempTableName)
         .delete()
@@ -199,10 +196,10 @@ const MainGuideScreen = ({ navigation, route }) => {
 
       if (error) throw new Error(`Delete Error: ${error.message}`);
       setItems(items.filter((item) => item.id !== itemId));
-      console.log("Item Deleted:", itemId);
+      //console.log("Item Deleted:", itemId);
       setShouldFetch(true);
     } catch (error) {
-      console.error("Delete Item Error:", error.message, error.stack);
+      //console.error("Delete Item Error:", error.message, error.stack);
       setError(`Failed to delete item: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -211,19 +208,71 @@ const MainGuideScreen = ({ navigation, route }) => {
 
   const handlePostPress = async () => {
     try {
-      setIsPosting(true); // Use isPosting for posting
-      console.log("Post Guide:", {
-        tempTableName,
-        service,
-        day,
-        churchId,
-        items,
-      });
+      setIsPosting(true);
+      // console.log("Posting Guide:", {
+      //   tempTableName,
+      //   service,
+      //   day,
+      //   churchId,
+      //   items,
+      // });
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
+
+      const validItems = items.filter((item) =>
+        ["basic", "bible", "hymn", "sermon"].includes(item.item_type)
+      );
+
+      if (validItems.length === 0) {
+        setError("No valid items to post.");
+        return;
+      }
+
+      const itemsToInsert = validItems.map((item) => {
+        const baseItem = {
+          church_id: churchId,
+          service,
+          day,
+          title: item.title || null,
+          content: item.content || null,
+          item_type: item.item_type,
+          book: item.book || null,
+          chapter: item.chapter || null,
+          verse: item.verse || null,
+          tenzi_number: item.tenzi_number || null,
+          sermon: item.sermon || null,
+          created_at: item.created_at,
+        };
+
+        if (item.item_type === "hymn") {
+          return {
+            ...baseItem,
+            songTitle: item.songTitle || null,
+            songData: item.songData || null,
+          };
+        } else if (item.item_type === "sermon") {
+          return {
+            ...baseItem,
+            sermon_content: item.sermon_content || null,
+            sermon_metadata: item.sermon_metadata || null,
+            sermon_image: item.sermon_image || null,
+            sermon_audio: item.sermon_audio || null,
+          };
+        }
+
+        return baseItem;
+      });
+
+      const { error: insertError } = await supabase
+        .from("sundayGuide")
+        .insert(itemsToInsert);
+
+      if (insertError) throw new Error(`Insert Error: ${insertError.message}`);
+
+      console.log("Items inserted into sundayGuide:", itemsToInsert);
 
       const { error: dropError } = await supabase.rpc(
         "drop_temp_sunday_guide_table",
@@ -231,13 +280,18 @@ const MainGuideScreen = ({ navigation, route }) => {
       );
       if (dropError) throw new Error(`Drop Error: ${dropError.message}`);
 
+      console.log("Temporary Table Dropped:", tempTableName);
+
       setIsDiscarded(true);
       setTempTableName("");
       setItems([]);
       setError("");
       setShouldFetch(false);
 
-      navigation.goBack();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "HomeScreen" }],
+      });
     } catch (error) {
       console.error("Post Guide Error:", error.message, error.stack);
       setError(`Failed to post guide: ${error.message}`);

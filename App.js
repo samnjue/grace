@@ -118,13 +118,17 @@ function MainApp() {
 
   return (
     <SafeAreaProvider>
-      {/* <StatusBar
+      <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
-        backgroundColor={isDarkTheme ? "#121212" : "#fff"}
+        //backgroundColor={isDarkTheme ? "#121212" : "#fff"}
         animated
-      /> */}
+        //hidden
+      />
       <SystemBars style="auto" />
-      <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+      <SafeAreaView
+        style={{ flex: 1 }}
+        edges={["left", "right", "top", "bottom"]}
+      >
         <AppNavigator />
       </SafeAreaView>
     </SafeAreaProvider>

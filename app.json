@@ -77,6 +77,14 @@
           "photosPermission": "The app needs access to your photos to upload sermon images.",
           "cameraPermission": "The app needs access to your camera to take sermon images."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.0"
+          }
+        }
       ]
     ],
     "extra": {

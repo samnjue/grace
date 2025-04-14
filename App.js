@@ -120,11 +120,12 @@ function MainApp() {
     <SafeAreaProvider>
       <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
-        //backgroundColor={isDarkTheme ? "#121212" : "#fff"}
+        backgroundColor={isDarkTheme ? "#121212" : "#fff"}
         animated
+        translucent
         //hidden
       />
-      <SystemBars style="auto" />
+      {isDarkTheme ? <SystemBars style="light" /> : <SystemBars style="dark" />}
       <SafeAreaView
         style={{ flex: 1 }}
         edges={["left", "right", "top", "bottom"]}

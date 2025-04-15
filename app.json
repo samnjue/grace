@@ -32,7 +32,6 @@
         "android.permission.FOREGROUND_SERVICE",
         "INTERNET"
       ],
-      "navigationBar": "sticky-immersive",
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.grace.ivory",
       "googleServicesFile": "./android/app/google-services.json"
@@ -83,6 +82,12 @@
         {
           "android": {
             "kotlinVersion": "2.0.0",
+            "compileSdkVersion": 34,
+            "minSdkVersion": 21,
+            "gradleVersion": "8.7",
+            "androidGradlePluginVersion": "8.5.0",
+            "compose": true,
+            "composeCompilerVersion": "2.0.0",
             "extraMavenRepos": [
               "https://repo.maven.apache.org/maven2/",
               "https://dl.google.com/dl/android/maven2/"

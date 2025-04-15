@@ -83,7 +83,7 @@
           "android": {
             "kotlinVersion": "1.9.25",
             "compileSdkVersion": 35,
-            "minSdkVersion": 21,
+            "minSdkVersion": 24,
             "gradleVersion": "8.7",
             "androidGradlePluginVersion": "8.4.1",
             "composeCompilerVersion": "1.5.14",

@@ -81,8 +81,8 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "1.9.22",
-            "compileSdkVersion": 34,
+            "kotlinVersion": "1.7.20",
+            "compileSdkVersion": 35,
             "minSdkVersion": 21,
             "gradleVersion": "8.7",
             "androidGradlePluginVersion": "8.4.1",

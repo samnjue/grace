@@ -86,7 +86,13 @@
             "minSdkVersion": 21,
             "gradleVersion": "8.7",
             "androidGradlePluginVersion": "8.4.1",
-            "composeCompilerVersion": null
+            "composeCompilerVersion": null,
+            "extraMavenRepos": [
+              "https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven",
+              "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev",
+              "https://repo.maven.apache.org/maven2/",
+              "https://dl.google.com/dl/android/maven2/"
+            ]
           }
         }
       ]

@@ -63,10 +63,10 @@ const NumberScreen = ({ navigation }) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">

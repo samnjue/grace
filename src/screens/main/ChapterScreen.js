@@ -558,6 +558,7 @@ const getStyle = (theme) => {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
       paddingTop: insets.top,
+      paddingBottom: insets.bottom - 20,
     },
     selectedVerse: {
       textDecorationLine: "underline",

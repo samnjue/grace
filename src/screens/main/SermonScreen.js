@@ -355,10 +355,10 @@ const SermonScreen = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         animated
-      />
+      /> */}
       <ScrollView
         contentContainerStyle={{ paddingBottom: 20 }}
         scrollEventThrottle={16}

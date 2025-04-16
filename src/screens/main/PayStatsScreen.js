@@ -72,6 +72,7 @@ const PayStatsScreen = () => {
         backgroundColor: isDarkTheme ? "#121212" : "#fff",
         padding: 20,
         paddingTop: insets.top,
+        paddingBottom: insets.bottom,
       }}
     >
       <View

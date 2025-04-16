@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "react-native-gesture-handler";
 import { supabase } from "../../utils/supabase";
 import Swiper from "react-native-swiper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const GracePesaScreen = ({ navigation }) => {
   const theme = useSelector((state) => state.theme.theme);
@@ -92,9 +93,10 @@ const GracePesaScreen = ({ navigation }) => {
         onPress={() =>
           navigation.navigate("PayOptionsScreen", {
             title: fundraiser.title,
-            accountName: fundraiser.title, // Hardcoding the fundraiser title as the account name
+            accountName: fundraiser.title,
           })
         }
+        activeOpacity={1}
       >
         <Image
           source={placeholderImages[index % placeholderImages.length]}
@@ -275,11 +277,13 @@ const GracePesaScreen = ({ navigation }) => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingBottom: insets.bottom,
     },
     content: {
       paddingHorizontal: 15,
@@ -451,7 +455,7 @@ const getStyle = (theme) => {
     percentageText: {
       fontSize: 16,
       fontFamily: "Inter_600SemiBold",
-      color: "#6a5acd",
+      color: isDarkTheme ? "#fff" : "#000",
     },
     separator: {
       height: 1,

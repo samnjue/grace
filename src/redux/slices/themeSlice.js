@@ -13,11 +13,11 @@ const themeSlice = createSlice({
     setTheme: (state, action) => {
       state.theme = action.payload;
       AsyncStorage.setItem("theme", action.payload);
-      configureNavigationBar(action.payload);
+      //configureNavigationBar(action.payload);
     },
     loadTheme: (state, action) => {
       state.theme = action.payload || "Light theme";
-      configureNavigationBar(action.payload || "Light Theme");
+      //configureNavigationBar(action.payload || "Light Theme");
     },
   },
 });

@@ -110,6 +110,7 @@ const ReceiptsScreen = () => {
         backgroundColor: isDarkTheme ? "#121212" : "#fff",
         padding: 20,
         paddingTop: 10 + insets.top,
+        paddingBottom: insets.bottom,
       }}
     >
       <View

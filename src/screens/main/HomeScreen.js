@@ -241,7 +241,7 @@ export default function HomeScreen() {
         justifyContent: "space-between",
         alignItems: "center",
         //paddingTop: insets.top,
-        paddingBottom: insets.bottom,
+        paddingBottom: insets.bottom + 10,
         paddingLeft: insets.left,
         paddingRight: insets.right,
         backgroundColor: isDarkTheme ? "#121212" : "#fff",

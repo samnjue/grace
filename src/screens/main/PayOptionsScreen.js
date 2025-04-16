@@ -4,21 +4,24 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { supabase } from "../../utils/supabase";
 
 const PayOptionsScreen = ({ route, navigation }) => {
-  const { title } = route.params;
+  const { title, accountName } = route.params; // Get title and accountName from navigation params
   const [amount, setAmount] = useState("");
-  const [group, setGroup] = useState("");
+  const [account, setAccount] = useState(accountName || title); // State for editable Account Name, initialized with accountName or title
   const [isAmountFocused, setAmountFocused] = useState(false);
-  const [isGroupFocused, setGroupFocused] = useState(false);
+  const [isAccountFocused, setAccountFocused] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [totalRaised, setTotalRaised] = useState(0);
 
-  const isButtonEnabled = amount.trim() !== "" && group.trim() !== "";
+  const isButtonEnabled = amount.trim() !== "" && account.trim() !== "";
 
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
-  const styles = getStyle(theme, isAmountFocused, isGroupFocused);
+  const styles = getStyle(theme, isAmountFocused, isAccountFocused);
 
+  // Fetch phone number from AsyncStorage
   useEffect(() => {
     const getPhoneNumber = async () => {
       try {
@@ -34,12 +37,40 @@ const PayOptionsScreen = ({ route, navigation }) => {
     getPhoneNumber();
   }, []);
 
+  // Fetch total amount raised from mpesa table
+  useEffect(() => {
+    const fetchTotalRaised = async () => {
+      if (!accountName) return; // Skip if accountName is not provided
+
+      try {
+        const { data, error } = await supabase
+          .from("mpesa")
+          .select("amount")
+          .eq("account_reference", accountName);
+
+        if (error) throw error;
+
+        // Calculate total amount raised
+        const total = data.reduce((sum, record) => sum + record.amount, 0);
+        setTotalRaised(total);
+      } catch (error) {
+        console.error("Error fetching total raised:", error);
+      }
+    };
+
+    fetchTotalRaised();
+  }, [accountName]);
+
+  const formatAmount = (amount) => {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
   const handlePayPress = () => {
     if (isButtonEnabled) {
       navigation.navigate("PayCompletionScreen", {
         amount: amount,
         phone: phoneNumber,
-        accountReference: title + " - " + group,
+        accountReference: account, // Use the edited account value
       });
     }
   };
@@ -58,7 +89,17 @@ const PayOptionsScreen = ({ route, navigation }) => {
         <Text style={styles.headerText}>{title}</Text>
       </View>
 
-      {/* Input Fields */}
+      {/* Total Amount Raised */}
+      {accountName && (
+        <View style={styles.totalRaisedContainer}>
+          <Text style={styles.totalRaisedLabel}>Total Raised:</Text>
+          <Text style={styles.totalRaisedText}>
+            {formatAmount(totalRaised)} KES
+          </Text>
+        </View>
+      )}
+
+      {/* Amount Input */}
       <Text style={styles.amountLabel}>Amount</Text>
       <TextInput
         style={[
@@ -76,20 +117,21 @@ const PayOptionsScreen = ({ route, navigation }) => {
         onChangeText={setAmount}
       />
 
+      {/* Account Name (Editable) */}
       <Text style={styles.groupLabel}>Account Name</Text>
       <TextInput
         style={[
           styles.input,
-          isGroupFocused ? styles.inputFocused : styles.inputBlurred,
+          isAccountFocused ? styles.inputFocused : styles.inputBlurred,
         ]}
-        placeholder="e.g Main or Youth"
+        placeholder="e.g., Main or Youth"
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         selectionColor={isDarkTheme ? "#ccc" : "#666666"}
         fontFamily="Inter_600SemiBold"
-        onFocus={() => setGroupFocused(true)}
-        onBlur={() => setGroupFocused(false)}
-        value={group}
-        onChangeText={setGroup}
+        onFocus={() => setAccountFocused(true)}
+        onBlur={() => setAccountFocused(false)}
+        value={account}
+        onChangeText={setAccount}
       />
 
       {/* Pay Button */}
@@ -104,7 +146,7 @@ const PayOptionsScreen = ({ route, navigation }) => {
   );
 };
 
-const getStyle = (theme, isAmountFocused, isGroupFocused) => {
+const getStyle = (theme, isAmountFocused, isAccountFocused) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const insets = useSafeAreaInsets();
 
@@ -119,12 +161,31 @@ const getStyle = (theme, isAmountFocused, isGroupFocused) => {
       flexDirection: "row",
       alignItems: "center",
       marginBottom: 20,
+      paddingTop: 7,
     },
     headerText: {
       fontSize: 22,
       fontFamily: "Archivo_700Bold",
       marginLeft: 10,
       color: isDarkTheme ? "#fff" : "#000",
+    },
+    totalRaisedContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 20,
+      padding: 10,
+      backgroundColor: isDarkTheme ? "#2c2c2c" : "#ededed",
+      borderRadius: 10,
+    },
+    totalRaisedLabel: {
+      fontSize: 18,
+      fontFamily: "Inter_600SemiBold",
+      color: isDarkTheme ? "#fff" : "#000",
+    },
+    totalRaisedText: {
+      fontSize: 18,
+      fontFamily: "Inter_600SemiBold",
+      color: "#6a5acd",
     },
     amountLabel: {
       fontSize: isAmountFocused ? 22 : 20,
@@ -133,9 +194,9 @@ const getStyle = (theme, isAmountFocused, isGroupFocused) => {
       marginBottom: 5,
     },
     groupLabel: {
-      fontSize: isGroupFocused ? 22 : 20,
+      fontSize: isAccountFocused ? 22 : 20,
       fontFamily: "Inter_600SemiBold",
-      color: isGroupFocused ? "#6a5acd" : isDarkTheme ? "#fff" : "#000",
+      color: isAccountFocused ? "#6a5acd" : isDarkTheme ? "#fff" : "#000",
       marginBottom: 5,
     },
     input: {

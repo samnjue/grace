@@ -29,7 +29,7 @@ export default function HomeNavigator() {
         name="VerseHistoryScreen"
         component={VerseHistoryScreen}
         options={{
-          cardStyleInterpolator: CardStyleInterpolators.forFadeFromRightAndroid,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           transitionSpec: {
             open: TransitionSpecs.TransitionIOSSpec,
             close: TransitionSpecs.TransitionIOSSpec,
@@ -40,7 +40,7 @@ export default function HomeNavigator() {
         name="DistrictNewsScreen"
         component={DistrictNewsScreen}
         options={{
-          cardStyleInterpolator: CardStyleInterpolators.forFadeFromRightAndroid,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           transitionSpec: {
             open: TransitionSpecs.TransitionIOSSpec,
             close: TransitionSpecs.TransitionIOSSpec,

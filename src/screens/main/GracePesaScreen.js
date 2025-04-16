@@ -7,6 +7,7 @@ import Header from "../../components/Header";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "react-native-gesture-handler";
 import { supabase } from "../../utils/supabase";
+import Swiper from "react-native-swiper";
 
 const GracePesaScreen = ({ navigation }) => {
   const theme = useSelector((state) => state.theme.theme);
@@ -14,6 +15,13 @@ const GracePesaScreen = ({ navigation }) => {
 
   const [phoneNumber, setPhoneNumber] = useState(null);
   const [isPesa, setIsPesa] = useState(false);
+  const [fundraisers, setFundraisers] = useState([]);
+
+  // Placeholder images for event cards
+  const placeholderImages = [
+    require("../../../assets/gradient_five.jpeg"),
+    require("../../../assets/gradient_seven.jpeg"),
+  ];
 
   useFocusEffect(
     useCallback(() => {
@@ -26,7 +34,7 @@ const GracePesaScreen = ({ navigation }) => {
   );
 
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const fetchUserData = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -34,17 +42,83 @@ const GracePesaScreen = ({ navigation }) => {
 
       const { data, error } = await supabase
         .from("users")
-        .select("pesa")
+        .select("pesa, selected_church")
         .eq("id", user.id)
         .single();
 
       if (!error && data) {
         setIsPesa(data.pesa);
+
+        // Fetch fundraisers matching the user's selected_church
+        const { data: fundraiserData, error: fundraiserError } = await supabase
+          .from("fundraisers")
+          .select("*")
+          .eq("church", data.selected_church);
+
+        if (fundraiserError) throw fundraiserError;
+
+        setFundraisers(fundraiserData);
       }
     };
 
-    fetchUserRole();
+    fetchUserData();
   }, []);
+
+  const calculateDaysLeft = (deadline) => {
+    const today = new Date();
+    const deadlineDate = new Date(deadline);
+    const timeDiff = deadlineDate - today;
+    return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+  };
+
+  const calculatePercentage = (raised, target) => {
+    return Math.min((raised / target) * 100, 100).toFixed(1);
+  };
+
+  const formatAmount = (amount) => {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  const renderFundraiserCard = (fundraiser, index) => {
+    const daysLeft = calculateDaysLeft(fundraiser.deadline);
+    const percentage = calculatePercentage(
+      fundraiser.raised_amount,
+      fundraiser.target
+    );
+    return (
+      <TouchableOpacity
+        key={fundraiser.id}
+        style={styles.eventCard}
+        onPress={() =>
+          navigation.navigate("PayOptionsScreen", {
+            title: fundraiser.title,
+            accountName: fundraiser.title, // Hardcoding the fundraiser title as the account name
+          })
+        }
+      >
+        <Image
+          source={placeholderImages[index % placeholderImages.length]}
+          style={styles.eventImage}
+        />
+        <View style={styles.daysLeftBadge}>
+          <Text style={styles.daysLeftText}>
+            {daysLeft > 0
+              ? `${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`
+              : "Ended"}
+          </Text>
+        </View>
+        <View style={styles.eventDetails}>
+          <Text style={styles.eventTitle}>{fundraiser.title}</Text>
+          <Text style={styles.percentageText}>{percentage}%</Text>
+        </View>
+        <View style={styles.separator} />
+        <Text style={styles.progressText}>
+          {formatAmount(fundraiser.raised_amount)} of{" "}
+          {formatAmount(fundraiser.target)} KES
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -85,8 +159,37 @@ const GracePesaScreen = ({ navigation }) => {
                 color={styles.iconColor}
               />
               <Text style={styles.cardTitle}>Upcoming Events</Text>
+              {isPesa && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("NewFundraiserScreen")}
+                >
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={28}
+                    color={styles.iconColor}
+                  />
+                </TouchableOpacity>
+              )}
             </View>
-            <Text style={styles.noEvents}>No upcoming events</Text>
+            {fundraisers.length === 0 ? (
+              <View style={styles.noEventsContainer}>
+                <Text style={styles.noEvents}>No upcoming events</Text>
+              </View>
+            ) : fundraisers.length === 1 ? (
+              renderFundraiserCard(fundraisers[0], 0)
+            ) : (
+              <Swiper
+                style={styles.swiper}
+                showsPagination={true}
+                paginationStyle={styles.pagination}
+                dotStyle={styles.dot}
+                activeDotStyle={styles.activeDot}
+              >
+                {fundraisers.map((fundraiser, index) =>
+                  renderFundraiserCard(fundraiser, index)
+                )}
+              </Swiper>
+            )}
           </View>
 
           {/* Give Section */}
@@ -189,6 +292,7 @@ const getStyle = (theme) => {
       elevation: 3,
       position: "relative",
       marginBottom: 15,
+      height: 300,
     },
     phoneCard: {
       backgroundColor: isDarkTheme ? "#2c2c2c" : "#ededed",
@@ -248,6 +352,8 @@ const getStyle = (theme) => {
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 10,
     },
     giveHeader: {
       flexDirection: "row",
@@ -256,12 +362,16 @@ const getStyle = (theme) => {
       marginBottom: 15,
       justifyContent: "space-between",
     },
+    noEventsContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
     noEvents: {
       fontSize: 14,
       fontFamily: "Archivo_700Bold",
       color: isDarkTheme ? "#bbb" : "#666",
       textAlign: "center",
-      margin: 90,
     },
     giveSection: {
       marginTop: 5,
@@ -297,6 +407,80 @@ const getStyle = (theme) => {
     iconColor: isDarkTheme ? "#fff" : "#000",
     scrollContent: {
       paddingBottom: 60,
+    },
+    swiper: {
+      height: 220,
+    },
+    eventCard: {
+      flex: 1,
+      backgroundColor: isDarkTheme ? "#3c3c3c" : "#d9d9d9",
+      borderRadius: 10,
+      overflow: "hidden",
+      marginHorizontal: 5,
+      justifyContent: "space-between",
+    },
+    eventImage: {
+      width: "100%",
+      height: 100,
+    },
+    daysLeftBadge: {
+      position: "absolute",
+      top: 10,
+      left: 10,
+      backgroundColor: "#6a5acd",
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      borderRadius: 15,
+    },
+    daysLeftText: {
+      color: "#fff",
+      fontSize: 12,
+      fontFamily: "Inter_600SemiBold",
+    },
+    eventDetails: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: 10,
+      paddingVertical: 15,
+    },
+    eventTitle: {
+      fontSize: 16,
+      fontFamily: "Inter_600SemiBold",
+      color: isDarkTheme ? "#fff" : "#000",
+    },
+    percentageText: {
+      fontSize: 16,
+      fontFamily: "Inter_600SemiBold",
+      color: "#6a5acd",
+    },
+    separator: {
+      height: 1,
+      backgroundColor: isDarkTheme ? "#666" : "#bbb",
+      marginHorizontal: 10,
+    },
+    progressText: {
+      fontSize: 14,
+      fontFamily: "Inter_600SemiBold",
+      color: isDarkTheme ? "#aaa" : "#555",
+      textAlign: "center",
+      paddingVertical: 15,
+    },
+    pagination: {
+      bottom: 5,
+    },
+    dot: {
+      backgroundColor: isDarkTheme ? "#666" : "#bbb",
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      margin: 3,
+    },
+    activeDot: {
+      backgroundColor: "#6a5acd",
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      margin: 3,
     },
   };
 };

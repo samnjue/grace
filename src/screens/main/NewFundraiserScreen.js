@@ -9,7 +9,6 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../../utils/supabase";
 
@@ -48,7 +47,19 @@ const NewFundraiserScreen = ({ navigation }) => {
     if (!isButtonEnabled) return;
 
     try {
-      const userId = await AsyncStorage.getItem("userId"); // Assuming user ID is stored
+      // Get the authenticated user from Supabase
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      const userId = user.id;
+
+      // Fetch the user's selected_church
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("selected_church")
@@ -57,6 +68,7 @@ const NewFundraiserScreen = ({ navigation }) => {
 
       if (userError) throw userError;
 
+      // Insert the fundraiser
       const { error } = await supabase.from("fundraisers").insert({
         title,
         target: parseInt(target),
@@ -68,7 +80,10 @@ const NewFundraiserScreen = ({ navigation }) => {
 
       if (error) throw error;
 
-      navigation.navigate("GracePesaScreen");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "GracePesa" }],
+      });
     } catch (error) {
       console.error("Error saving fundraiser:", error);
     }

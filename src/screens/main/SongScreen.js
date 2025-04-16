@@ -113,9 +113,9 @@ export default function SongScreen({ navigation }) {
         justifyContent: "space-between",
         alignItems: "center",
         //paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
+        //paddingBottom: insets.bottom,
+        //paddingLeft: insets.left,
+        //paddingRight: insets.right,
         backgroundColor: "#fff",
       }}
     >

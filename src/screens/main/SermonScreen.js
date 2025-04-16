@@ -581,6 +581,7 @@ const getStyle = (theme, insets) => {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      paddingTop: insets.top,
     },
     imageContainer: {
       height: 300,
@@ -767,7 +768,7 @@ const getStyle = (theme, insets) => {
       top: 0,
       left: 0,
       right: 0,
-      height: 60,
+      height: 60 + insets.top,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
       flexDirection: "row",
       alignItems: "center",
@@ -783,6 +784,7 @@ const getStyle = (theme, insets) => {
       color: isDarkTheme ? "#fff" : "#121212",
       marginLeft: 10,
       flex: 1,
+      marginTop: 3,
     },
   });
 };

@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function DistrictNewsCard({ refreshKey }) {
   const [news, setNews] = useState([]);
@@ -166,6 +167,8 @@ export default function DistrictNewsCard({ refreshKey }) {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
+
   return {
     card: {
       borderRadius: 10,
@@ -177,8 +180,8 @@ const getStyle = (theme) => {
       shadowOpacity: 0.2,
       shadowRadius: 4,
       elevation: 2,
-      width: 380,
-      maxWidth: 380,
+      //width: 380,
+      //maxWidth: 380,
       position: "relative",
     },
     title: {

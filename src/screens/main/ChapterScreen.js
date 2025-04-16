@@ -76,10 +76,10 @@ const ChapterScreen = () => {
     saveTheme();
   }, [theme]);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   useEffect(() => {
     Animated.timing(panelAnim, {
@@ -346,10 +346,10 @@ const ChapterScreen = () => {
 
   return (
     <View style={[styles.container]}>
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      />
+      /> */}
       <ScrollView
         ref={scrollViewRef}
         style={styles.content}
@@ -385,6 +385,7 @@ const ChapterScreen = () => {
             ellipsizeMode="tail"
             adjustsFontSizeToFit
             maxFontSizeMultiplier={1.2}
+            allowFontScaling={false}
           >
             {book} {chapter}
           </Text>
@@ -556,6 +557,7 @@ const getStyle = (theme) => {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      paddingTop: insets.top,
     },
     selectedVerse: {
       textDecorationLine: "underline",

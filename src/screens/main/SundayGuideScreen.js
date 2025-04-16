@@ -114,7 +114,14 @@ export default function SundayGuideScreen() {
                     });
                   }}
                 >
-                  <Text style={styles.buttonText}>View</Text>
+                  <Text
+                    style={styles.buttonText}
+                    allowFontScaling={false}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    View
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -135,7 +142,14 @@ export default function SundayGuideScreen() {
                     });
                   }}
                 >
-                  <Text style={styles.buttonText}>View</Text>
+                  <Text
+                    style={styles.buttonText}
+                    allowFontScaling={false}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    View
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -152,7 +166,14 @@ export default function SundayGuideScreen() {
                     });
                   }}
                 >
-                  <Text style={styles.buttonText}>Open</Text>
+                  <Text
+                    style={styles.buttonText}
+                    allowFontScaling={false}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    Open
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -221,6 +242,9 @@ export default function SundayGuideScreen() {
                   color: isDarkTheme ? "#fff" : "#222",
                 },
               ]}
+              allowFontScaling={false}
+              numberOfLines={1}
+              ellipsizeMode="tail"
             >
               {service}
             </Text>
@@ -242,10 +266,12 @@ export default function SundayGuideScreen() {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
   return {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",

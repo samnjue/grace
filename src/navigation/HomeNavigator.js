@@ -15,6 +15,7 @@ import TypeScreen from "../screens/main/TypeScreen";
 import ItemCreationScreen from "../screens/main/ItemCreationScreen";
 import SelectHymnScreen from "../screens/main/SelectHymnScreen";
 import SermonTextScreen from "../screens/main/SermonTextScreen";
+import MainEditScreen from "../screens/main/MainEditScreen";
 import { TransitionSpecs } from "@react-navigation/stack";
 import { CardStyleInterpolators } from "@react-navigation/stack";
 
@@ -108,6 +109,17 @@ export default function HomeNavigator() {
         component={SundayGuideHistoryScreen}
         options={{
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          transitionSpec: {
+            open: TransitionSpecs.TransitionIOSSpec,
+            close: TransitionSpecs.TransitionIOSSpec,
+          },
+        }}
+      />
+      <Stack.Screen
+        name="MainEditScreen"
+        component={MainEditScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
           transitionSpec: {
             open: TransitionSpecs.TransitionIOSSpec,
             close: TransitionSpecs.TransitionIOSSpec,

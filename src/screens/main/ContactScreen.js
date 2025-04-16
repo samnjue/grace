@@ -256,6 +256,7 @@ const getStyle = (theme) => {
       paddingBottom: insets.bottom,
       paddingLeft: insets.left,
       paddingRight: insets.right,
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",

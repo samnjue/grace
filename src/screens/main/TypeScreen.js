@@ -2,9 +2,11 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TypeScreen = ({ navigation, route }) => {
-  const { tempTableName, churchId, service, day, item } = route.params || {};
+  const { tempTableName, churchId, service, day, item, isEditMode } =
+    route.params || {};
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
@@ -15,8 +17,9 @@ const TypeScreen = ({ navigation, route }) => {
       churchId,
       service,
       day,
-      itemType: type, // Pass the selected item type
-      item: item || null, // Pass the item if editing, null if adding new
+      itemType: type,
+      item: item || null,
+      isEditMode,
     });
   };
 
@@ -66,12 +69,14 @@ const TypeScreen = ({ navigation, route }) => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return {
     container: {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",

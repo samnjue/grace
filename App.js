@@ -93,10 +93,10 @@ function MainApp() {
     saveTheme();
   }, [theme]);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   useEffect(() => {
     const prepare = async () => {
@@ -118,18 +118,15 @@ function MainApp() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
         animated
         translucent
-        //hidden
-      />
+        hidden
+      /> */}
       {isDarkTheme ? <SystemBars style="light" /> : <SystemBars style="dark" />}
-      <SafeAreaView
-        style={{ flex: 1 }}
-        edges={["left", "right", "top", "bottom"]}
-      >
+      <SafeAreaView style={{ flex: 1 }} edges={["", "", "", ""]}>
         <AppNavigator />
       </SafeAreaView>
     </SafeAreaProvider>

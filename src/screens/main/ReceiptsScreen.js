@@ -12,40 +12,78 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../utils/supabase";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const PayStatsScreen = () => {
+const ReceiptsScreen = () => {
   const navigation = useNavigation();
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
 
   const [transactions, setTransactions] = useState([]);
+  const [churchName, setChurchName] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchTransactions = async (isRefreshing = false) => {
+  const fetchUserChurchAndTransactions = async (isRefreshing = false) => {
     if (isRefreshing) setRefreshing(true);
     else setLoading(true);
 
-    const { data, error } = await supabase
-      .from("mpesa")
-      .select(
-        "phone, account_reference, mpesa_receipt_number, amount, created_at"
-      )
-      .eq("is_successful", true)
-      .order("created_at", { ascending: false });
+    try {
+      const phoneNumber = await AsyncStorage.getItem("phoneNumber");
+      //console.log("Fetched phoneNumber from AsyncStorage:", phoneNumber);
 
-    if (error) {
-      console.error("Error fetching transactions:", error);
-    } else {
-      setTransactions(data);
+      if (!phoneNumber) {
+        throw new Error("No phone number found in AsyncStorage");
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No authenticated user");
+      //console.log("Authenticated user ID:", user.id);
+
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("selected_church")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) throw userError;
+      //console.log("User data:", userData);
+
+      const { data: churchData, error: churchError } = await supabase
+        .from("churches")
+        .select("name")
+        .eq("id", userData.selected_church)
+        .single();
+
+      if (churchError) throw churchError;
+      setChurchName(churchData.name);
+      //console.log("Church name:", churchData.name);
+
+      const { data: transactionData, error: transactionError } = await supabase
+        .from("mpesa")
+        .select(
+          "phone, account_reference, mpesa_receipt_number, amount, created_at"
+        )
+        .eq("is_successful", true)
+        .eq("phone", phoneNumber)
+        .order("created_at", { ascending: false });
+
+      if (transactionError) throw transactionError;
+      //console.log("Fetched transactions:", transactionData);
+
+      setTransactions(transactionData || []);
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    } finally {
+      if (isRefreshing) setRefreshing(false);
+      else setLoading(false);
     }
-
-    if (isRefreshing) setRefreshing(false);
-    else setLoading(false);
   };
 
   useEffect(() => {
-    fetchTransactions();
+    fetchUserChurchAndTransactions();
   }, []);
 
   const groupTransactionsByDate = (transactions) => {
@@ -71,7 +109,7 @@ const PayStatsScreen = () => {
         flex: 1,
         backgroundColor: isDarkTheme ? "#121212" : "#fff",
         padding: 20,
-        paddingTop: insets.top,
+        paddingTop: 10 + insets.top,
       }}
     >
       <View
@@ -92,7 +130,7 @@ const PayStatsScreen = () => {
             marginLeft: 10,
           }}
         >
-          Transactions
+          Receipts
         </Text>
       </View>
 
@@ -102,12 +140,27 @@ const PayStatsScreen = () => {
         >
           <ActivityIndicator size="large" color="#6a5acd" />
         </View>
+      ) : transactions.length === 0 ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Archivo_700Bold",
+              color: isDarkTheme ? "#bbb" : "#666",
+              textAlign: "center",
+            }}
+          >
+            No receipts found.
+          </Text>
+        </View>
       ) : (
         <ScrollView
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => fetchTransactions(true)}
+              onRefresh={() => fetchUserChurchAndTransactions(true)}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -168,7 +221,7 @@ const PayStatsScreen = () => {
                           fontFamily: "Inter_600SemiBold",
                         }}
                       >
-                        {tx.phone}
+                        {churchName}
                       </Text>
                       <Text
                         style={{
@@ -197,7 +250,7 @@ const PayStatsScreen = () => {
                           fontFamily: "Inter_600SemiBold",
                         }}
                       >
-                        + KSH {tx.amount}
+                        - KSH {tx.amount}
                       </Text>
                       <Text
                         style={{
@@ -224,4 +277,4 @@ const PayStatsScreen = () => {
   );
 };
 
-export default PayStatsScreen;
+export default ReceiptsScreen;

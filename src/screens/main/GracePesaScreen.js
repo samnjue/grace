@@ -13,7 +13,6 @@ const GracePesaScreen = ({ navigation }) => {
   const styles = getStyle(theme);
 
   const [phoneNumber, setPhoneNumber] = useState(null);
-
   const [isPesa, setIsPesa] = useState(false);
 
   useFocusEffect(
@@ -93,12 +92,20 @@ const GracePesaScreen = ({ navigation }) => {
           {/* Give Section */}
           <View style={styles.giveSection}>
             <View style={styles.giveHeader}>
-              <Ionicons
-                name="cash-outline"
-                size={32}
-                color={styles.iconColor}
-              />
-              <Text style={styles.giveTitle}>Give</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons
+                  name="cash-outline"
+                  size={32}
+                  color={styles.iconColor}
+                />
+                <Text style={styles.giveTitle}>Give</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.receiptsButton}
+                onPress={() => navigation.navigate("ReceiptsScreen")}
+              >
+                <Text style={styles.receiptsButtonText}>Receipts</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.giveContainer}>
@@ -227,6 +234,17 @@ const getStyle = (theme) => {
       color: isDarkTheme ? "#fff" : "#fff",
       paddingHorizontal: 10,
     },
+    receiptsButton: {
+      backgroundColor: isDarkTheme ? "#6a5acd" : "#6a5acd",
+      borderRadius: 25,
+      paddingVertical: 8,
+      paddingHorizontal: 20,
+    },
+    receiptsButtonText: {
+      fontSize: 16,
+      fontFamily: "Inter_600SemiBold",
+      color: isDarkTheme ? "#fff" : "#fff",
+    },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
@@ -235,7 +253,8 @@ const getStyle = (theme) => {
       flexDirection: "row",
       alignItems: "center",
       marginLeft: 12,
-      marginBottom: 5,
+      marginBottom: 15,
+      justifyContent: "space-between",
     },
     noEvents: {
       fontSize: 14,

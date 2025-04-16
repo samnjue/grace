@@ -166,6 +166,7 @@ const getStyle = (theme) => {
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
       paddingLeft: insets.left,
       paddingRight: insets.right,
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",

@@ -11,9 +11,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { fetchSundayGuide } from "../../services/supabaseService";
+import { supabase } from "../../utils/supabase";
 
-export default function SundayGuideHistoryScreen() {
+export default function MainEditScreen() {
   const [groupedHistory, setGroupedHistory] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,11 +53,17 @@ export default function SundayGuideHistoryScreen() {
 
       try {
         setLoading(true);
-        const historyData = await fetchSundayGuide(churchId);
+        const { data: historyData, error } = await supabase
+          .from("sundayGuide")
+          .select("*")
+          .eq("church_id", churchId)
+          .in("item_type", ["basic", "bible", "hymn", "sermon"]); // Filter for rows with item_type
+
+        if (error) throw error;
 
         if (historyData.length > 0) {
           await AsyncStorage.setItem(
-            "SundayGuideHistory",
+            "SundayGuideEditHistory",
             JSON.stringify(historyData)
           );
 
@@ -71,11 +77,13 @@ export default function SundayGuideHistoryScreen() {
 
           setGroupedHistory(groupedData);
         } else {
-          setError("No history available");
+          setError("No editable guides available");
         }
       } catch (err) {
         setError("Error fetching history. Check your connection.");
-        const cachedHistory = await AsyncStorage.getItem("SundayGuideHistory");
+        const cachedHistory = await AsyncStorage.getItem(
+          "SundayGuideEditHistory"
+        );
         if (cachedHistory) {
           setGroupedHistory(JSON.parse(cachedHistory));
         }
@@ -100,7 +108,13 @@ export default function SundayGuideHistoryScreen() {
         key={day}
         style={styles.historyCard}
         onPress={() =>
-          navigation.navigate("SundayGuideScreen", { selectedDay: day })
+          navigation.navigate("MainGuideScreen", {
+            day,
+            items: groupedHistory[day],
+            churchId: selectedChurch.church_id,
+            service: groupedHistory[day][0].service,
+            isEditMode: true, // Indicate that this is edit mode
+          })
         }
       >
         <Text style={styles.historyDay}>{day}</Text>
@@ -121,7 +135,7 @@ export default function SundayGuideHistoryScreen() {
             color={isDarkTheme ? "#fff" : "#000"}
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sunday Guide History</Text>
+        <Text style={styles.headerTitle}>Edit Sunday Guide</Text>
       </View>
 
       {loading ? (
@@ -192,10 +206,6 @@ const getStyle = (theme) => {
       fontFamily: "SourceSerif4_700Bold",
       color: isDarkTheme ? "#fff" : "#333",
       marginBottom: 4,
-    },
-    historySubtitle: {
-      fontSize: 14,
-      color: isDarkTheme ? "#bbb" : "#555",
     },
     emptyText: {
       fontSize: 16,

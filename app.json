@@ -2,7 +2,7 @@
   "expo": {
     "name": "Grace",
     "slug": "mark13",
-    "version": "1.13.38",
+    "version": "1.13.39",
     "scheme": "grace.ivory",
     "icon": "./assets/icon.png",
     "orientation": "default",

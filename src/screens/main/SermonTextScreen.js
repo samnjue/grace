@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SermonTextScreen = ({ navigation, route }) => {
   const { sermonContent } = route.params || {};
@@ -12,7 +13,6 @@ const SermonTextScreen = ({ navigation, route }) => {
   const [text, setText] = useState(sermonContent || "");
 
   const handleSave = () => {
-    console.log("Saving sermon text:", text);
     navigation.goBack();
     route.params?.onSave?.(text);
   };
@@ -46,12 +46,14 @@ const SermonTextScreen = ({ navigation, route }) => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return {
     container: {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",

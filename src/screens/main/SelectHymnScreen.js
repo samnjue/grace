@@ -10,8 +10,11 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import tenziData from "../../data/tenzi.json";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SelectHymnScreen = ({ navigation, route }) => {
+  const { tempTableName, churchId, service, day, itemType, item, isEditMode } =
+    route.params || {};
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
@@ -59,14 +62,16 @@ const SelectHymnScreen = ({ navigation, route }) => {
       alert("Please select a hymn before saving.");
       return;
     }
-    // Navigate to a new ItemCreationScreen with hymn data
+    // Navigate to ItemCreationScreen with hymn data and isEditMode
     navigation.navigate("ItemCreationScreen", {
-      tempTableName: route.params.tempTableName,
-      churchId: route.params.churchId,
-      service: route.params.service,
-      day: route.params.day,
+      tempTableName,
+      churchId,
+      service,
+      day,
       itemType: "Hymn Item",
-      selectedHymn: selectedHymn,
+      selectedHymn,
+      item,
+      isEditMode, // Pass isEditMode to ItemCreationScreen
     });
   };
 
@@ -127,15 +132,16 @@ const SelectHymnScreen = ({ navigation, route }) => {
   );
 };
 
-// getStyle remains unchanged
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return StyleSheet.create({
     container: {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",

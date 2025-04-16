@@ -107,11 +107,11 @@ const HighlightScreen = ({ navigation }) => {
         styles.container,
         {
           backgroundColor: isDarkTheme ? "#121212" : "#fff",
-          //paddingTop: insets.top,
+          paddingTop: insets.top,
         },
       ]}
     >
-      <StatusBar barStyle={isDarkTheme ? "light-content" : "dark-content"} />
+      {/* <StatusBar barStyle={isDarkTheme ? "light-content" : "dark-content"} /> */}
 
       {/* Header */}
       <View style={styles.header}>

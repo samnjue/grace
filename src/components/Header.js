@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { useSelector } from "react-redux";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Header = ({
   title,
@@ -56,9 +57,11 @@ const Header = ({
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
   return {
     container: {
-      height: 60,
+      paddingTop: insets.top,
+      height: 80,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
       flexDirection: "row",
       alignItems: "center",

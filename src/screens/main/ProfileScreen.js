@@ -362,17 +362,17 @@ const ProfileScreen = ({ navigation }) => {
     loadSavedTheme();
   }, [dispatch]);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   return (
     <View style={[styles.container]}>
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      />
+      /> */}
       <Header title="Profile" />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -452,7 +452,7 @@ const ProfileScreen = ({ navigation }) => {
             />
             <Text style={styles.buttonText}>Appearance</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.logOutButton}
             onPress={() => setIsLogOutModalVisible(true)}
           >
@@ -460,7 +460,7 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.logOutText} maxFontSizeMultiplier={0}>
               LOG OUT
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Log Out Modal */}
@@ -595,12 +595,22 @@ const ProfileScreen = ({ navigation }) => {
               Privacy Policy & Account Deletion
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { paddingBottom: 10, marginBottom: 10 }]}
+            onPress={() => setIsLogOutModalVisible(true)}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={30}
+              color={isDarkTheme ? "#fff" : "#333"}
+            />
+            <Text style={styles.buttonText} maxFontSizeMultiplier={0}>
+              Log Out
+            </Text>
+          </TouchableOpacity>
           <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-            v1.13.38
+            v1.13.39
           </Text>
-          {/* <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-                        © 2025 ivory
-                    </Text> */}
         </View>
       </ScrollView>
     </View>
@@ -609,6 +619,8 @@ const ProfileScreen = ({ navigation }) => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
+
   return {
     container: {
       flex: 1,
@@ -662,10 +674,11 @@ const getStyle = (theme) => {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "red",
+      backgroundColor: "#FF2400",
       padding: 10,
       borderRadius: 25,
       marginTop: 10,
+      width: "50%",
     },
     logOutText: {
       color: "white",
@@ -698,9 +711,8 @@ const getStyle = (theme) => {
       fontSize: 20,
       fontFamily: "Inter_700Bold",
       color: isDarkTheme ? "#fff" : "#333",
-      right: 75,
-      bottom: 20,
-      marginBottom: 0,
+      textAlign: "center",
+      marginBottom: 10,
       marginTop: 10,
     },
     themeModalOptionText: {
@@ -747,7 +759,6 @@ const getStyle = (theme) => {
     },
     cancelButton: {
       flex: 1,
-      backgroundColor: "#fff",
       backgroundColor: isDarkTheme ? "#2c2c2c" : "#fff",
       borderRadius: 25,
       paddingVertical: 12,

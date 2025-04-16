@@ -16,6 +16,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import Modal from "react-native-modal";
 import { supabase } from "../utils/supabase";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SundayGuideCard({ refreshKey }) {
   const [guideData, setGuideData] = useState([]);
@@ -207,15 +208,23 @@ export default function SundayGuideCard({ refreshKey }) {
       ) : error ? (
         <Animated.View style={[styles.errorCard]}>
           <Text style={styles.errorTitle}>Sunday Guide</Text>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.historyPillButton}
-            onPress={() => navigation.navigate("SundayGuideHistoryScreen")}
-          >
-            <Text style={styles.historyPillButtonText}>
-              View previous guides
+          <View style={styles.errorContent}>
+            <Text
+              style={styles.errorText}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {error}
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.historyPillButton}
+              onPress={() => navigation.navigate("SundayGuideHistoryScreen")}
+            >
+              <Text style={styles.historyPillButtonText}>
+                View previous guides
+              </Text>
+            </TouchableOpacity>
+          </View>
           {isEditor && (
             <TouchableOpacity
               style={[styles.historyButton, { right: 10 }]}
@@ -301,7 +310,6 @@ export default function SundayGuideCard({ refreshKey }) {
         <View style={styles.modalContent}>
           <View style={styles.modalBar} />
           <Text style={styles.modalTitle}>Sunday Guide</Text>
-          {/*New programme button*/}
           <TouchableOpacity
             style={styles.modalButton}
             onPress={() => {
@@ -311,7 +319,13 @@ export default function SundayGuideCard({ refreshKey }) {
           >
             <Text style={styles.modalButtonText}>Create new programme</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.modalButton}>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => {
+              setModalVisible(false);
+              navigation.navigate("MainEditScreen");
+            }}
+          >
             <Text style={styles.modalButtonText}>Edit existing programme</Text>
           </TouchableOpacity>
         </View>
@@ -322,6 +336,8 @@ export default function SundayGuideCard({ refreshKey }) {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
+
   return {
     card: {
       borderRadius: 10,
@@ -333,8 +349,7 @@ const getStyle = (theme) => {
       shadowOpacity: 0.2,
       shadowRadius: 4,
       elevation: 2,
-      width: 380,
-      maxWidth: 380,
+      position: "relative",
     },
     title: {
       fontSize: 19,
@@ -371,8 +386,6 @@ const getStyle = (theme) => {
       marginVertical: 50,
     },
     errorCard: {
-      height: 200,
-      width: 380,
       borderRadius: 10,
       marginBottom: 40,
       padding: 16,
@@ -382,6 +395,14 @@ const getStyle = (theme) => {
       shadowOpacity: 0.2,
       shadowRadius: 4,
       elevation: 2,
+      minHeight: 150,
+      //width: 380
+    },
+    errorContent: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      flexShrink: 1,
     },
     errorTitle: {
       fontSize: 19,
@@ -400,6 +421,8 @@ const getStyle = (theme) => {
       backgroundColor: isDarkTheme ? "#1d1d1d" : "#eeeeee",
       height: 250,
       width: 380,
+      left: insets.left,
+      right: insets.right,
     },
     historyButton: {
       position: "absolute",

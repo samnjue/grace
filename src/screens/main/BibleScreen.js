@@ -149,10 +149,10 @@ export default function BibleScreen({}) {
     saveTheme();
   }, [theme]);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   const toggleVersion = () => {
     const nextIndex = (currentVersionIndex + 1) % versionKeys.length;
@@ -195,9 +195,9 @@ export default function BibleScreen({}) {
         justifyContent: "space-between",
         alignItems: "center",
         //paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
+        //paddingBottom: insets.bottom,
+        //paddingLeft: insets.left,
+        //paddingRight: insets.right,
         backgroundColor: "#fff",
       }}
     >

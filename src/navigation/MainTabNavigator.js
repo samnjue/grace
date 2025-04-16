@@ -99,12 +99,21 @@ export default function MainTabNavigator() {
     if (routeName === "SermonTextScreen") {
       return { display: "none" };
     }
+    if (routeName === "MainEditScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "ReceiptsScreen") {
+      return { display: "none" };
+    }
+    if (routeName === "NewFundraiserScreen") {
+      return { display: "none" };
+    }
     return {
       position: "absolute",
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
-      borderTopWidth: 0.21,
+      borderTopWidth: 0.5,
       elevation: 0,
-      height: 60 + insets.bottom,
+      height: 70 + insets.bottom,
       keyboardHidesTabBar: true,
       paddingBottom: insets.bottom,
     };

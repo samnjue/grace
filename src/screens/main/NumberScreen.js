@@ -70,10 +70,10 @@ const NumberScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      />
+      /> */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons
@@ -144,8 +144,13 @@ const NumberScreen = ({ navigation }) => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
   return {
-    container: { flex: 1, backgroundColor: isDarkTheme ? "#121212" : "#fff" },
+    container: {
+      flex: 1,
+      backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      paddingTop: insets.top,
+    },
     header: { flexDirection: "row", alignItems: "center", padding: 16 },
     headerText: {
       marginLeft: 10,

@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../../utils/supabase";
 import * as NavigationBar from "expo-navigation-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const NewGuideScreen = ({ navigation }) => {
   const [service, setService] = useState("");
@@ -33,6 +34,40 @@ const NewGuideScreen = ({ navigation }) => {
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme, isServiceFocused, isDayFocused);
+
+  // Function to format the current date as "Day, Month Date, Year"
+  const insertCurrentDate = () => {
+    const date = new Date();
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const dayName = days[date.getDay()];
+    const monthName = months[date.getMonth()];
+    const dayNumber = date.getDate();
+    const year = date.getFullYear();
+    const formattedDate = `${dayName}, ${monthName} ${dayNumber}, ${year}`;
+    setDay(formattedDate);
+  };
 
   useEffect(() => {
     const getSelectedChurch = async () => {
@@ -149,21 +184,34 @@ const NewGuideScreen = ({ navigation }) => {
       />
 
       <Text style={styles.dayLabel}>Day</Text>
-      <TextInput
-        style={[
-          styles.input,
-          isDayFocused ? styles.inputFocused : styles.inputBlurred,
-        ]}
-        placeholder="e.g. Sunday, March 23, 2025"
-        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
-        selectionColor={isDarkTheme ? "#ccc" : "#666666"}
-        fontFamily="Inter_600SemiBold"
-        onFocus={() => setDayFocused(true)}
-        onBlur={() => setDayFocused(false)}
-        value={day}
-        onChangeText={setDay}
-        editable={!isLoading}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[
+            styles.inputWithIcon,
+            isDayFocused ? styles.inputFocused : styles.inputBlurred,
+          ]}
+          placeholder="e.g. Sunday, March 23, 2025"
+          placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+          selectionColor={isDarkTheme ? "#ccc" : "#666666"}
+          fontFamily="Inter_600SemiBold"
+          onFocus={() => setDayFocused(true)}
+          onBlur={() => setDayFocused(false)}
+          value={day}
+          onChangeText={setDay}
+          editable={!isLoading}
+        />
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={insertCurrentDate}
+          disabled={isLoading}
+        >
+          <Ionicons
+            name="calendar-outline"
+            size={24}
+            color={isDarkTheme ? "#fff" : "#333"}
+          />
+        </TouchableOpacity>
+      </View>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -185,12 +233,14 @@ const NewGuideScreen = ({ navigation }) => {
 
 const getStyle = (theme, isServiceFocused, isDayFocused) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return {
     container: {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",
@@ -215,6 +265,11 @@ const getStyle = (theme, isServiceFocused, isDayFocused) => {
       color: isDayFocused ? "#6a5acd" : isDarkTheme ? "#fff" : "#000",
       marginBottom: 5,
     },
+    inputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 15,
+    },
     input: {
       height: 50,
       borderWidth: 2,
@@ -224,11 +279,28 @@ const getStyle = (theme, isServiceFocused, isDayFocused) => {
       marginBottom: 15,
       color: isDarkTheme ? "#f5f5f5" : "#000",
     },
+    inputWithIcon: {
+      flex: 1,
+      height: 50,
+      borderWidth: 2,
+      borderRadius: 10,
+      paddingLeft: 10,
+      paddingRight: 40, // Space for the icon
+      fontSize: 16,
+      color: isDarkTheme ? "#f5f5f5" : "#000",
+    },
     inputFocused: {
       borderColor: "#6a5acd",
     },
     inputBlurred: {
       borderColor: "#ccc",
+    },
+    iconContainer: {
+      position: "absolute",
+      right: 10,
+      height: 50,
+      justifyContent: "center",
+      alignItems: "center",
     },
     createButton: {
       backgroundColor: "#6a5acd",

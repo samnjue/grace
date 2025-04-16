@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PayOptionsScreen = ({ route, navigation }) => {
   const { title } = route.params;
@@ -75,7 +76,7 @@ const PayOptionsScreen = ({ route, navigation }) => {
         onChangeText={setAmount}
       />
 
-      <Text style={styles.groupLabel}>Group</Text>
+      <Text style={styles.groupLabel}>Account Name</Text>
       <TextInput
         style={[
           styles.input,
@@ -105,12 +106,14 @@ const PayOptionsScreen = ({ route, navigation }) => {
 
 const getStyle = (theme, isAmountFocused, isGroupFocused) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return {
     container: {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",

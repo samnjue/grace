@@ -194,10 +194,10 @@ export default function HomeScreen() {
     saveTheme();
   }, [theme]);
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -248,10 +248,10 @@ export default function HomeScreen() {
         marginBottom: 15,
       }}
     >
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      />
+      /> */}
       <Header title="Home" />
       <FlatList
         data={["VerseCard", "DistrictNewsCard", "SundayGuideCard"]}

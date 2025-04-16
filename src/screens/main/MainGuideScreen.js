@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Modal, FlatList } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import { supabase } from "../../utils/supabase";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MainGuideScreen = ({ navigation, route }) => {
   const [tempTableName, setTempTableName] = useState("");
@@ -14,16 +15,29 @@ const MainGuideScreen = ({ navigation, route }) => {
   const [isPosting, setIsPosting] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [items, setItems] = useState([]);
+  const [originalItems, setOriginalItems] = useState([]);
   const [isDiscarded, setIsDiscarded] = useState(false);
   const [shouldFetch, setShouldFetch] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    const { tempTableName, service, day, churchId } = route.params || {};
-    if (tempTableName && service && day && churchId !== null) {
+    const { tempTableName, service, day, churchId, items, isEditMode } =
+      route.params || {};
+    if (isEditMode) {
+      setIsEditMode(true);
+      setDay(day);
+      setChurchId(churchId);
+      setService(service);
+      setItems(items || []);
+      setOriginalItems(items || []);
+      setShouldFetch(false);
+      fetchDatabaseItems(churchId, service, day);
+    } else if (tempTableName && service && day && churchId !== null) {
       setTempTableName(tempTableName);
       setService(service);
       setDay(day);
@@ -34,7 +48,7 @@ const MainGuideScreen = ({ navigation, route }) => {
     }
 
     const unsubscribeFocus = navigation.addListener("focus", () => {
-      if (tempTableName && !isDiscarded) {
+      if ((tempTableName || isEditMode) && !isDiscarded) {
         setShouldFetch(true);
       }
     });
@@ -42,7 +56,7 @@ const MainGuideScreen = ({ navigation, route }) => {
     const unsubscribeBeforeRemove = navigation.addListener(
       "beforeRemove",
       (e) => {
-        if (tempTableName && !isDiscarded && !isPosting) {
+        if (tempTableName && !isDiscarded && !isPosting && !isEditMode) {
           e.preventDefault();
           setIsDeleteModalVisible(true);
         }
@@ -56,36 +70,55 @@ const MainGuideScreen = ({ navigation, route }) => {
   }, [navigation, route.params, isPosting, isDiscarded, tempTableName]);
 
   useEffect(() => {
-    if (shouldFetch && tempTableName && !isDiscarded) {
+    if (shouldFetch && tempTableName && !isDiscarded && !isEditMode) {
       fetchItems(tempTableName);
       setShouldFetch(false);
+    } else if (shouldFetch && isEditMode && churchId && service && day) {
+      fetchDatabaseItems(churchId, service, day);
+      setShouldFetch(false);
     }
-  }, [shouldFetch, tempTableName, isDiscarded]);
+  }, [
+    shouldFetch,
+    tempTableName,
+    isDiscarded,
+    isEditMode,
+    churchId,
+    service,
+    day,
+  ]);
 
-  // useEffect(() => {
-  //   console.log("Current items state:", items);
-  //   console.log(
-  //     "Valid items:",
-  //     items.filter((item) =>
-  //       ["basic", "bible", "hymn", "sermon"].includes(item.item_type)
-  //     )
-  //   );
-  // }, [items]);
+  const fetchDatabaseItems = async (churchId, service, day) => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("sundayGuide")
+        .select("*")
+        .eq("church_id", churchId)
+        .eq("service", service)
+        .eq("day", day)
+        .order("created_at", { ascending: true });
+
+      if (error) throw new Error(`Fetch Error: ${error.message}`);
+      setItems(data || []);
+      setOriginalItems(data || []);
+    } catch (error) {
+      setError(`Failed to load database items: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchItems = async (tableName) => {
     try {
       setIsLoading(true);
-      //console.log("Fetching items from table:", tableName);
       const { data, error } = await supabase
         .from(tableName)
         .select("*")
         .order("created_at", { ascending: true });
 
       if (error) throw new Error(`Fetch Error: ${error.message}`);
-      //console.log("Fetched Items from Temp Table:", data);
       setItems(data || []);
     } catch (error) {
-      //console.error("Fetch Items Error:", error.message, error.stack);
       if (error.message.includes("does not exist")) {
         setIsDiscarded(true);
         setTempTableName("");
@@ -104,7 +137,7 @@ const MainGuideScreen = ({ navigation, route }) => {
   };
 
   const handleBackPress = () => {
-    if (tempTableName && !isDiscarded) {
+    if (tempTableName && !isDiscarded && !isEditMode) {
       setIsDeleteModalVisible(true);
     } else {
       navigation.goBack();
@@ -126,7 +159,6 @@ const MainGuideScreen = ({ navigation, route }) => {
         { user_id: user.id }
       );
       if (dropError) throw new Error(`Drop Error: ${dropError.message}`);
-      //onsole.log("Table Dropped:", tempTableName);
 
       setIsDiscarded(true);
       setTempTableName("");
@@ -139,7 +171,6 @@ const MainGuideScreen = ({ navigation, route }) => {
         routes: [{ name: "HomeScreen" }],
       });
     } catch (error) {
-      //console.error("Confirm Delete Error:", error.message, error.stack);
       setError(`Failed to discard programme: ${error.message}`);
     } finally {
       setIsPosting(false);
@@ -148,15 +179,15 @@ const MainGuideScreen = ({ navigation, route }) => {
 
   const handleAddItem = () => {
     navigation.navigate("TypeScreen", {
-      tempTableName,
+      tempTableName: isEditMode ? "sundayGuide" : tempTableName,
       churchId,
       service,
       day,
+      isEditMode,
     });
   };
 
   const handleEditItem = (item) => {
-    //console.log("Edit Item:", item);
     let inferredType;
     if (
       item.title &&
@@ -177,29 +208,29 @@ const MainGuideScreen = ({ navigation, route }) => {
     }
 
     navigation.navigate("ItemCreationScreen", {
-      tempTableName,
+      tempTableName: isEditMode ? "sundayGuide" : tempTableName,
       churchId,
       service,
       day,
       itemType: inferredType,
       item,
+      isEditMode,
     });
   };
 
   const handleDeleteItem = async (itemId) => {
     try {
       setIsLoading(true);
+      const tableName = isEditMode ? "sundayGuide" : tempTableName;
       const { error } = await supabase
-        .from(tempTableName)
+        .from(tableName)
         .delete()
         .eq("id", itemId);
 
       if (error) throw new Error(`Delete Error: ${error.message}`);
       setItems(items.filter((item) => item.id !== itemId));
-      //console.log("Item Deleted:", itemId);
       setShouldFetch(true);
     } catch (error) {
-      //console.error("Delete Item Error:", error.message, error.stack);
       setError(`Failed to delete item: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -209,13 +240,6 @@ const MainGuideScreen = ({ navigation, route }) => {
   const handlePostPress = async () => {
     try {
       setIsPosting(true);
-      // console.log("Posting Guide:", {
-      //   tempTableName,
-      //   service,
-      //   day,
-      //   churchId,
-      //   items,
-      // });
 
       const {
         data: { user },
@@ -231,60 +255,168 @@ const MainGuideScreen = ({ navigation, route }) => {
         return;
       }
 
-      const itemsToInsert = validItems.map((item) => {
-        const baseItem = {
-          church_id: churchId,
-          service,
-          day,
-          title: item.title || null,
-          content: item.content || null,
-          item_type: item.item_type,
-          book: item.book || null,
-          chapter: item.chapter || null,
-          verse: item.verse || null,
-          tenzi_number: item.tenzi_number || null,
-          sermon: item.sermon || null,
-          created_at: item.created_at,
-        };
+      if (!isEditMode) {
+        const itemsToInsert = validItems.map((item) => {
+          const baseItem = {
+            church_id: churchId,
+            service,
+            day,
+            title: item.title || null,
+            content: item.content || null,
+            item_type: item.item_type,
+            book: item.book || null,
+            chapter: item.chapter || null,
+            verse: item.verse || null,
+            tenzi_number: item.tenzi_number || null,
+            sermon: item.sermon || null,
+            created_at: item.created_at,
+          };
 
-        if (item.item_type === "hymn") {
-          return {
-            ...baseItem,
-            songTitle: item.songTitle || null,
-            songData: item.songData || null,
-          };
-        } else if (item.item_type === "sermon") {
-          return {
-            ...baseItem,
-            sermon_content: item.sermon_content || null,
-            sermon_metadata: item.sermon_metadata || null,
-            sermon_image: item.sermon_image || null,
-            sermon_audio: item.sermon_audio || null,
-          };
+          if (item.item_type === "hymn") {
+            return {
+              ...baseItem,
+              songTitle: item.songTitle || null,
+              songData: item.songData || null,
+            };
+          } else if (item.item_type === "sermon") {
+            return {
+              ...baseItem,
+              sermon_content: item.sermon_content || null,
+              sermon_metadata: item.sermon_metadata || null,
+              sermon_image: item.sermon_image || null,
+              sermon_audio: item.sermon_audio || null,
+            };
+          }
+
+          return baseItem;
+        });
+
+        const { error: insertError } = await supabase
+          .from("sundayGuide")
+          .insert(itemsToInsert);
+
+        if (insertError)
+          throw new Error(`Insert Error: ${insertError.message}`);
+
+        const { error: dropError } = await supabase.rpc(
+          "drop_temp_sunday_guide_table",
+          { user_id: user.id }
+        );
+        if (dropError) throw new Error(`Drop Error: ${dropError.message}`);
+
+        setIsDiscarded(true);
+        setTempTableName("");
+      } else {
+        const deletedItems = originalItems.filter(
+          (origItem) => !validItems.some((item) => item.id === origItem.id)
+        );
+
+        const newItems = validItems.filter(
+          (item) => !originalItems.some((origItem) => origItem.id === item.id)
+        );
+
+        const updatedItems = validItems
+          .filter((item) =>
+            originalItems.some((origItem) => origItem.id === item.id)
+          )
+          .filter((item) => {
+            const origItem = originalItems.find((orig) => orig.id === item.id);
+            return JSON.stringify(item) !== JSON.stringify(origItem);
+          });
+
+        if (deletedItems.length > 0) {
+          const { error: deleteError } = await supabase
+            .from("sundayGuide")
+            .delete()
+            .in(
+              "id",
+              deletedItems.map((item) => item.id)
+            );
+
+          if (deleteError)
+            throw new Error(`Delete Error: ${deleteError.message}`);
         }
 
-        return baseItem;
-      });
+        if (newItems.length > 0) {
+          const itemsToInsert = newItems.map((item) => {
+            const baseItem = {
+              church_id: churchId,
+              service,
+              day,
+              title: item.title || null,
+              content: item.content || null,
+              item_type: item.item_type,
+              book: item.book || null,
+              chapter: item.chapter || null,
+              verse: item.verse || null,
+              tenzi_number: item.tenzi_number || null,
+              sermon: item.sermon || null,
+              created_at: item.created_at || new Date().toISOString(),
+            };
 
-      const { error: insertError } = await supabase
-        .from("sundayGuide")
-        .insert(itemsToInsert);
+            if (item.item_type === "hymn") {
+              return {
+                ...baseItem,
+                songTitle: item.songTitle || null,
+                songData: item.songData || null,
+              };
+            } else if (item.item_type === "sermon") {
+              return {
+                ...baseItem,
+                sermon_content: item.sermon_content || null,
+                sermon_metadata: item.sermon_metadata || null,
+                sermon_image: item.sermon_image || null,
+                sermon_audio: item.sermon_audio || null,
+              };
+            }
 
-      if (insertError) throw new Error(`Insert Error: ${insertError.message}`);
+            return baseItem;
+          });
 
-      console.log("Items inserted into sundayGuide:", itemsToInsert);
+          const { error: insertError } = await supabase
+            .from("sundayGuide")
+            .insert(itemsToInsert);
 
-      const { error: dropError } = await supabase.rpc(
-        "drop_temp_sunday_guide_table",
-        { user_id: user.id }
-      );
-      if (dropError) throw new Error(`Drop Error: ${dropError.message}`);
+          if (insertError)
+            throw new Error(`Insert Error: ${insertError.message}`);
+        }
 
-      console.log("Temporary Table Dropped:", tempTableName);
+        if (updatedItems.length > 0) {
+          for (const item of updatedItems) {
+            const baseItem = {
+              title: item.title || null,
+              content: item.content || null,
+              item_type: item.item_type,
+              book: item.book || null,
+              chapter: item.chapter || null,
+              verse: item.verse || null,
+              tenzi_number: item.tenzi_number || null,
+              sermon: item.sermon || null,
+            };
 
-      setIsDiscarded(true);
-      setTempTableName("");
+            if (item.item_type === "hymn") {
+              baseItem.songTitle = item.songTitle || null;
+              baseItem.songData = item.songData || null;
+            } else if (item.item_type === "sermon") {
+              baseItem.sermon_content = item.sermon_content || null;
+              baseItem.sermon_metadata = item.sermon_metadata || null;
+              baseItem.sermon_image = item.sermon_image || null;
+              baseItem.sermon_audio = item.sermon_audio || null;
+            }
+
+            const { error: updateError } = await supabase
+              .from("sundayGuide")
+              .update(baseItem)
+              .eq("id", item.id);
+
+            if (updateError)
+              throw new Error(`Update Error: ${updateError.message}`);
+          }
+        }
+      }
+
       setItems([]);
+      setOriginalItems([]);
       setError("");
       setShouldFetch(false);
 
@@ -293,7 +425,6 @@ const MainGuideScreen = ({ navigation, route }) => {
         routes: [{ name: "HomeScreen" }],
       });
     } catch (error) {
-      console.error("Post Guide Error:", error.message, error.stack);
       setError(`Failed to post guide: ${error.message}`);
     } finally {
       setIsPosting(false);
@@ -348,7 +479,9 @@ const MainGuideScreen = ({ navigation, route }) => {
           />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerText}>Sunday Guide</Text>
+          <Text style={styles.headerText}>
+            {isEditMode ? "Edit Sunday Guide" : "Sunday Guide"}
+          </Text>
           <Text style={styles.headerDay}>{day || "Not set"}</Text>
         </View>
       </View>
@@ -378,7 +511,7 @@ const MainGuideScreen = ({ navigation, route }) => {
           disabled={isPosting}
         >
           <Text style={styles.postText}>
-            {isPosting ? "Processing..." : "Post"}
+            {isPosting ? "Processing..." : isEditMode ? "Update" : "Post"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -415,12 +548,14 @@ const MainGuideScreen = ({ navigation, route }) => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return {
     container: {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",
@@ -555,6 +690,7 @@ const getStyle = (theme) => {
       justifyContent: "space-between",
       marginTop: 25,
       width: "100%",
+      paddingBottom: insets.bottom,
     },
     exitButton: {
       flex: 1,

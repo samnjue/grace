@@ -327,7 +327,7 @@ const getStyle = (theme) => {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
-      //paddingTop: insets.top,
+      paddingTop: insets.top,
       paddingBottom: insets.bottom,
       paddingLeft: insets.left,
       paddingRight: insets.right,

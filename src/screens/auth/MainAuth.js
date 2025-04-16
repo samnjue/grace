@@ -13,10 +13,10 @@ export default function MainAuthScreen({ navigation }) {
   const styles = getStyle(theme);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-    NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  }, [isDarkTheme]);
+  // useEffect(() => {
+  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
+  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
+  // }, [isDarkTheme]);
 
   useEffect(() => {
     const saveTheme = async () => {
@@ -55,13 +55,13 @@ export default function MainAuthScreen({ navigation }) {
         paddingBottom: insets.bottom,
         paddingLeft: insets.left,
         paddingRight: insets.right,
-        backgroundColor: "#fff",
+        backgroundColor: isDarkTheme ? "#121212" : "#fff",
       }}
     >
-      <StatusBar
+      {/* <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      />
+      /> */}
       <View style={styles.container}>
         <Image
           source={require("../../../assets/adaptive-icon.png")}
@@ -84,8 +84,13 @@ export default function MainAuthScreen({ navigation }) {
           <Text style={styles.buttonText}>LOG IN</Text>
         </TouchableOpacity>
         <Image
-          source={require("../../../assets/ivoirepng.png")}
-          style={{ width: 80, height: 80, top: 110 }}
+          source={require("../../../assets/ivorypng (2).png")}
+          style={{
+            width: 120,
+            height: 120,
+            top: 110,
+            paddingBottom: insets.bottom,
+          }}
         />
       </View>
     </View>

@@ -13,6 +13,7 @@ import { supabase } from "../../utils/supabase";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ItemCreationScreen = ({ navigation, route }) => {
   const {
@@ -23,6 +24,7 @@ const ItemCreationScreen = ({ navigation, route }) => {
     itemType,
     item,
     selectedHymn,
+    isEditMode,
   } = route.params || {};
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
@@ -76,6 +78,7 @@ const ItemCreationScreen = ({ navigation, route }) => {
       day,
       itemType,
       item,
+      isEditMode,
     });
   };
 
@@ -305,22 +308,42 @@ const ItemCreationScreen = ({ navigation, route }) => {
           throw new Error("Invalid item type");
       }
 
-      if (item) {
-        const { error: updateError } = await supabase
-          .from(tempTableName)
-          .update(dataToSave)
-          .eq("id", item.id);
+      if (isEditMode) {
+        if (item) {
+          // Update existing item in sundayGuide
+          const { error: updateError } = await supabase
+            .from("sundayGuide")
+            .update(dataToSave)
+            .eq("id", item.id);
 
-        if (updateError)
-          throw new Error(`Update Error: ${updateError.message}`);
+          if (updateError)
+            throw new Error(`Update Error: ${updateError.message}`);
+        } else {
+          // Insert new item in sundayGuide
+          const { error: insertError } = await supabase
+            .from("sundayGuide")
+            .insert([dataToSave]);
+
+          if (insertError)
+            throw new Error(`Insert Error: ${insertError.message}`);
+        }
       } else {
-        const { data, error: insertError } = await supabase
-          .from(tempTableName)
-          .insert([dataToSave])
-          .select();
+        if (item) {
+          const { error: updateError } = await supabase
+            .from(tempTableName)
+            .update(dataToSave)
+            .eq("id", item.id);
 
-        if (insertError)
-          throw new Error(`Insert Error: ${insertError.message}`);
+          if (updateError)
+            throw new Error(`Update Error: ${updateError.message}`);
+        } else {
+          const { error: insertError } = await supabase
+            .from(tempTableName)
+            .insert([dataToSave]);
+
+          if (insertError)
+            throw new Error(`Insert Error: ${insertError.message}`);
+        }
       }
 
       navigation.goBack();
@@ -558,12 +581,14 @@ const ItemCreationScreen = ({ navigation, route }) => {
 
 const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
+  const insets = useSafeAreaInsets();
 
   return {
     container: {
       flex: 1,
       padding: 20,
       backgroundColor: isDarkTheme ? "#121212" : "#ffffff",
+      paddingTop: insets.top,
     },
     header: {
       flexDirection: "row",
@@ -602,6 +627,12 @@ const getStyle = (theme) => {
       color: "#fff",
       fontSize: 16,
       fontFamily: "Archivo_700Bold",
+    },
+    selectedHymnText: {
+      fontSize: 16,
+      fontFamily: "Inter_400Regular",
+      color: isDarkTheme ? "#ccc" : "#666",
+      marginBottom: 15,
     },
     statusContainer: {
       flexDirection: "row",

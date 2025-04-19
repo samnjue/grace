@@ -18,7 +18,6 @@ const GracePesaScreen = ({ navigation }) => {
   const [isPesa, setIsPesa] = useState(false);
   const [fundraisers, setFundraisers] = useState([]);
 
-  // Placeholder images for event cards
   const placeholderImages = [
     require("../../../assets/gradient_five.jpeg"),
     require("../../../assets/gradient_seven.jpeg"),
@@ -50,7 +49,6 @@ const GracePesaScreen = ({ navigation }) => {
       if (!error && data) {
         setIsPesa(data.pesa);
 
-        // Fetch fundraisers matching the user's selected_church
         const { data: fundraiserData, error: fundraiserError } = await supabase
           .from("fundraisers")
           .select("*")
@@ -58,7 +56,12 @@ const GracePesaScreen = ({ navigation }) => {
 
         if (fundraiserError) throw fundraiserError;
 
-        setFundraisers(fundraiserData);
+        const filteredFundraisers = fundraiserData.filter((fundraiser) => {
+          const daysLeft = calculateDaysLeft(fundraiser.deadline);
+          return daysLeft >= -1;
+        });
+
+        setFundraisers(filteredFundraisers);
       }
     };
 
@@ -136,18 +139,26 @@ const GracePesaScreen = ({ navigation }) => {
         <View style={styles.content}>
           {/* Phone Card */}
           <View style={styles.phoneCard}>
-            <Text style={styles.cardTitle}>Phone Number</Text>
+            <Text style={styles.cardTitle} allowFontScaling={false}>
+              Phone Number
+            </Text>
             {phoneNumber && (
-              <Text style={styles.cardNumber}>{phoneNumber}</Text>
+              <Text style={styles.cardNumber} allowFontScaling={false}>
+                {phoneNumber}
+              </Text>
             )}
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => navigation.navigate("NumberScreen")}
             >
               {phoneNumber ? (
-                <Text style={styles.addButtonText}>Edit</Text>
+                <Text style={styles.addButtonText} allowFontScaling={false}>
+                  Edit
+                </Text>
               ) : (
-                <Text style={styles.addButtonText}>Add</Text>
+                <Text style={styles.addButtonText} allowFontScaling={false}>
+                  Add
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -155,12 +166,16 @@ const GracePesaScreen = ({ navigation }) => {
           {/* Events Section */}
           <View style={styles.card}>
             <View style={styles.sectionHeader}>
-              <Ionicons
-                name="calendar-outline"
-                size={22}
-                color={styles.iconColor}
-              />
-              <Text style={styles.cardTitle}>Upcoming Events</Text>
+              <View style={styles.sectionHeaderContent}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={22}
+                  color={styles.iconColor}
+                />
+                <Text style={styles.cardTitle} allowFontScaling={false}>
+                  Upcoming Events
+                </Text>
+              </View>
               {isPesa && (
                 <TouchableOpacity
                   onPress={() => navigation.navigate("NewFundraiserScreen")}
@@ -203,13 +218,20 @@ const GracePesaScreen = ({ navigation }) => {
                   size={32}
                   color={styles.iconColor}
                 />
-                <Text style={styles.giveTitle}>Give</Text>
+                <Text style={styles.giveTitle} allowFontScaling={false}>
+                  Give
+                </Text>
               </View>
               <TouchableOpacity
                 style={styles.receiptsButton}
                 onPress={() => navigation.navigate("ReceiptsScreen")}
               >
-                <Text style={styles.receiptsButtonText}>Receipts</Text>
+                <Text
+                  style={styles.receiptsButtonText}
+                  allowFontScaling={false}
+                >
+                  Receipts
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -224,7 +246,9 @@ const GracePesaScreen = ({ navigation }) => {
                   source={require("../../../assets/gradient_twelve.jpeg")}
                   style={styles.buttonImage}
                 />
-                <Text style={styles.buttonText}>Offering</Text>
+                <Text style={styles.buttonText} allowFontScaling={false}>
+                  Offering
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -237,7 +261,9 @@ const GracePesaScreen = ({ navigation }) => {
                   source={require("../../../assets/gradient_seven.jpeg")}
                   style={styles.buttonImage}
                 />
-                <Text style={styles.buttonText}>Tithe</Text>
+                <Text style={styles.buttonText} allowFontScaling={false}>
+                  Tithe
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -252,7 +278,9 @@ const GracePesaScreen = ({ navigation }) => {
                   source={require("../../../assets/gradient_nine.jpeg")}
                   style={styles.buttonImage}
                 />
-                <Text style={styles.buttonText}>Thanksgiving</Text>
+                <Text style={styles.buttonText} allowFontScaling={false}>
+                  Thanksgiving
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -265,7 +293,9 @@ const GracePesaScreen = ({ navigation }) => {
                   source={require("../../../assets/gradient_five.jpeg")}
                   style={styles.buttonImage}
                 />
-                <Text style={styles.buttonText}>Donation</Text>
+                <Text style={styles.buttonText} allowFontScaling={false}>
+                  Donation
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -296,7 +326,7 @@ const getStyle = (theme) => {
       elevation: 3,
       position: "relative",
       marginBottom: 15,
-      height: 300,
+      height: 290,
     },
     phoneCard: {
       backgroundColor: isDarkTheme ? "#2c2c2c" : "#ededed",
@@ -359,6 +389,12 @@ const getStyle = (theme) => {
       justifyContent: "space-between",
       marginBottom: 10,
     },
+    sectionHeaderContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      flex: 1,
+    },
     giveHeader: {
       flexDirection: "row",
       alignItems: "center",
@@ -401,7 +437,7 @@ const getStyle = (theme) => {
       position: "absolute",
     },
     buttonText: {
-      fontSize: 17,
+      fontSize: 20,
       fontFamily: "Inter_600SemiBold",
       color: "#fff",
       textShadowColor: "rgba(0, 0, 0, 0.5)",

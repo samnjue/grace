@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useRef } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View, StyleSheet, TouchableWithoutFeedback } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  Animated,
+} from "react-native";
 import BibleNavigator from "./BibleNavigator";
 import SongNavigator from "./SongNavigator";
 import PesaNavigator from "./PesaNavigator";
@@ -14,11 +19,56 @@ import { useSelector } from "react-redux";
 
 const Tab = createBottomTabNavigator();
 
-const CustomTabBarButton = ({ children, onPress }) => (
-  <TouchableWithoutFeedback onPress={onPress}>
-    <View style={styles.customButtonContainer}>{children}</View>
-  </TouchableWithoutFeedback>
-);
+const CustomTabBarButton = ({ children, onPress }) => {
+  const flashOpacity = useRef(new Animated.Value(0)).current;
+  const flashScale = useRef(new Animated.Value(0)).current;
+
+  const triggerFlash = () => {
+    flashOpacity.setValue(0.3);
+    flashScale.setValue(0);
+    Animated.parallel([
+      Animated.timing(flashOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(flashScale, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handlePress = () => {
+    triggerFlash();
+    onPress();
+  };
+
+  return (
+    <TouchableWithoutFeedback onPress={handlePress}>
+      <View style={styles.customButtonContainer}>
+        <Animated.View
+          style={[
+            styles.flashOverlay,
+            {
+              opacity: flashOpacity,
+              transform: [
+                {
+                  scale: flashScale.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.2, 1.5],
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
+        {children}
+      </View>
+    </TouchableWithoutFeedback>
+  );
+};
 
 export default function MainTabNavigator() {
   const insets = useSafeAreaInsets();
@@ -208,5 +258,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
+  },
+  flashOverlay: {
+    position: "absolute",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#6a5acd",
+    opacity: 0.3,
   },
 });

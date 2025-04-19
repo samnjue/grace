@@ -19,7 +19,7 @@ const NewGuideScreen = ({ navigation }) => {
   const validServices = [
     "Main",
     "Youth",
-    "Kids",
+    "Children",
     "Kiswahili",
     "English",
     "Morning",
@@ -35,7 +35,6 @@ const NewGuideScreen = ({ navigation }) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const styles = getStyle(theme, isServiceFocused, isDayFocused);
 
-  // Function to format the current date as "Day, Month Date, Year"
   const insertCurrentDate = () => {
     const date = new Date();
     const days = [
@@ -172,7 +171,7 @@ const NewGuideScreen = ({ navigation }) => {
           styles.input,
           isServiceFocused ? styles.inputFocused : styles.inputBlurred,
         ]}
-        placeholder="Main, Youth, or Kids"
+        placeholder="Main, Youth, or Children"
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         selectionColor={isDarkTheme ? "#ccc" : "#666666"}
         fontFamily="Inter_600SemiBold"

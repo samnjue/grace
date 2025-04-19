@@ -220,7 +220,10 @@ export default function SundayGuideCard({ refreshKey }) {
               style={styles.historyPillButton}
               onPress={() => navigation.navigate("SundayGuideHistoryScreen")}
             >
-              <Text style={styles.historyPillButtonText}>
+              <Text
+                style={styles.historyPillButtonText}
+                allowFontScaling={false}
+              >
                 View previous guides
               </Text>
             </TouchableOpacity>

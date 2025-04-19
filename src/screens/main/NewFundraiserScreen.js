@@ -30,12 +30,7 @@ const NewFundraiserScreen = ({ navigation }) => {
 
   const theme = useSelector((state) => state.theme.theme);
   const isDarkTheme = theme.toLowerCase().includes("dark");
-  const styles = getStyle(
-    theme,
-    isTitleFocused,
-    isTargetFocused,
-    isAccNoFocused
-  );
+  const styles = getStyle(theme);
 
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || deadline;
@@ -47,7 +42,6 @@ const NewFundraiserScreen = ({ navigation }) => {
     if (!isButtonEnabled) return;
 
     try {
-      // Get the authenticated user from Supabase
       const {
         data: { user },
         error: authError,
@@ -59,7 +53,6 @@ const NewFundraiserScreen = ({ navigation }) => {
 
       const userId = user.id;
 
-      // Fetch the user's selected_church
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("selected_church")
@@ -68,12 +61,11 @@ const NewFundraiserScreen = ({ navigation }) => {
 
       if (userError) throw userError;
 
-      // Insert the fundraiser
       const { error } = await supabase.from("fundraisers").insert({
         title,
         target: parseInt(target),
         acc_no: accNo,
-        deadline: deadline.toISOString().split("T")[0], // Store as YYYY-MM-DD
+        deadline: deadline.toISOString().split("T")[0],
         created_by: userId,
         church: userData.selected_church,
       });
@@ -104,7 +96,14 @@ const NewFundraiserScreen = ({ navigation }) => {
       </View>
 
       {/* Input Fields */}
-      <Text style={styles.label}>Title</Text>
+      <Text
+        style={[
+          styles.label,
+          isTitleFocused ? styles.labelFocused : styles.labelBlurred,
+        ]}
+      >
+        Title
+      </Text>
       <TextInput
         style={[
           styles.input,
@@ -120,7 +119,14 @@ const NewFundraiserScreen = ({ navigation }) => {
         onChangeText={setTitle}
       />
 
-      <Text style={styles.label}>Target (KES)</Text>
+      <Text
+        style={[
+          styles.label,
+          isTargetFocused ? styles.labelFocused : styles.labelBlurred,
+        ]}
+      >
+        Target (KES)
+      </Text>
       <TextInput
         style={[
           styles.input,
@@ -137,7 +143,14 @@ const NewFundraiserScreen = ({ navigation }) => {
         onChangeText={setTarget}
       />
 
-      <Text style={styles.label}>Acc. No</Text>
+      <Text
+        style={[
+          styles.label,
+          isAccNoFocused ? styles.labelFocused : styles.labelBlurred,
+        ]}
+      >
+        Acc. No
+      </Text>
       <TextInput
         style={[
           styles.input,
@@ -196,7 +209,7 @@ const NewFundraiserScreen = ({ navigation }) => {
   );
 };
 
-const getStyle = (theme, isTitleFocused, isTargetFocused, isAccNoFocused) => {
+const getStyle = (theme) => {
   const isDarkTheme = theme.toLowerCase().includes("dark");
   const insets = useSafeAreaInsets();
 
@@ -219,15 +232,18 @@ const getStyle = (theme, isTitleFocused, isTargetFocused, isAccNoFocused) => {
       color: isDarkTheme ? "#fff" : "#000",
     },
     label: {
-      fontSize: isTitleFocused || isTargetFocused || isAccNoFocused ? 22 : 20,
+      fontSize: 20,
       fontFamily: "Inter_600SemiBold",
-      color:
-        isTitleFocused || isTargetFocused || isAccNoFocused
-          ? "#6a5acd"
-          : isDarkTheme
-            ? "#fff"
-            : "#000",
+      color: isDarkTheme ? "#fff" : "#000",
       marginBottom: 5,
+    },
+    labelFocused: {
+      fontSize: 22,
+      color: "#6a5acd",
+    },
+    labelBlurred: {
+      fontSize: 20,
+      color: isDarkTheme ? "#fff" : "#000",
     },
     input: {
       height: 50,

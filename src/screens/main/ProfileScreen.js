@@ -625,6 +625,7 @@ const getStyle = (theme) => {
     container: {
       flex: 1,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
+      paddingBottom: insets.bottom + 8,
     },
     profileSection: {
       flexDirection: "row",

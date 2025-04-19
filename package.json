@@ -72,6 +72,7 @@
     "react-native-shimmer-placeholder": "^2.0.9",
     "react-native-svg": "15.8.0",
     "react-native-swiper": "^1.6.0",
+    "react-native-url-polyfill": "^2.0.0",
     "react-native-vector-icons": "^10.2.0",
     "react-redux": "^9.2.0",
     "uuid": "^11.1.0",

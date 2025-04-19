@@ -82,7 +82,9 @@ const NumberScreen = ({ navigation }) => {
             color={isDarkTheme ? "#fff" : "#000"}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Edit Phone Number</Text>
+        <Text style={styles.headerText} allowFontScaling={false}>
+          Edit Phone Number
+        </Text>
       </View>
       <View style={styles.inputContainer}>
         <TextInput

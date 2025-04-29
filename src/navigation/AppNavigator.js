@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, View, StatusBar } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  ActivityIndicator,
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -16,23 +22,41 @@ import { DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { supabase } from "../utils/supabase";
 import { usePushNotifications } from "../utils/notifications";
 import * as ExpoInAppUpdates from "expo-in-app-updates";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const Stack = createStackNavigator();
 
 export default function AppNavigator() {
   const [isLoading, setIsLoading] = useState(true);
   const [initialRoute, setInitialRoute] = useState("AuthStack");
+  const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+  const [isInitialLaunch, setIsInitialLaunch] = useState(true);
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
-  /*useEffect(() => {
-        const logDebugInfo = async () => {
-            const session = await AsyncStorage.getItem('userSession');
-            console.log('AsyncStorage session:', session);
-            console.log('Redux user state:', user);
-        };
-        logDebugInfo();
-    }, [user]);*/
+  // Animation for pulsating WiFi icon
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isCheckingConnection) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.5,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1); // Reset animation when not checking
+    }
+  }, [isCheckingConnection]);
 
   const expoPushToken = usePushNotifications();
 
@@ -62,7 +86,7 @@ export default function AppNavigator() {
         );
       }
     } catch (error) {
-      //console.error("Error checking for updates:", error);
+      // console.error("Error checking for updates:", error);
     }
   };
 
@@ -99,7 +123,7 @@ export default function AppNavigator() {
       });
 
       if (error) {
-        //console.error("Session refresh error:", error);
+        // console.error("Session refresh error:", error);
         return;
       }
 
@@ -113,10 +137,10 @@ export default function AppNavigator() {
         dispatch(
           logIn({ email: data.session.user.email, session: data.session })
         );
-        //console.log("Session refreshed successfully");
+        // console.log("Session refreshed successfully");
       }
     } catch (err) {
-      //console.error("Error refreshing session:", err);
+      // console.error("Error refreshing session:", err);
     }
   };
 
@@ -132,7 +156,7 @@ export default function AppNavigator() {
       try {
         const savedSession = await AsyncStorage.getItem("supabaseSession");
         if (!savedSession) {
-          //console.log("No session found, redirecting to login.");
+          // console.log("No session found, redirecting to login.");
           return;
         }
 
@@ -140,7 +164,7 @@ export default function AppNavigator() {
         const currentTime = Math.floor(Date.now() / 1000);
 
         if (session.expires_at < currentTime) {
-          //console.log("Session expired, attempting to refresh...");
+          // console.log("Session expired, attempting to refresh...");
           await refreshSession();
         } else {
           await supabase.auth.setSession({
@@ -149,120 +173,130 @@ export default function AppNavigator() {
           });
         }
       } catch (error) {
-        //console.error("Error restoring session:", error);
+        // console.error("Error restoring session:", error);
       }
     };
 
     restoreSession();
   }, []);
 
-  useEffect(() => {
-    const checkUserSession = async () => {
-      try {
-        const session = await AsyncStorage.getItem("userSession");
+  const checkUserSession = async () => {
+    try {
+      const session = await AsyncStorage.getItem("userSession");
 
-        if (session) {
-          const parsedSession = JSON.parse(session);
-          dispatch(logIn(parsedSession));
+      if (session) {
+        const parsedSession = JSON.parse(session);
+        dispatch(logIn(parsedSession));
 
-          const netInfo = await NetInfo.fetch();
+        const netInfo = await NetInfo.fetch();
 
-          if (netInfo.isConnected) {
-            try {
-              const { data: profile, error } = await supabase
-                .from("users")
-                .select("selected_church, selected_district")
-                .eq("id", parsedSession.user.id)
-                .single();
+        if (netInfo.isConnected) {
+          try {
+            const { data: profile, error } = await supabase
+              .from("users")
+              .select("selected_church, selected_district")
+              .eq("id", parsedSession.user.id)
+              .single();
 
-              if (profile && !error) {
-                dispatch(
-                  setChurchAndDistrict({
-                    selected_church: profile.selected_church,
-                    selected_district: profile.selected_district,
-                  })
-                );
+            if (profile && !error) {
+              dispatch(
+                setChurchAndDistrict({
+                  selected_church: profile.selected_church,
+                  selected_district: profile.selected_district,
+                })
+              );
 
-                dispatch(selectChurch(profile.selected_church));
-                dispatch(selectDistrict(profile.selected_district));
+              dispatch(selectChurch(profile.selected_church));
+              dispatch(selectDistrict(profile.selected_district));
 
-                await AsyncStorage.setItem(
-                  "userProfile",
-                  JSON.stringify(profile)
-                );
+              await AsyncStorage.setItem(
+                "userProfile",
+                JSON.stringify(profile)
+              );
 
-                setInitialRoute(
-                  profile.selected_church && profile.selected_district
-                    ? "MainApp"
-                    : "ChurchSelection"
-                );
-                setIsLoading(false);
-              } else {
-                fallbackToCachedProfile();
-              }
-            } catch (error) {
-              console.error("Error fetching profile:", error);
-              fallbackToCachedProfile();
+              setInitialRoute(
+                profile.selected_church && profile.selected_district
+                  ? "MainApp"
+                  : "ChurchSelection"
+              );
+              setIsLoading(false);
+              setIsInitialLaunch(false); // Mark initial launch as complete
+            } else {
+              await fallbackToCachedProfile();
             }
-          } else {
-            fallbackToCachedProfile();
+          } catch (error) {
+            console.error("Error fetching profile:", error);
+            await fallbackToCachedProfile();
           }
+        } else if (isInitialLaunch) {
+          setIsCheckingConnection(true); // Show connectivity UI only on initial launch
         } else {
-          setInitialRoute("AuthStack");
-          setIsLoading(false);
+          await fallbackToCachedProfile(); // Use cached data for offline mode
         }
-      } catch (error) {
-        //console.error("Error checking session:", error);
-        setIsLoading(false);
-      }
-    };
-
-    const fallbackToCachedProfile = async () => {
-      try {
-        const cachedProfile = await AsyncStorage.getItem("userProfile");
-        if (cachedProfile) {
-          const profile = JSON.parse(cachedProfile);
-
-          dispatch(
-            setChurchAndDistrict({
-              selected_church: profile.selected_church,
-              selected_district: profile.selected_district,
-            })
-          );
-
-          dispatch(selectChurch(profile.selected_church));
-          dispatch(selectDistrict(profile.selected_district));
-
-          setInitialRoute(
-            profile.selected_church && profile.selected_district
-              ? "MainApp"
-              : "ChurchSelection"
-          );
-        } else {
-          setInitialRoute("ChurchSelection");
-        }
-      } catch (error) {
-        //console.error("Error loading cached profile:", error);
-        setInitialRoute("ChurchSelection");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const safetyTimeout = setTimeout(() => {
-      if (isLoading) {
-        // console.warn(
-        //   "Safety timeout triggered - forcing navigation to AuthStack"
-        // );
+      } else {
         setInitialRoute("AuthStack");
         setIsLoading(false);
+        setIsInitialLaunch(false); // Mark initial launch as complete
       }
-    }, 30000);
+    } catch (error) {
+      // console.error("Error checking session:", error);
+      setIsLoading(false);
+      setIsInitialLaunch(false); // Mark initial launch as complete
+    }
+  };
 
+  const fallbackToCachedProfile = async () => {
+    try {
+      const cachedProfile = await AsyncStorage.getItem("userProfile");
+      if (cachedProfile) {
+        const profile = JSON.parse(cachedProfile);
+
+        dispatch(
+          setChurchAndDistrict({
+            selected_church: profile.selected_church,
+            selected_district: profile.selected_district,
+          })
+        );
+
+        dispatch(selectChurch(profile.selected_church));
+        dispatch(selectDistrict(profile.selected_district));
+
+        setInitialRoute(
+          profile.selected_church && profile.selected_district
+            ? "MainApp"
+            : "ChurchSelection"
+        );
+      } else {
+        setInitialRoute("ChurchSelection");
+      }
+    } catch (error) {
+      // console.error("Error loading cached profile:", error);
+      setInitialRoute("ChurchSelection");
+    } finally {
+      setIsLoading(false);
+      setIsInitialLaunch(false); // Mark initial launch as complete
+    }
+  };
+
+  const handleConnectivityCheck = async () => {
+    setIsCheckingConnection(true);
+    try {
+      const netInfo = await NetInfo.fetch();
+      if (netInfo.isConnected) {
+        await checkUserSession(); // Retry session check
+        setIsCheckingConnection(false);
+      } else {
+        setIsCheckingConnection(false); // Keep showing retry screen
+      }
+    } catch (error) {
+      // console.error("Error checking connectivity:", error);
+      setIsCheckingConnection(false);
+    }
+  };
+
+  useEffect(() => {
     checkUserSession();
-
-    return () => clearTimeout(safetyTimeout);
-  }, [dispatch, isLoading]);
+  }, [dispatch]);
 
   useEffect(() => {
     const syncReduxWithStorage = async () => {
@@ -284,7 +318,7 @@ export default function AppNavigator() {
           }
         }
       } catch (error) {
-        //console.error("Error syncing state:", error);
+        // console.error("Error syncing state:", error);
       }
     };
     syncReduxWithStorage();
@@ -301,7 +335,7 @@ export default function AppNavigator() {
           dispatch(setTheme(storedTheme));
         }
       } catch (error) {
-        //console.error("Error loading theme:", error);
+        // console.error("Error loading theme:", error);
       }
     };
     loadTheme();
@@ -312,16 +346,11 @@ export default function AppNavigator() {
       try {
         await AsyncStorage.setItem("appTheme", theme);
       } catch (error) {
-        //console.error("Error saving theme:", error);
+        // console.error("Error saving theme:", error);
       }
     };
     saveTheme();
   }, [theme]);
-
-  // useEffect(() => {
-  //   NavigationBar.setBackgroundColorAsync(isDarkTheme ? "#121212" : "#fff");
-  //   NavigationBar.setButtonStyleAsync(isDarkTheme ? "dark" : "light");
-  // }, [isDarkTheme]);
 
   const appTheme = isDarkTheme
     ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: "#121212" } }
@@ -340,21 +369,63 @@ export default function AppNavigator() {
           backgroundColor: isDarkTheme ? "#121212" : "#fff",
         }}
       >
-        {/* <StatusBar
-          barStyle={isDarkTheme ? "light-content" : "dark-content"}
-          backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-        /> */}
         <ActivityIndicator size="large" color="#6a5acd" />
+      </View>
+    );
+  }
+
+  if (isCheckingConnection) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: isDarkTheme ? "#121212" : "#fff",
+        }}
+      >
+        <Animated.View style={{ opacity: pulseAnim }}>
+          <Ionicons
+            name="wifi"
+            size={50}
+            color={isDarkTheme ? "#fff" : "#000"}
+          />
+        </Animated.View>
+        <Text
+          style={{
+            marginTop: 20,
+            fontSize: 18,
+            color: isDarkTheme ? "#fff" : "#000",
+            fontFamily: "Archivo_700Bold",
+          }}
+        >
+          Checking connection...
+        </Text>
+        <TouchableOpacity
+          style={{
+            marginTop: 20,
+            padding: 10,
+            backgroundColor: "#6a5acd",
+            borderRadius: 5,
+          }}
+          onPress={handleConnectivityCheck}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 16,
+              fontFamily: "Inter_600SemiBold",
+            }}
+          >
+            Retry
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <NavigationContainer theme={appTheme}>
-      {/* <StatusBar
-        barStyle={isDarkTheme ? "light-content" : "dark-content"}
-        backgroundColor={isDarkTheme ? "#121212" : "#fff"}
-      /> */}
       <Stack.Navigator
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}

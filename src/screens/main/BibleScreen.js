@@ -8,7 +8,6 @@ import {
   TextInput,
   Modal,
   ScrollView,
-  StatusBar,
   Keyboard,
   Animated,
   Easing,
@@ -256,6 +255,13 @@ export default function BibleScreen({}) {
           )}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={() => (
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText} maxFontSizeMultiplier={1.2}>
+                No results found
+              </Text>
+            </View>
+          )}
         />
 
         {selectedBook && (
@@ -398,7 +404,7 @@ const getStyle = (theme) => {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.05)",
+      //backgroundColor: "rgba(0, 0, 0, 0.05)",
     },
     modalContainer: {
       width: "90%",
@@ -518,6 +524,18 @@ const getStyle = (theme) => {
       color: "#fff",
       fontSize: 16,
       fontWeight: "bold",
+    },
+    noResultsContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    noResultsText: {
+      fontSize: 18,
+      fontFamily: "Inter",
+      color: isDarkTheme ? "#bbb" : "#666",
+      textAlign: "center",
     },
   };
 };

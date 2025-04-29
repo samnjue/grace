@@ -184,7 +184,7 @@ const getStyle = (theme) => {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.1)",
+      //backgroundColor: "rgba(0, 0, 0, 0.1)",
     },
     modalContent: {
       backgroundColor: isDarkTheme ? "#000" : "#fff",
@@ -192,6 +192,8 @@ const getStyle = (theme) => {
       padding: 45,
       alignItems: "center",
       width: "80%",
+      borderColor: "#333",
+      borderWidth: 0.7,
     },
     modalText: {
       fontSize: 22,

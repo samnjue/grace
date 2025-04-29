@@ -2,7 +2,6 @@ import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
-  StatusBar,
   TouchableOpacity,
   ScrollView,
   Animated,
@@ -17,7 +16,6 @@ import Clipboard from "@react-native-clipboard/clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from "react-redux";
 import { setTheme } from "../../redux/slices/themeSlice";
-import * as NavigationBar from "expo-navigation-bar";
 
 const ChapterScreen = () => {
   const route = useRoute();
@@ -747,7 +745,7 @@ const getStyle = (theme) => {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.1)",
+      //backgroundColor: "rgba(0, 0, 0, 0.1)",
     },
     modalContent: {
       backgroundColor: isDarkTheme ? "#000" : "#fff",
@@ -756,6 +754,8 @@ const getStyle = (theme) => {
       paddingTop: 20,
       alignItems: "center",
       width: "80%",
+      borderColor: isDarkTheme ? "" : "#333",
+      borderWidth: 0.5,
     },
     modalText: {
       fontSize: 22,

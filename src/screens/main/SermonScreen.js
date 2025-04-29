@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { StatusBar } from "react-native";
 import Slider from "@react-native-community/slider";
 import AudioService from "../../services/audioService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -768,12 +767,12 @@ const getStyle = (theme, insets) => {
       top: 0,
       left: 0,
       right: 0,
-      height: 60 + insets.top,
+      height: 45 + insets.top,
       backgroundColor: isDarkTheme ? "#121212" : "#fff",
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 15,
-      paddingTop: 10,
+      paddingTop: 25,
     },
     topBarBackButton: {
       padding: 10,

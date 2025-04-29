@@ -314,7 +314,9 @@ const getStyle = (theme) => {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.1)",
+      // backgroundColor: isDarkTheme
+      //   ? "rgba(0, 0, 0, 0.1)"
+      //   : "rgba(0, 0, 0, 0.05)",
     },
     modalContent: {
       width: "80%",

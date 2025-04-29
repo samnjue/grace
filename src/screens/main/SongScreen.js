@@ -168,6 +168,13 @@ export default function SongScreen({ navigation }) {
           )}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={() => (
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText} maxFontSizeMultiplier={1.2}>
+                No results found
+              </Text>
+            </View>
+          )}
         />
       </View>
     </View>
@@ -220,6 +227,18 @@ const getStyle = (theme) => {
       padding: 8,
       position: "absolute",
       right: 0,
+    },
+    noResultsContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    noResultsText: {
+      fontSize: 18,
+      fontFamily: "Inter",
+      color: isDarkTheme ? "#bbb" : "#666",
+      textAlign: "center",
     },
   };
 };

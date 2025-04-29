@@ -8,7 +8,6 @@ import {
   Linking,
   ScrollView,
   BackHandler,
-  StatusBar,
   Image,
   RefreshControl,
   Alert,
@@ -609,7 +608,7 @@ const ProfileScreen = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
           <Text style={styles.versionText} maxFontSizeMultiplier={0}>
-            v1.13.39
+            v1.13.40
           </Text>
         </View>
       </ScrollView>
@@ -691,7 +690,9 @@ const getStyle = (theme) => {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.1)",
+      // backgroundColor: isDarkTheme
+      //   ? "rgba(0, 0, 0, 0.1)"
+      //   : "rgba(0, 0, 0, 0.05)",
     },
     modalContent: {
       width: "80%",
@@ -699,6 +700,8 @@ const getStyle = (theme) => {
       borderRadius: 20,
       padding: 20,
       alignItems: "center",
+      borderColor: isDarkTheme ? "" : "#333",
+      borderWidth: 0.5,
     },
     modalTitle: {
       fontSize: 20,

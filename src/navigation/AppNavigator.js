@@ -30,7 +30,6 @@ export default function AppNavigator() {
   const [isLoading, setIsLoading] = useState(true);
   const [initialRoute, setInitialRoute] = useState("AuthStack");
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
-  const [isInitialLaunch, setIsInitialLaunch] = useState(true);
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
@@ -118,12 +117,19 @@ export default function AppNavigator() {
         return;
       }
 
+      const netInfo = await NetInfo.fetch();
+      if (!netInfo.isConnected) {
+        setIsCheckingConnection(true); // Show connectivity UI for session refresh
+        return;
+      }
+
       const { data, error } = await supabase.auth.refreshSession({
         refresh_token,
       });
 
       if (error) {
         // console.error("Session refresh error:", error);
+        setIsCheckingConnection(true); // Show connectivity UI on refresh failure
         return;
       }
 
@@ -141,6 +147,7 @@ export default function AppNavigator() {
       }
     } catch (err) {
       // console.error("Error refreshing session:", err);
+      setIsCheckingConnection(true); // Show connectivity UI on error
     }
   };
 
@@ -220,7 +227,6 @@ export default function AppNavigator() {
                   : "ChurchSelection"
               );
               setIsLoading(false);
-              setIsInitialLaunch(false); // Mark initial launch as complete
             } else {
               await fallbackToCachedProfile();
             }
@@ -228,20 +234,16 @@ export default function AppNavigator() {
             console.error("Error fetching profile:", error);
             await fallbackToCachedProfile();
           }
-        } else if (isInitialLaunch) {
-          setIsCheckingConnection(true); // Show connectivity UI only on initial launch
         } else {
-          await fallbackToCachedProfile(); // Use cached data for offline mode
+          await fallbackToCachedProfile(); // Use cached data when offline
         }
       } else {
         setInitialRoute("AuthStack");
         setIsLoading(false);
-        setIsInitialLaunch(false); // Mark initial launch as complete
       }
     } catch (error) {
       // console.error("Error checking session:", error);
       setIsLoading(false);
-      setIsInitialLaunch(false); // Mark initial launch as complete
     }
   };
 
@@ -274,7 +276,6 @@ export default function AppNavigator() {
       setInitialRoute("ChurchSelection");
     } finally {
       setIsLoading(false);
-      setIsInitialLaunch(false); // Mark initial launch as complete
     }
   };
 
@@ -283,8 +284,9 @@ export default function AppNavigator() {
     try {
       const netInfo = await NetInfo.fetch();
       if (netInfo.isConnected) {
-        await checkUserSession(); // Retry session check
+        await refreshSession(); // Retry session refresh
         setIsCheckingConnection(false);
+        await checkUserSession(); // Re-check session after refresh
       } else {
         setIsCheckingConnection(false); // Keep showing retry screen
       }

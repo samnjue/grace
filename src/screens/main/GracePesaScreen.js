@@ -56,7 +56,28 @@ const GracePesaScreen = ({ navigation }) => {
 
         if (fundraiserError) throw fundraiserError;
 
-        const filteredFundraisers = fundraiserData.filter((fundraiser) => {
+        // Fetch total raised for each fundraiser
+        const enrichedFundraisers = await Promise.all(
+          fundraiserData.map(async (fundraiser) => {
+            const { data: mpesaData, error: mpesaError } = await supabase
+              .from("mpesa")
+              .select("amount")
+              .eq("account_reference", fundraiser.title);
+
+            if (mpesaError) {
+              console.error("Error fetching mpesa data:", mpesaError);
+              return { ...fundraiser, raised_amount: 0 };
+            }
+
+            const totalRaised = mpesaData.reduce(
+              (sum, record) => sum + record.amount,
+              0
+            );
+            return { ...fundraiser, raised_amount: totalRaised };
+          })
+        );
+
+        const filteredFundraisers = enrichedFundraisers.filter((fundraiser) => {
           const daysLeft = calculateDaysLeft(fundraiser.deadline);
           return daysLeft >= -1;
         });

@@ -82,9 +82,9 @@ serve(async (req) => {
       );
     }
 
-    const supabaseUrl = "https://dabljjonrpbnidwnkwgz.supabase.co";
+    const supabaseUrl = //toka hapa
     const supabaseKey =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhYmxqam9ucnBibmlkd25rd2d6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMTE2MjMxMiwiZXhwIjoyMDQ2NzM4MzEyfQ.zCTqC188P8VBkUOAo8n7jDkS4nlOaz8q1ZYhfQk2JgQ";
+     //gerarahia
 
     try {
       // Insert into transactions table

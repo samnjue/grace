@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const supabaseUrl = "https://dabljjonrpbnidwnkwgz.supabase.co";
+const supabaseUrl = //get out of here not for your eyes
 const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhYmxqam9ucnBibmlkd25rd2d6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMTE2MjMxMiwiZXhwIjoyMDQ2NzM4MzEyfQ.zCTqC188P8VBkUOAo8n7jDkS4nlOaz8q1ZYhfQk2JgQ"; // Replace with your actual service role key
-
+  //no hacking here
 serve(async (req) => {
   console.log("M-Pesa Callback function triggered");
 

@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const supabaseUrl = "https://dabljjonrpbnidwnkwgz.supabase.co";
+const supabaseUrl = //
 const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhYmxqam9ucnBibmlkd25rd2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzExNjIzMTIsImV4cCI6MjA0NjczODMxMn0.heJ-OmceVakcQElnBp7tXYsxyHnMR5hhg4xR6R0A03o";
-//no hacking here
+  //
 serve(async (req) => {
   console.log("M-Pesa Callback function triggered");
 

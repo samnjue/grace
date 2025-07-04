@@ -55,11 +55,11 @@ M-Pesa Daraja API via Supabase Edge Functions
 
 <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 16px 0;">
 
-  <img src="https://github.com/user-attachments/assets/4bddef36-cb98-4b72-9a6c-2fa219ace729" width="200" alt="Screenshot 1"/>
-  <img src="https://github.com/user-attachments/assets/b2c12669-b1f3-44d9-9d4a-0716888176dc" width="200" alt="Screenshot 2"/>
-  <img src="https://github.com/user-attachments/assets/b3e848e4-b394-4d5b-867a-df63a803978b" width="200" alt="Screenshot 3"/>
-  <img src="https://github.com/user-attachments/assets/2dd147da-9a24-4231-9546-b34f7c9cf7b5" width="200" alt="Screenshot 4"/>
-  <img src="https://github.com/user-attachments/assets/e7eeb03f-4e1a-4eb2-bb9f-db183f3be4bb" width="200" alt="Screenshot 5"/>
+  <img src="https://github.com/user-attachments/assets/4bddef36-cb98-4b72-9a6c-2fa219ace729" width="200" alt="HomeScreen"/>
+  <img src="https://github.com/user-attachments/assets/b2c12669-b1f3-44d9-9d4a-0716888176dc" width="200" alt="ChapterScreen"/>
+  <img src="https://github.com/user-attachments/assets/b3e848e4-b394-4d5b-867a-df63a803978b" width="200" alt="GracePesaScreen"/>
+  <img src="https://github.com/user-attachments/assets/2dd147da-9a24-4231-9546-b34f7c9cf7b5" width="200" alt="PayDetailsScreen"/>
+  <img src="https://github.com/user-attachments/assets/5d358082-22c4-4e3e-852b-fcdf8d5cb2f2" width="200" alt="NewGuideScreen"/>
 
 </div>
 

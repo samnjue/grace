@@ -1,7 +1,7 @@
 # Grace
 Grace by Ivory is a dynamic mobile application built with React Native (Expo) that integrates Supabase for backend services and supports M-Pesa STK Push functionality. The app is designed for church communities, offering features like digital sermons, Sunday guides, community news, payments, and scripture readings in both English and Kiswahili.
 
-## Features
+### Features
 🌐 Multi-Screen Navigation
 
 - Utilizes React Navigation with stack and tab navigators for smooth transitions.
@@ -40,7 +40,7 @@ Grace by Ivory is a dynamic mobile application built with React Native (Expo) th
 
 - Offline capabilities and persistent storage.
 
-## Tech Stack
+### Tech Stack
 React Native (Expo)
 
 Supabase (Auth, Database, Edge Functions, Notifications)
@@ -51,7 +51,7 @@ React Navigation for Tabs and Stack screens
 
 M-Pesa Daraja API via Supabase Edge Functions
 
-## Screenshots
+### Screenshots
 
 <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 16px 0;">
 
